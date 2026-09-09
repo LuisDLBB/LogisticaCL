@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LogisticaCL — Contexto de integración</title>
+  <style>
+    :root { color-scheme: light; font-family: Arial, sans-serif; color: #172033; background: #f4f7fb; }
+    body { margin: 0; line-height: 1.55; }
+    main { max-width: 860px; margin: 40px auto; padding: 38px; background: #fff; border-radius: 14px; box-shadow: 0 8px 26px #18244a1a; }
+    h1 { margin-top: 0; color: #123b68; }
+    h2 { margin-top: 32px; color: #1d568e; }
+    code { padding: 2px 5px; border-radius: 4px; background: #edf3fa; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { padding: 10px; border: 1px solid #d9e2ed; text-align: left; }
+    th { background: #edf5fc; }
+    .note { padding: 14px 16px; border-left: 4px solid #2c7cc3; background: #eef7ff; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>LogisticaCL — Contexto de integración</h1>
+    <p>Documento de coordinación inicial entre Luis y Hans para el sistema logístico de 4N.</p>
+
+    <h2>Objetivo</h2>
+    <p>Construir un sistema logístico conectado a una solución mayor, utilizando maestros estándar compartidos y un ambiente de pruebas en <code>dev.4n.cl</code>.</p>
+
+    <h2>Decisión de datos</h2>
+    <p>Se usará una base de datos compartida para varias empresas. Cada tabla que guarde información propia de una empresa deberá incluir <code>tenant_id</code> como campo obligatorio.</p>
+    <ul>
+      <li>Las consultas deben filtrar siempre por <code>tenant_id</code>.</li>
+      <li>Las claves únicas deben considerar la empresa, por ejemplo <code>(tenant_id, codigo_cliente)</code>.</li>
+      <li>Los índices principales deben comenzar por <code>tenant_id</code> cuando corresponda.</li>
+      <li>Los maestros universales pueden ser compartidos; los configurables por empresa deben incluir <code>tenant_id</code>.</li>
+      <li>Los cambios de estructura se implementarán mediante migraciones versionadas en Git.</li>
+    </ul>
+
+    <h2>Repositorio y colaboración</h2>
+    <table>
+      <tr><th>Elemento</th><th>Definición</th></tr>
+      <tr><td>Repositorio</td><td><code>https://github.com/LuisDLBB/LogisticaCL</code></td></tr>
+      <tr><td>Visibilidad</td><td>Privado</td></tr>
+      <tr><td>Acceso de Hans</td><td>Colaborador con permiso de escritura</td></tr>
+      <tr><td>Rama <code>main</code></td><td>Versiones aprobadas</td></tr>
+      <tr><td>Rama <code>develop</code></td><td>Integración y pruebas en <code>dev.4n.cl</code></td></tr>
+      <tr><td>Ramas <code>feature/*</code></td><td>Trabajo aislado por módulo o funcionalidad</td></tr>
+    </table>
+
+    <h2>Forma de trabajo</h2>
+    <ol>
+      <li>Crear una rama desde <code>develop</code>, por ejemplo <code>feature/maestros-estandar</code>.</li>
+      <li>Implementar el cambio junto con su migración de base de datos, si aplica.</li>
+      <li>Subir la rama a GitHub y abrir una solicitud de cambio hacia <code>develop</code>.</li>
+      <li>Revisar e integrar el cambio.</li>
+      <li>Desplegar <code>develop</code> en <code>dev.4n.cl</code> para probar la integración.</li>
+      <li>Cuando esté aprobado, integrar <code>develop</code> hacia <code>main</code>.</li>
+    </ol>
+
+    <h2>Coordinación de maestros estándar</h2>
+    <p>Antes de crear o modificar un maestro estándar, acordar nombre de tabla, campos, tipos de datos, claves, relaciones y responsable. El acuerdo debe quedar documentado en el repositorio y aplicarse mediante una migración.</p>
+
+    <p class="note">Las claves, contraseñas y otros datos de acceso no deben incluirse en este documento ni en el repositorio. Deben almacenarse como configuración privada del entorno.</p>
+  </main>
+</body>
+</html>
