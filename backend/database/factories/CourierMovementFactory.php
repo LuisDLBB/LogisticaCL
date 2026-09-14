@@ -26,6 +26,7 @@ class CourierMovementFactory extends Factory
             'tracking_number' => fake()->unique()->bothify('4N############-###'),
             'tracking_code' => fake()->bothify('4N############'),
             'external_code' => fake()->bothify('EXT-#####'),
+            'peso_real' => null,
             'status' => 'Entregado',
             'delivery_attempts' => 0,
             'merchant_name' => fake()->company(),
