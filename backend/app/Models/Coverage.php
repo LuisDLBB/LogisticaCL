@@ -13,7 +13,7 @@ class Coverage extends Model
     use HasFactory;
 
     protected $fillable = [
-        'tenant_id', 'provider_id', 'commune_name', 'commune_key', 'matrix_commune_name',
+        'tenant_id', 'provider_id', 'commune_name', 'matrix_commune_name',
         'provider_tax_id', 'provider_name_source', 'zone', 'return_payment_applies', 'return_value',
         'delivery_frequency', 'delivery_type', 'region_code', 'route_code', 'consideration_code',
         'aerial_commune_name', 'aerial_route_code', 'base_commune_name', 'trunk_name', 'post_name',

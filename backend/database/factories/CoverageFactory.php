@@ -23,7 +23,6 @@ class CoverageFactory extends Factory
             'tenant_id' => Tenant::factory(),
             'provider_id' => Provider::factory(),
             'commune_name' => fake()->city(),
-            'commune_key' => fake()->unique()->slug(2),
             'matrix_commune_name' => fake()->city(),
             'provider_tax_id' => fake()->numerify('########-#'),
             'provider_name_source' => fake()->company(),

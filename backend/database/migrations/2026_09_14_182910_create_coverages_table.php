@@ -17,7 +17,6 @@ return new class extends Migration
             $table->foreignId('provider_id')->nullable()->constrained()->restrictOnDelete();
 
             $table->string('commune_name', 150);
-            $table->string('commune_key', 150);
             $table->string('matrix_commune_name', 150)->nullable();
             $table->string('provider_tax_id', 15)->nullable();
             $table->string('provider_name_source', 255)->nullable();
@@ -43,7 +42,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->index(['tenant_id', 'commune_key', 'is_active']);
+            $table->index(['tenant_id', 'commune_name', 'is_active']);
             $table->index(['tenant_id', 'zone', 'region_code']);
             $table->index(['provider_id', 'is_active']);
             $table->index(['tenant_id', 'route_code']);
