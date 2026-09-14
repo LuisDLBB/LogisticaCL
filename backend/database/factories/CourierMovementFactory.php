@@ -22,6 +22,7 @@ class CourierMovementFactory extends Factory
             'tenant_id' => Tenant::factory(),
             'client_id' => null,
             'source_system' => 'Geolize',
+            'fecha' => now()->toDateString(),
             'tracking_number' => fake()->unique()->bothify('4N############-###'),
             'tracking_code' => fake()->bothify('4N############'),
             'external_code' => fake()->bothify('EXT-#####'),

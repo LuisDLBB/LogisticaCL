@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Database\Factories\CourierMovementFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +16,7 @@ class CourierMovement extends Model
     protected $table = 'movimientos_courier';
 
     protected $fillable = [
-        'tenant_id', 'client_id', 'source_system', 'tracking_number', 'tracking_code', 'external_code',
+        'tenant_id', 'client_id', 'source_system', 'fecha', 'tracking_number', 'tracking_code', 'external_code',
         'cost_center', 'purchase_order', 'dispatch_guide', 'weight_kg', 'length_cm', 'width_cm', 'height_cm',
         'status', 'delivery_attempts', 'merchant_name', 'service_name', 'campaign_name', 'recipient_name',
         'recipient_company_name', 'recipient_address', 'destination_commune_name', 'recipient_phone',
@@ -31,6 +32,7 @@ class CourierMovement extends Model
             'length_cm' => 'decimal:2',
             'width_cm' => 'decimal:2',
             'height_cm' => 'decimal:2',
+            'fecha' => 'date',
             'recipient_name' => 'encrypted',
             'recipient_company_name' => 'encrypted',
             'recipient_address' => 'encrypted',
@@ -53,5 +55,19 @@ class CourierMovement extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public static function fechaFromTrackingNumber(string $trackingNumber): ?CarbonImmutable
+    {
+        $year = substr($trackingNumber, 2, 4);
+        $month = substr($trackingNumber, 6, 2);
+        $day = substr($trackingNumber, 8, 2);
+
+        if (! ctype_digit($year) || ! ctype_digit($month) || ! ctype_digit($day)
+            || ! checkdate((int) $month, (int) $day, (int) $year)) {
+            return null;
+        }
+
+        return CarbonImmutable::create((int) $year, (int) $month, (int) $day);
     }
 }
