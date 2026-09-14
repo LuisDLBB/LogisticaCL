@@ -12,3 +12,5 @@ Módulo independiente dentro de LogisticaCL. Comparte usuarios, empresas, permis
 - Trazabilidad del pago y rentabilidad del servicio.
 
 Las tablas se crearán cuando estén validadas las reglas de pago para agencias regionales, repartidores de Santiago y proveedores de regiones.
+
+La definición funcional, reglas validadas y pendientes se mantiene en `docs/modules/provider-payments.md`.
