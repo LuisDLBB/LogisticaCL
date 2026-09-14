@@ -9,6 +9,7 @@ class Vehicle extends Model
 {
     protected $fillable = [
         'tenant_id',
+        'rut_empresa',
         'internal_code',
         'plate',
         'vehicle_type',

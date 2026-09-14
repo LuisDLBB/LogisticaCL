@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('vehicles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tenant_id')->constrained()->restrictOnDelete();
+            $table->string('rut_empresa', 15)->nullable();
 
             $table->string('internal_code', 50);
             $table->string('plate', 12);
@@ -40,6 +41,7 @@ return new class extends Migration
 
             $table->unique(['tenant_id', 'internal_code']);
             $table->unique(['tenant_id', 'plate']);
+            $table->index(['tenant_id', 'rut_empresa']);
             $table->index(['tenant_id', 'operational_status']);
             $table->index(['tenant_id', 'vehicle_type']);
         });
