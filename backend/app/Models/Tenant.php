@@ -51,4 +51,9 @@ class Tenant extends Model
     {
         return $this->hasMany(Provider::class);
     }
+
+    public function coverages(): HasMany
+    {
+        return $this->hasMany(Coverage::class);
+    }
 }

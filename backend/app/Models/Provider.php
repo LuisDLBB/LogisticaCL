@@ -33,4 +33,9 @@ class Provider extends Model
     {
         return $this->hasMany(ProviderBankAccount::class);
     }
+
+    public function coverages(): HasMany
+    {
+        return $this->hasMany(Coverage::class);
+    }
 }
