@@ -26,6 +26,7 @@ Controlar los servicios ejecutados por agencias, repartidores externos y otros p
 ## Reglas de negocio validadas
 
 - Para pagos en regiones, la base inicial indicada es: RUT proveedor + RUT cliente + tipo de servicio + peso.
+- Cada proveedor queda clasificado como `RM` o `Regiones` mediante `TipoOperador`; la clasificación se utilizará al resolver las reglas de pago.
 - La cobertura definirá si el servicio se paga a una agencia regional o a un repartidor externo de Santiago.
 - Los pagos requieren respaldo operacional, motivo, fecha, valor, condición de pago y documento tributario antes de su envío a Finanzas.
 
@@ -36,3 +37,11 @@ Controlar los servicios ejecutados por agencias, repartidores externos y otros p
 - Definir catálogo de estados de aprobación y responsables por monto.
 - Definir la evidencia mínima por tipo de servicio.
 - No crear tablas de pago hasta validar estos puntos.
+
+## Calidad de datos detectada
+
+- Los registros `No Aplica`, `Planta`, `N/A` y RUT con valor `0` no son proveedores pagables y no deben importarse a este maestro.
+- Existen RUT con dígito verificador en minúscula, sin guion o sin dígito verificador; deben normalizarse antes de cargar.
+- El titular de la cuenta bancaria puede ser distinto de la razón social del proveedor; por eso las cuentas se registran separadamente.
+- El campo `TipoOperador` ya separa RM y Regiones. Las categorías más específicas, como Agencia o Courier Stgo, aún aparecen dentro del nombre del operador y deben normalizarse antes de usarse para cálculos adicionales.
+- Los datos de contacto están mayoritariamente vacíos y deberán completarse o validarse antes de habilitar notificaciones.
