@@ -12,11 +12,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('tenant_id')->constrained()->restrictOnDelete();
             $table->foreignId('user_id')->constrained()->restrictOnDelete();
+            $table->string('rut_empresa', 15)->nullable();
             $table->string('role_code', 50)->default('operator');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
             $table->unique(['tenant_id', 'user_id']);
+            $table->index(['tenant_id', 'rut_empresa']);
             $table->index(['tenant_id', 'role_code']);
             $table->index(['user_id', 'is_active']);
         });
