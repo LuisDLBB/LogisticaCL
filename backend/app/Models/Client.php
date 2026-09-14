@@ -37,4 +37,9 @@ class Client extends Model
     {
         return $this->hasMany(ClientBranch::class);
     }
+
+    public function courierMovements(): HasMany
+    {
+        return $this->hasMany(CourierMovement::class);
+    }
 }

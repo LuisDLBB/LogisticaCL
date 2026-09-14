@@ -56,4 +56,9 @@ class Tenant extends Model
     {
         return $this->hasMany(Coverage::class);
     }
+
+    public function courierMovements(): HasMany
+    {
+        return $this->hasMany(CourierMovement::class);
+    }
 }

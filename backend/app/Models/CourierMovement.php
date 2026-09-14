@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Models;
+
+use Database\Factories\CourierMovementFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class CourierMovement extends Model
+{
+    /** @use HasFactory<CourierMovementFactory> */
+    use HasFactory;
+
+    protected $table = 'movimientos_courier';
+
+    protected $fillable = [
+        'tenant_id', 'client_id', 'source_system', 'tracking_number', 'tracking_code', 'external_code',
+        'cost_center', 'purchase_order', 'dispatch_guide', 'weight_kg', 'length_cm', 'width_cm', 'height_cm',
+        'status', 'delivery_attempts', 'merchant_name', 'service_name', 'campaign_name', 'recipient_name',
+        'recipient_company_name', 'recipient_address', 'destination_commune_name', 'recipient_phone',
+        'recipient_email', 'declared_value', 'received_at', 'estimated_delivery_date', 'delivered_at',
+        'merchant_pickup', 'pickup_warehouse_name', 'delivery_route_code', 'courier_name', 'courier_phone',
+        'delivery_user_name',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'weight_kg' => 'decimal:3',
+            'length_cm' => 'decimal:2',
+            'width_cm' => 'decimal:2',
+            'height_cm' => 'decimal:2',
+            'recipient_name' => 'encrypted',
+            'recipient_company_name' => 'encrypted',
+            'recipient_address' => 'encrypted',
+            'recipient_phone' => 'encrypted',
+            'recipient_email' => 'encrypted',
+            'declared_value' => 'decimal:2',
+            'received_at' => 'datetime',
+            'estimated_delivery_date' => 'date',
+            'delivered_at' => 'datetime',
+            'merchant_pickup' => 'boolean',
+            'courier_phone' => 'encrypted',
+        ];
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
+    }
+}
