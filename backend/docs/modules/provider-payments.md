@@ -28,6 +28,8 @@ Controlar los servicios ejecutados por agencias, repartidores externos y otros p
 - Para pagos en regiones, la base inicial indicada es: RUT proveedor + RUT cliente + tipo de servicio + peso.
 - Cada proveedor queda clasificado como `RM` o `Regiones` mediante `TipoOperador`; la clasificación se utilizará al resolver las reglas de pago.
 - La cobertura definirá si el servicio se paga a una agencia regional o a un repartidor externo de Santiago.
+- Al construir la base origen de pagos, las coberturas se procesarán en tres grupos independientes: `RM`, `Temuco` y `Regiones`.
+- Para las coberturas de `RM` y `Temuco`, el RUT de razón social que se usará en la base origen de pagos será el de 4 Nortes. La regla se implementará cuando se defina ese proceso de carga.
 - Los pagos requieren respaldo operacional, motivo, fecha, valor, condición de pago y documento tributario antes de su envío a Finanzas.
 
 ## Pendientes y riesgos
