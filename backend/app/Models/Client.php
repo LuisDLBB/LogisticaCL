@@ -1,0 +1,40 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Client extends Model
+{
+    protected $fillable = [
+        'tenant_id',
+        'tax_id',
+        'tax_id_number',
+        'tax_id_check_digit',
+        'commercial_name',
+        'legal_name',
+        'billing_address',
+        'billing_commune_name',
+        'business_activity',
+        'is_active',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+        ];
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
+    public function branches(): HasMany
+    {
+        return $this->hasMany(ClientBranch::class);
+    }
+}
