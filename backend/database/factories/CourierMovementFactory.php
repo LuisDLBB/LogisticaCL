@@ -28,6 +28,7 @@ class CourierMovementFactory extends Factory
             'external_code' => fake()->bothify('EXT-#####'),
             'peso_real' => null,
             'peso_transformado' => null,
+            'peso_final' => null,
             'status' => 'Entregado',
             'delivery_attempts' => 0,
             'merchant_name' => fake()->company(),

@@ -17,7 +17,7 @@ class CourierMovement extends Model
 
     protected $fillable = [
         'tenant_id', 'client_id', 'source_system', 'fecha', 'tracking_number', 'tracking_code', 'external_code',
-        'cost_center', 'purchase_order', 'dispatch_guide', 'weight_kg', 'peso_real', 'peso_transformado', 'length_cm', 'width_cm', 'height_cm',
+        'cost_center', 'purchase_order', 'dispatch_guide', 'weight_kg', 'peso_real', 'peso_transformado', 'peso_final', 'length_cm', 'width_cm', 'height_cm',
         'status', 'delivery_attempts', 'merchant_name', 'service_name', 'campaign_name', 'recipient_name',
         'recipient_company_name', 'recipient_address', 'destination_commune_name', 'recipient_phone',
         'recipient_email', 'declared_value', 'received_at', 'estimated_delivery_date', 'delivered_at',
@@ -29,8 +29,9 @@ class CourierMovement extends Model
     {
         return [
             'weight_kg' => 'decimal:3',
-            'peso_real' => 'decimal:3',
-            'peso_transformado' => 'decimal:3',
+            'peso_real' => 'integer',
+            'peso_transformado' => 'integer',
+            'peso_final' => 'integer',
             'length_cm' => 'decimal:2',
             'width_cm' => 'decimal:2',
             'height_cm' => 'decimal:2',
@@ -59,6 +60,17 @@ class CourierMovement extends Model
         return $this->belongsTo(Client::class);
     }
 
+    protected static function booted(): void
+    {
+        static::saving(function (CourierMovement $movement): void {
+            if ($movement->weight_kg === null) {
+                $movement->weight_kg = 1;
+            }
+
+            $movement->peso_final = self::pesoFinal($movement->peso_real, $movement->peso_transformado);
+        });
+    }
+
     public static function fechaFromTrackingNumber(string $trackingNumber): ?CarbonImmutable
     {
         $year = substr($trackingNumber, 2, 4);
@@ -71,5 +83,14 @@ class CourierMovement extends Model
         }
 
         return CarbonImmutable::create((int) $year, (int) $month, (int) $day);
+    }
+
+    public static function pesoFinal(?int $pesoReal, ?int $pesoTransformado): ?int
+    {
+        if ($pesoReal === null || $pesoTransformado === null) {
+            return null;
+        }
+
+        return min($pesoReal, $pesoTransformado);
     }
 }
