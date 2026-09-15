@@ -44,4 +44,9 @@ class CostCenterKey extends Model
     {
         return $this->belongsTo(ServiceType::class);
     }
+
+    public function costCenter(): BelongsTo
+    {
+        return $this->belongsTo(CostCenter::class, 'cost_center_code', 'cost_center_code');
+    }
 }
