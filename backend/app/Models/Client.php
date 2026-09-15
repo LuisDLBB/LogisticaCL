@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Client extends Model
@@ -41,5 +42,12 @@ class Client extends Model
     public function courierMovements(): HasMany
     {
         return $this->hasMany(CourierMovement::class);
+    }
+
+    public function serviceTypes(): BelongsToMany
+    {
+        return $this->belongsToMany(ServiceType::class, 'client_service_type')
+            ->withPivot('is_active')
+            ->withTimestamps();
     }
 }
