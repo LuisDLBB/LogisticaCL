@@ -1,14 +1,1 @@
-<!doctype html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Pago a Proveedores | LogisticaCL</title>
-</head>
-<body>
-    <main>
-        <h1>Pago a Proveedores</h1>
-        <p>Este módulo concentrará servicios prestados, tarifas, adicionales, respaldos y aprobaciones antes del pago.</p>
-    </main>
-</body>
-</html>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Pago a Proveedores</title><style>body{font-family:system-ui;background:#f5f7fb;color:#14213d;margin:0}main{max-width:1000px;margin:auto;padding:40px}a{display:block;padding:16px;background:#fff;border-radius:10px;color:#14213d;text-decoration:none;margin:10px 0;box-shadow:0 1px 4px #dce1eb}h2{margin-top:36px}</style></head><body><main><h1>Pago a Proveedores</h1><p>Procesos y maestros para preparar pagos.</p><a href="{{ route('provider-payments.courier-movements.upload') }}">1. Carga Movimientos Courier</a><a href="{{ route('provider-payments.courier-movements.compile') }}">2. Compilar Movimientos Courier</a><h2>3. Mantenedor</h2>@foreach (['Clientes','Sucursales','Servicios','Centro de Costos','Pesos','Proveedores','Bancos','Vehículos','Coberturas','Llave centro costos','Estados'] as $name)<a href="{{ route('provider-payments.maintainers.'.str($name)->slug()) }}">{{ $name }}</a>@endforeach</main></body></html>
