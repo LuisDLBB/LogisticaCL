@@ -29,6 +29,7 @@ class CourierMovementFactory extends Factory
             'peso_real' => null,
             'peso_transformado' => null,
             'peso_final' => null,
+            'tipo_pago' => 'Variables',
             'status' => 'Entregado',
             'delivery_attempts' => 0,
             'merchant_name' => fake()->company(),
