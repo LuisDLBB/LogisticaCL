@@ -14,9 +14,9 @@
 <div class="card">
     <strong>{{ $snapshot['file'] }}</strong><p>{{ number_format($snapshot['records'], 0, ',', '.') }} registros analizados. Esta revisión todavía no guarda movimientos.</p>
     <p class="note">Cada desplegable agrupa valores pendientes e indica qué corregir. Un registro puede aparecer en varios grupos; sus totales no deben sumarse.</p>
-    <form id="review-form" class="tenant-row" method="get"><label for="tenant">Empresa propietaria</label><select id="tenant" name="tenant" required><option value="">Selecciona una empresa</option>@foreach($tenants as $company)<option value="{{ $company->id }}" @selected($tenant?->id === $company->id)>{{ $company->name }}</option>@endforeach</select><button type="submit">Volver a revisar maestros</button></form>
+    <form id="review-form" class="tenant-row" method="get"><strong>Empresa de prueba:</strong><span>{{ $tenant?->name ?? '4 Nortes' }}</span><button type="submit">Volver a revisar maestros</button></form>
     <div id="review-progress" hidden role="status"><p>Comparando datos con los maestros…</p><progress aria-label="Revisando parámetros"></progress></div>
-    @if (! $tenant)<p class="warning">No hay empresa seleccionada{{ $tenants->isEmpty() ? ' o registrada para esta revisión' : '' }}. Los clientes y coberturas se muestran como pendientes de comprobar, sin mezclar datos de distintas empresas.</p>@endif
+    @if (! $tenant)<p class="warning">Falta registrar 4 Nortes como empresa de prueba. Los cruces no pueden comprobarse hasta completar ese registro.</p>@endif
     @if($snapshot['missing_columns'])<p class="warning">Columnas no identificadas: {{ implode(', ', $snapshot['missing_columns']) }}. Revisa los encabezados del archivo.</p>@endif
     <p class="note">Las coincidencias de nombres y comunas son exactas. Los pesos quedan pendientes porque aún falta implementar su maestro de transformación.</p>
     <p class="note"><strong>Cruce de clientes:</strong> Comerciante del archivo → Comerciante (Pila) del maestro de clientes → RUT y razón social.</p>

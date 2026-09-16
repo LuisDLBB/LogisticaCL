@@ -15,6 +15,20 @@ class CourierParameterReviewTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_four_north_is_the_default_company_for_parameter_review(): void
+    {
+        $this->withSession(['courier_review' => [
+            'file' => 'prueba.csv',
+            'records' => 0,
+            'groups' => [],
+            'missing_columns' => [],
+        ]])->get(route('provider-payments.courier-movements.review-parameters'))
+            ->assertOk()
+            ->assertSee('Empresa de prueba:')
+            ->assertSee('4 Nortes')
+            ->assertDontSee('Selecciona una empresa');
+    }
+
     public function test_windows_csv_accents_survive_json_session_storage(): void
     {
         $csv = mb_convert_encoding("Seguimiento paquete,Comerciante,Servicio,Comuna,Peso,Estado\n4N20260916A,Diseño,Distribución,Ñuñoa,5,En tránsito\n", 'Windows-1252', 'UTF-8');
@@ -37,7 +51,8 @@ class CourierParameterReviewTest extends TestCase
 
         $response = $this->get(route('provider-payments.courier-movements.review-parameters'));
         $response->assertOk()->assertSee('Cliente A')->assertSee('TEMUCO')
-            ->assertSee('Pendiente de comparación');
+            ->assertSee('Empresa de prueba:')->assertSee('4 Nortes')
+            ->assertSee('Ingresar este valor en Comerciante (Pila)');
     }
 
     public function test_comparison_is_scoped_and_preserves_exact_commune_names(): void

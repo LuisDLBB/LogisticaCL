@@ -117,13 +117,8 @@ class CourierMovementImportController
     public function reviewParameters(Request $request, ParameterReview $reviewer): View
     {
         $snapshot = $request->session()->get('courier_review');
-        $tenants = $request->user()
-            ? $request->user()->tenants()->wherePivot('is_active', true)->get()
-            : (app()->environment('local') ? Tenant::where('is_active', true)->get() : collect());
-        $tenant = $request->filled('tenant')
-            ? $tenants->firstWhere('id', (int) $request->input('tenant'))
-            : ($tenants->count() === 1 ? $tenants->first() : null);
-        abort_if($request->filled('tenant') && ! $tenant, 403);
+        $tenant = Tenant::query()->where('code', '4N')->where('is_active', true)->first();
+        $tenants = $tenant ? collect([$tenant]) : collect();
 
         return view('provider-payments::courier-movements-parameters', [
             'snapshot' => $snapshot, 'tenants' => $tenants, 'tenant' => $tenant,
