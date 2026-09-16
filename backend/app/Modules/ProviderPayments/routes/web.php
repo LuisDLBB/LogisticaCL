@@ -17,3 +17,5 @@ Route::prefix('pago-proveedores')
                 ->name('maintainers.'.str($name)->slug());
         }
     });
+
+Route::view('/pago-proveedores/carga-movimientos-courier/revisar-parametros', 'provider-payments::courier-movements-parameters')->name('provider-payments.courier-movements.review-parameters');
