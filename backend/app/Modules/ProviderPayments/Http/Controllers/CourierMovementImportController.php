@@ -26,6 +26,10 @@ class CourierMovementImportController
         $normalizedHeaders = [];
         $trackingIndex = null;
         $weightIndex = null;
+        $merchantIndex = null;
+        $statusIndex = null;
+        $merchantCounts = [];
+        $statusCounts = [];
 
         foreach ($reader->getSheetIterator() as $sheet) {
             foreach ($sheet->getRowIterator() as $row) {
@@ -36,6 +40,8 @@ class CourierMovementImportController
                     $normalizedHeaders = array_map(fn (mixed $header): string => $this->normalizeHeader($header), $headers);
                     $trackingIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => str_contains($header, 'seguimiento'));
                     $weightIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => str_contains($header, 'peso'));
+                    $merchantIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => str_contains($header, 'comerciante'));
+                    $statusIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => str_contains($header, 'estado'));
 
                     continue;
                 }
@@ -45,6 +51,10 @@ class CourierMovementImportController
                 }
 
                 $records++;
+                $merchant = trim((string) ($merchantIndex === null ? '' : $values[$merchantIndex] ?? '')) ?: 'Sin comerciante';
+                $status = trim((string) ($statusIndex === null ? '' : $values[$statusIndex] ?? '')) ?: 'Sin estado';
+                $merchantCounts[$merchant] = ($merchantCounts[$merchant] ?? 0) + 1;
+                $statusCounts[$status] = ($statusCounts[$status] ?? 0) + 1;
                 $tracking = $trackingIndex === null ? '' : trim((string) ($values[$trackingIndex] ?? ''));
 
                 if ($tracking === '') {
@@ -63,10 +73,10 @@ class CourierMovementImportController
         $reader->close();
         $normalizedHeaders = array_map(fn (mixed $header): string => $this->normalizeHeader($header), $headers);
         $trackingIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => str_contains($header, 'seguimiento'));
-        $merchantIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => str_contains($header, 'comerciante'));
-        $weightIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => str_contains($header, 'peso'));
+        arsort($merchantCounts);
+        arsort($statusCounts);
 
-        return view('provider-payments::courier-movements-upload', ['validation' => ['file_name' => $file->getClientOriginalName(), 'records' => $records, 'headers' => array_values(array_filter($headers)), 'has_tracking' => $trackingIndex !== null, 'has_merchant' => $merchantIndex !== null, 'has_weight' => $weightIndex !== null, 'missing_tracking' => $missingTracking, 'invalid_date' => $invalidDate, 'missing_weight' => $missingWeight]]);
+        return view('provider-payments::courier-movements-summary', ['validation' => ['file_name' => $file->getClientOriginalName(), 'records' => $records, 'has_tracking' => $trackingIndex !== null, 'has_merchant' => $merchantIndex !== null, 'has_weight' => $weightIndex !== null, 'missing_tracking' => $missingTracking, 'invalid_date' => $invalidDate, 'missing_weight' => $missingWeight, 'merchant_counts' => $merchantCounts, 'status_counts' => $statusCounts]]);
     }
 
     private function normalizeHeader(mixed $header): string
