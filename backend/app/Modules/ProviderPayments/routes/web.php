@@ -18,4 +18,4 @@ Route::prefix('pago-proveedores')
         }
     });
 
-Route::view('/pago-proveedores/carga-movimientos-courier/revisar-parametros', 'provider-payments::courier-movements-parameters')->name('provider-payments.courier-movements.review-parameters');
+Route::get('/pago-proveedores/carga-movimientos-courier/revisar-parametros', [CourierMovementImportController::class, 'reviewParameters'])->name('provider-payments.courier-movements.review-parameters');
