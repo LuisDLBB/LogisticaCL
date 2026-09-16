@@ -25,8 +25,24 @@ class CourierParameterReviewTest extends TestCase
         ]])->get(route('provider-payments.courier-movements.review-parameters'))
             ->assertOk()
             ->assertSee('Empresa de prueba:')
-            ->assertSee('4 Nortes')
+            ->assertSee('4N')
             ->assertDontSee('Selecciona una empresa');
+    }
+
+    public function test_initial_companies_are_registered_in_the_tenant_master(): void
+    {
+        $this->assertDatabaseHas('tenants', [
+            'code' => '4N',
+            'tax_id' => '77346078-7',
+            'legal_name' => '4 Nortes Logistica SPA',
+            'business_activity' => 'Logistica',
+        ]);
+        $this->assertDatabaseHas('tenants', [
+            'code' => 'PMCB',
+            'tax_id' => '77639015-1',
+            'legal_name' => 'Transportes y Distribucion PMCB SPA',
+            'business_activity' => 'Transporte de Carga por Carretera',
+        ]);
     }
 
     public function test_windows_csv_accents_survive_json_session_storage(): void
@@ -51,7 +67,7 @@ class CourierParameterReviewTest extends TestCase
 
         $response = $this->get(route('provider-payments.courier-movements.review-parameters'));
         $response->assertOk()->assertSee('Cliente A')->assertSee('TEMUCO')
-            ->assertSee('Empresa de prueba:')->assertSee('4 Nortes')
+            ->assertSee('Empresa de prueba:')->assertSee('4N')
             ->assertSee('Ingresar este valor en Comerciante (Pila)');
     }
 

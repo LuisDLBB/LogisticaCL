@@ -19,6 +19,7 @@ class Tenant extends Model
         'name',
         'legal_name',
         'tax_id',
+        'business_activity',
         'timezone',
         'is_active',
     ];
