@@ -51,8 +51,8 @@
             @if ($errors->any())
                 <div class="result visible error" role="alert">{{ $errors->first() }}</div>
             @endif
-            @if (session('validation'))
-                @php($validation = session('validation'))
+            @if (isset($validation) || session('validation'))
+                @php($validation = $validation ?? session('validation'))
                 <div class="result visible" role="status">
                     <strong>Resultado de la validación</strong>
                     <div><b>Archivo:</b> {{ $validation['file_name'] }}</div>

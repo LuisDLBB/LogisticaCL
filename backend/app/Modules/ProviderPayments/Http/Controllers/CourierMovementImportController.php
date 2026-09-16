@@ -3,15 +3,15 @@
 namespace App\Modules\ProviderPayments\Http\Controllers;
 
 use App\Models\CourierMovement;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use OpenSpout\Reader\CSV\Reader as CsvReader;
 use OpenSpout\Reader\XLSX\Reader as XlsxReader;
 
 class CourierMovementImportController
 {
-    public function validateFile(Request $request): RedirectResponse
+    public function validateFile(Request $request): View
     {
         $validated = $request->validate(['file' => ['required', 'file', 'mimes:xlsx,csv', 'max:102400']]);
         $file = $validated['file'];
@@ -23,6 +23,9 @@ class CourierMovementImportController
         $missingTracking = 0;
         $invalidDate = 0;
         $missingWeight = 0;
+        $normalizedHeaders = [];
+        $trackingIndex = null;
+        $weightIndex = null;
 
         foreach ($reader->getSheetIterator() as $sheet) {
             foreach ($sheet->getRowIterator() as $row) {
@@ -30,6 +33,9 @@ class CourierMovementImportController
 
                 if ($headers === []) {
                     $headers = $values;
+                    $normalizedHeaders = array_map(fn (mixed $header): string => $this->normalizeHeader($header), $headers);
+                    $trackingIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => str_contains($header, 'seguimiento'));
+                    $weightIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => str_contains($header, 'peso'));
 
                     continue;
                 }
@@ -39,9 +45,6 @@ class CourierMovementImportController
                 }
 
                 $records++;
-                $normalizedHeaders = array_map(fn (mixed $header): string => $this->normalizeHeader($header), $headers);
-                $trackingIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => str_contains($header, 'seguimiento'));
-                $weightIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => str_contains($header, 'peso'));
                 $tracking = $trackingIndex === null ? '' : trim((string) ($values[$trackingIndex] ?? ''));
 
                 if ($tracking === '') {
@@ -63,7 +66,7 @@ class CourierMovementImportController
         $merchantIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => str_contains($header, 'comerciante'));
         $weightIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => str_contains($header, 'peso'));
 
-        return back()->with('validation', ['file_name' => $file->getClientOriginalName(), 'records' => $records, 'headers' => array_values(array_filter($headers)), 'has_tracking' => $trackingIndex !== null, 'has_merchant' => $merchantIndex !== null, 'has_weight' => $weightIndex !== null, 'missing_tracking' => $missingTracking, 'invalid_date' => $invalidDate, 'missing_weight' => $missingWeight]);
+        return view('provider-payments::courier-movements-upload', ['validation' => ['file_name' => $file->getClientOriginalName(), 'records' => $records, 'headers' => array_values(array_filter($headers)), 'has_tracking' => $trackingIndex !== null, 'has_merchant' => $merchantIndex !== null, 'has_weight' => $weightIndex !== null, 'missing_tracking' => $missingTracking, 'invalid_date' => $invalidDate, 'missing_weight' => $missingWeight]]);
     }
 
     private function normalizeHeader(mixed $header): string
@@ -79,6 +82,6 @@ class CourierMovementImportController
             }
         }
 
-return null;
+        return null;
     }
 }
