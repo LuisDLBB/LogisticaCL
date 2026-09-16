@@ -1,1 +1,7 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ $title }}</title></head><body style="font-family:system-ui;margin:0;color:#201e1f;background:#f6f8f8"><header style="padding:14px 30px;background:#fff;border-bottom:5px solid #5db8bc"><img src="{{ asset('images/logo4n.jpg') }}" alt="4N Logística" style="width:115px"></header><main style="padding:40px"><p><a href="{{ route('provider-payments.dashboard') }}" style="color:#277d80">← Pago a Proveedores</a></p><h1>{{ $title }}</h1><p>Esta pantalla quedará conectada al maestro o proceso correspondiente.</p></main></body></html>
+@extends('provider-payments::layout')
+@section('title', $title)
+@section('content')
+<a class="back" href="{{ route('provider-payments.dashboard') }}">← Pago a Proveedores</a>
+<p class="eyebrow">Gestión operacional</p><h1>{{ $title }}</h1><p class="intro">Esta pantalla quedará conectada al maestro o proceso correspondiente.</p>
+<div class="card"><p class="note">Módulo en preparación.</p></div>
+@endsection
