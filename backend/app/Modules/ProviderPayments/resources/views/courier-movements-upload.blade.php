@@ -29,49 +29,31 @@
         <h1>Carga Movimientos Courier</h1>
         <div class="card">
             <p>Selecciona la base Geolize que se importará a <strong>movimientos_courier</strong>.</p>
-            <form id="upload-form">
+            <form action="{{ route('provider-payments.courier-movements.validate') }}" method="post" enctype="multipart/form-data">
+                @csrf
                 <label for="file">Archivo de movimientos</label>
                 <div class="file">
                     <div>Busca un archivo Excel o CSV</div>
-                    <input id="file" type="file" accept=".xlsx,.xls,.csv" required>
+                    <input id="file" name="file" type="file" accept=".xlsx,.csv" required>
                 </div>
                 <p class="note">La carga validará seguimiento, fecha, peso y datos necesarios antes de incorporarlos.</p>
-                <button class="button" type="submit">Preparar archivo</button>
+                <button class="button" type="submit">Validar archivo</button>
             </form>
-            <div id="result" class="result" role="status" aria-live="polite"></div>
+            @if ($errors->any())
+                <div class="result visible error" role="alert">{{ $errors->first() }}</div>
+            @endif
+            @if (session('validation'))
+                @php($validation = session('validation'))
+                <div class="result visible" role="status">
+                    <strong>Resultado de la validación</strong>
+                    <div><b>Archivo:</b> {{ $validation['file_name'] }}</div>
+                    <div><b>Registros detectados:</b> {{ number_format($validation['records'], 0, ',', '.') }}</div>
+                    <div><b>Campos encontrados:</b> seguimiento {{ $validation['has_tracking'] ? 'sí' : 'no' }}, comerciante {{ $validation['has_merchant'] ? 'sí' : 'no' }}, peso {{ $validation['has_weight'] ? 'sí' : 'no' }}</div>
+                    <div><b>Observaciones:</b> {{ $validation['missing_tracking'] }} sin seguimiento, {{ $validation['invalid_date'] }} con fecha no identificable y {{ $validation['missing_weight'] }} sin peso.</div>
+                    <p>Revisa este resultado. El siguiente paso será decidir qué registros se incorporan o reemplazan.</p>
+                </div>
+            @endif
         </div>
     </main>
-    <script>
-        const form = document.getElementById('upload-form');
-        const input = document.getElementById('file');
-        const result = document.getElementById('result');
-
-        form.addEventListener('submit', function (event) {
-            event.preventDefault();
-            const file = input.files[0];
-
-            if (!file) {
-                result.className = 'result visible error';
-                result.textContent = 'Primero selecciona el archivo que deseas preparar.';
-                return;
-            }
-
-            const allowedExtensions = ['xlsx', 'xls', 'csv'];
-            const extension = file.name.split('.').pop().toLowerCase();
-
-            if (!allowedExtensions.includes(extension)) {
-                result.className = 'result visible error';
-                result.textContent = 'Selecciona un archivo Excel o CSV.';
-                return;
-            }
-
-            const size = (file.size / 1024 / 1024).toFixed(2).replace('.', ',');
-            result.className = 'result visible';
-            result.innerHTML = '<strong>Archivo preparado para validar</strong>'
-                + '<div><b>Nombre:</b> ' + file.name + '</div>'
-                + '<div><b>Tipo:</b> ' + extension.toUpperCase() + ' · <b>Tamaño:</b> ' + size + ' MB</div>'
-                + '<p>En el siguiente paso se revisarán los registros antes de cargarlos al sistema.</p>';
-        });
-    </script>
 </body>
 </html>
