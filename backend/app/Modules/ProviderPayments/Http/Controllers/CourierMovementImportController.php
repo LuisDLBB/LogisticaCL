@@ -17,7 +17,9 @@ class CourierMovementImportController
         ]);
 
         $file = $validated['file'];
-        $worksheet = IOFactory::load($file->getRealPath())->getActiveSheet();
+        $reader = IOFactory::createReaderForFile($file->getRealPath());
+        $reader->setReadDataOnly(true);
+        $worksheet = $reader->load($file->getRealPath())->getActiveSheet();
         $headers = $worksheet->rangeToArray('A1:'.$worksheet->getHighestDataColumn().'1', null, true, false)[0];
         $normalizedHeaders = array_map(fn (mixed $header): string => $this->normalizeHeader($header), $headers);
 

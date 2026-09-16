@@ -20,6 +20,11 @@
         .result.visible { display: block; }
         .result strong { display: block; margin-bottom: 6px; }
         .error { background: #fff0f1; color: #992d3a; }
+        .progress { display: none; margin-top: 20px; }
+        .progress.visible { display: block; }
+        .progress-track { height: 10px; overflow: hidden; border-radius: 999px; background: #dcecec; }
+        .progress-bar { width: 35%; height: 100%; border-radius: inherit; background: var(--turquoise); animation: loading 1.2s ease-in-out infinite; }
+        @keyframes loading { from { transform: translateX(-110%); } to { transform: translateX(310%); } }
     </style>
 </head>
 <body>
@@ -29,7 +34,7 @@
         <h1>Carga Movimientos Courier</h1>
         <div class="card">
             <p>Selecciona la base Geolize que se importará a <strong>movimientos_courier</strong>.</p>
-            <form action="{{ route('provider-payments.courier-movements.validate') }}" method="post" enctype="multipart/form-data">
+            <form id="validation-form" action="{{ route('provider-payments.courier-movements.validate') }}" method="post" enctype="multipart/form-data">
                 @csrf
                 <label for="file">Archivo de movimientos</label>
                 <div class="file">
@@ -37,8 +42,12 @@
                     <input id="file" name="file" type="file" accept=".xlsx,.csv" required>
                 </div>
                 <p class="note">La carga validará seguimiento, fecha, peso y datos necesarios antes de incorporarlos.</p>
-                <button class="button" type="submit">Validar archivo</button>
+                <button id="validate-button" class="button" type="submit">Validar archivo</button>
             </form>
+            <div id="progress" class="progress" role="status" aria-live="polite">
+                <div class="progress-track"><div class="progress-bar"></div></div>
+                <p>Subiendo y validando el archivo. Esto puede tomar unos momentos.</p>
+            </div>
             @if ($errors->any())
                 <div class="result visible error" role="alert">{{ $errors->first() }}</div>
             @endif
@@ -55,5 +64,18 @@
             @endif
         </div>
     </main>
+    <script>
+        const validationForm = document.getElementById('validation-form');
+        const progress = document.getElementById('progress');
+        const validateButton = document.getElementById('validate-button');
+
+        validationForm.addEventListener('submit', function () {
+            if (validationForm.checkValidity()) {
+                progress.classList.add('visible');
+                validateButton.disabled = true;
+                validateButton.textContent = 'Validando archivo...';
+            }
+        });
+    </script>
 </body>
 </html>
