@@ -1,0 +1,586 @@
+Comuna	ComunaMatriz	Rut_Proveedor	Zona	PAGAR RETORNO	VALOR/RETORNO	NombreProveedor	Frecuencia	TipoEntrega	Region	Ruta	Considerar	ComunaAereo	ruta aerea	ComunaBase	Troncal	Posta	OrdenEntregaTroncal
+CD QUILICURA	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+alhue	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+BUIN	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+BUIN 1	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+BUIN1	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+San José de Maipo	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Mall plaza Oeste	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Calera De Tango	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+CaleraDeTango	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+DIBAMA	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	12 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+CHEVALIER	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	12 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+MIRAFLORES	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	12 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+LAS REJAS	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	12 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Cerillos	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	12 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Cerrillos	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	12 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Cerro Navia	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+CerroNavia	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Chicureo	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	02 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+COLINA  	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	02 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+COLINA 	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	02 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Conchalí	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	09 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Conchali	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	09 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+CONCHALﾍ	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	09 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+El Bosque	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+ElBosque	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+Estación Central	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Est Central	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Estacion Central	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+EstacionCentral	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+ESTACIﾓN CENTRAL	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+ESTACIﾓNCENTRAL	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Estaci Central	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+EstaciCentral	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+EstCentral	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Huechuraba	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	09 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Independencia	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	09 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+La Cisterna	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	06 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+La Florida	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	11 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+La Granja	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+La Pintana	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+La Reina	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	08 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+LaCisterna	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	06 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+LaFlorida	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	11 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+LaGranja	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+Lampa	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	02 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+LaPintana	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+LaReina	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	08 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Las Condes	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	05- RM	2			Quilicura	CD 4N	Bodega 4N	0
+LasCondes	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	05- RM	2			Quilicura	CD 4N	Bodega 4N	0
+Linderos	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES - MIERCOLES - VIERNES	Frecuencia especial	13	08 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+Lo Barnechea	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	03 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Lo Espejo	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+La Prado	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Lo Prado	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+LoBarnechea	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	03 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+LoEspejo	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+LoPrado	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Macul	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Maipu	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	12 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Maipú	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	12 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+nos	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+Nunoa	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	08 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+ﾑUﾑOA	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	08 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+NUﾑOA	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	08 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Ñuñoa	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	08 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Paine	4N RM	77346078-7	RM	NO	1000	4N RM	MARTES Y VIERNES	Frecuencia especial	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+Palolen	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	09 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Pedro Aguirre Cerda	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	12 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+PedroAguirreCerda	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	12 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Pelolen	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	09 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Peñalolén	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	09 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Penalolen	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	09 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Pelol駭	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	09 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Pirque	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES - MIERCOLES - VIERNES	Entrega normal	13	11 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Providencia	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	04 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Pudahuel	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Puente Alto	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	11 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+PuenteAlto	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	11 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+QUIICURA	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	02 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Quilicura	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	02 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Quilucura	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	02 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Quinta Normal	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+QuintaNormal	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Recoleta	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	09 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Renca	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	01 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+San Bernardo	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+San Joaquín	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	06 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+San Joaquin	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	06 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+San Joaqu匤	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	06 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+SAN JOSE DE MAIPO	4N RM	77346078-7	RM	NO	1000	4N RM	VIERNES	Frecuencia especial	13	11 - RM	1			Quilicura	CD 4N	Bodega 4N	0
+San Miguel	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	06 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+San Ramón	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+San Ram	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+San Ramon	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+SanBernardo	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+SanJoaquin	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	06 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+SanJoaqu匤	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	06 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+SANJOSEDEMAIPO	4N RM	77346078-7	RM	NO	1000	4N RM	VIERNES	Frecuencia especial	13	11 - RM	1			Quilicura	CD 4N	Bodega 4N	0
+SanMiguel	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	06 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+SanRamon	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	07 - RM	2			Buin	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	1
+SANTIAGO MAYORISTA	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	10 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Santiago centro	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	10 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+ALAMEDA	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	10 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Santiago	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	10 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Vitacura	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	03 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+ФОA	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	08 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Toltén	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Calafquen	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Carahue	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+chocol	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Cholchol	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Collipulli	Mercasur	76052551-0	Regiones	NO	1000	Mercasur	LUNES Y JUEVES	Frecuencia especial	9	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Cunco	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Curacautín	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES Y JUEVES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Curacautin	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES Y JUEVES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+CURACAUTÌN	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES Y JUEVES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Curarrehue	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Ercilla	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES Y JUEVES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Freire	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+GALVARINO	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES A VIERNES	Entrega normal	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Gorbea	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+lanco	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES A VIERNES	Entrega normal	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Lautaro	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES Y JUEVES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Loncoche	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES A VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Lonquimay	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Lumaco	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Máfil	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Mafil	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Malalhue	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Melipeuco	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+M畴il	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Nueva Imperial	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES Y JUEVES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Padre Las Casas	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES A VIERNES	Entrega normal	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+PAILAHUEQUE	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Panguipulli	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y JUEVES	Frecuencia especial	10	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Perquenco	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Pitrufquén	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES Y JUEVES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Pitrufquen	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES Y JUEVES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Pitrufqu駭	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Pucón	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES A VIERNES	Entrega normal	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Lic疣 Ray	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES A VIERNES	Entrega normal	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Pucon	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES A VIERNES	Entrega normal	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Puc	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES A VIERNES	Entrega normal	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Purén	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Puren	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Pur駭	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Saavedra	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+TREMUCO	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES A VIERNES	Entrega normal	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Temuco	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES A VIERNES	Entrega normal	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Teodoro Schmidt	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Teodoro Schmindt	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Traiguen	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Traiguén	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Traigu駭	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Victoria	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES A VIERNES	Entrega normal	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+VILCUN	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Tirúa	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Vilcún	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y VIERNES	Frecuencia especial	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Villarica	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES A VIERNES	Entrega normal	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Villarrica	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES A VIERNES	Entrega normal	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Retiro	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1		0	Envio externo	99) Envio externo	Externo	0
+PENDIENTE	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1		0	Envio externo	99) Envio externo	Externo	0
+Hualaihué	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1		0	Envio externo	99) Envio externo	Externo	0
+Paredones	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1		0	Envio externo	99) Envio externo	Externo	0
+Andacollo	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1		0	Envio externo	99) Envio externo	Externo	0
+Pichidangui	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1		0	Envio externo	99) Envio externo	Externo	0
+Codegua	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1		0	Envio externo	99) Envio externo	Externo	0
+Alto Del Carmen	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1		0	Envio externo	99) Envio externo	Externo	0
+Fresia	Sergio Pino (Pto Montt)	7481733-5	Regiones	NO	1000		LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1			Puerto Montt	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	12
+Cisnes	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1		0	Envio externo	99) Envio externo	Externo	0
+Futaleufú	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1		0	Envio externo	99) Envio externo	Externo	0
+Futaleufu	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1		0	Envio externo	99) Envio externo	Externo	0
+Futrono	4N Troncal Sur 3	77346078-7	Regiones	NO	1000		LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Hualaihue	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1		0	Envio externo	99) Envio externo	Externo	0
+Pumanque	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	ESPECIAL	Frecuencia especial	10	029-Ruta Sur	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+Malloa	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	ESPECIAL	Frecuencia especial	10	029-Ruta Sur	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+SAN JOSE LA MARIQUINA	4N Troncal Sur 3	77346078-7	Regiones	NO	1000		LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Mariquina	4N Troncal Sur 3	77346078-7	Regiones	NO	1000		LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+MEJILLONES	Claudio Castro (Antofagasta)	77300326-2	Regiones	SI	1000	Claudio Castro (Antofagasta)	JUEVES	Frecuencia especial	10	029-Ruta Sur	1	Antofagasta	SCL-ANF	Antofagasta	00) Aereo Norte	Norte	1
+Pica	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1		0	Envio externo	99) Envio externo	Externo	0
+Primavera	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1		0	Envio externo	99) Envio externo	Externo	0
+SAN FRANCISCO MOSTAZAL	Hugo Lopez (Rancagua)	8906841-K	Regiones	NO	1000	Hugo Lopez (Rancagua)	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1		0	Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+San Pedro	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1		0	Envio externo	99) Envio externo	Externo	0
+Santa Bárbara	Mercasur	76052551-0	Regiones	NO	1000		LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+SANTA BARBARA	Mercasur	76052551-0	Regiones	NO	1000		LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Santa María	Micael Figueroa (Los Andes)	17657150-0	Regiones	NO	1000	Micael Figueroa (Los Andes)	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1			Llay llay	03) Troncal Norte (Santiago-Coquimbo)	1. Llay Llay	1
+Santa Maria	Micael Figueroa (Los Andes)	17657150-0	Regiones	NO	1000	Micael Figueroa (Los Andes)	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1			Llay llay	03) Troncal Norte (Santiago-Coquimbo)	1. Llay Llay	1
+Yungay	Mercasur	76052551-0	Regiones	NO	1000	Mercasur	MARTES Y JUEVES	Frecuencia especial	8	081-META	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Cauquenes	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Chanco	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Colbún	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Colbun	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Constitución	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Constitucion	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+CONSTITUCIﾓN	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Constituci	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Curepto	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Empedrado	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Yerbas Buenas	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	045-Linares	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Linares	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	045-Linares	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+LINARS	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	045-Linares	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Longaví	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	045-Linares	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+LONGAVI	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	045-Linares	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+LONTUE	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+MAULE	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	MIERCOLES	Frecuencia especial	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Parral	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Pelluhue	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Pencahue	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Río Claro	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+R卲 Claro	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+San Clemente	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	MARTES Y JUEVES	Frecuencia especial	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+San Javier	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	MARTES Y VIERNES	Frecuencia especial	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Talca	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Villa Alegre	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	LUNES A VIERNES	Entrega normal	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Casa blanca	Casa Blanca (V Region)	11189365-9	Regiones	Gregoria Faundes	1000	Casa Blanca (V Region)	LUNES - MIERCOLES - VIERNES	Entrega normal	5	061-V Costa	1			Casablanca	02) Troncal V Region	5. Casablanca	5
+Casablanca	Casa Blanca (V Region)	11189365-9	Regiones	Gregoria Faundes	1000	Casa Blanca (V Region)	LUNES - MIERCOLES - VIERNES	Entrega normal	5	061-V Costa	1			Casablanca	02) Troncal V Region	5. Casablanca	5
+Algarrobo	Celia Leon (Litoral)	8960481-8	Regiones	SI	1000	Celia Leon (Litoral)	LUNES A VIERNES	Entrega normal	5	061-V Costa	1		0	El Tabo	02) Troncal V Region	7. Litoral	7
+Las cruces	Celia Leon (Litoral)	8960481-8	Regiones	SI	1000	Celia Leon (Litoral)	LUNES A VIERNES	Entrega normal	5	061-V Costa	1		0	El Tabo	02) Troncal V Region	7. Litoral	7
+Cartagena	Celia Leon (Litoral)	8960481-8	Regiones	SI	1000	Celia Leon (Litoral)	LUNES A VIERNES	Entrega normal	5	061-V Costa	1		0	El Tabo	02) Troncal V Region	7. Litoral	7
+HUALLILEMU SUR	Celia Leon (Litoral)	8960481-8	Regiones	SI	1000	Celia Leon (Litoral)	LUNES A VIERNES	Entrega normal	5	061-V Costa	1		0	El Tabo	02) Troncal V Region	7. Litoral	7
+El Quisco	Celia Leon (Litoral)	8960481-8	Regiones	SI	1000	Celia Leon (Litoral)	LUNES A VIERNES	Entrega normal	5	061-V Costa	1		0	El Tabo	02) Troncal V Region	7. Litoral	7
+El Tablo	Celia Leon (Litoral)	8960481-8	Regiones	SI	1000	Celia Leon (Litoral)	LUNES A VIERNES	Entrega normal	5	061-V Costa	1		0	El Tabo	02) Troncal V Region	7. Litoral	7
+El Tabo	Celia Leon (Litoral)	8960481-8	Regiones	SI	1000	Celia Leon (Litoral)	LUNES A VIERNES	Entrega normal	5	061-V Costa	1		0	El Tabo	02) Troncal V Region	7. Litoral	7
+Isla Negra	Celia Leon (Litoral)	8960481-8	Regiones	SI	1000	Celia Leon (Litoral)	LUNES A VIERNES	Entrega normal	5	061-V Costa	1		0	El Tabo	02) Troncal V Region	7. Litoral	7
+Litoral	Celia Leon (Litoral)	8960481-8	Regiones	SI	1000	Celia Leon (Litoral)	LUNES A VIERNES	Entrega normal	5	061-V Costa	1		0	El Tabo	02) Troncal V Region	7. Litoral	7
+LLO LLEO	Celia Leon (Litoral)	8960481-8	Regiones	SI	1000	Celia Leon (Litoral)	LUNES A VIERNES	Entrega normal	5	061-V Costa	1		0	El Tabo	02) Troncal V Region	7. Litoral	7
+LLO-LLEO	Celia Leon (Litoral)	8960481-8	Regiones	SI	1000	Celia Leon (Litoral)	LUNES A VIERNES	Entrega normal	5	061-V Costa	1		0	El Tabo	02) Troncal V Region	7. Litoral	7
+San Antonio	Celia Leon (Litoral)	8960481-8	Regiones	SI	1000	Celia Leon (Litoral)	LUNES A VIERNES	Entrega normal	5	061-V Costa	1		0	El Tabo	02) Troncal V Region	7. Litoral	7
+Santo Domingo	Celia Leon (Litoral)	8960481-8	Regiones	SI	1000	Celia Leon (Litoral)	LUNES A VIERNES	Entrega normal	5	061-V Costa	1		0	El Tabo	02) Troncal V Region	7. Litoral	7
+Antfagasta	Claudio Castro (Antofagasta)	77300326-2	Regiones	SI	1000	Claudio Castro (Antofagasta)	LUNES A VIERNES	Entrega normal	2	011-Extremo	1	Antofagasta	SCL-ANF	Antofagasta	00) Aereo Norte	Norte	1
+ANTOFAAGSTA	Claudio Castro (Antofagasta)	77300326-2	Regiones	SI	1000	Claudio Castro (Antofagasta)	LUNES A VIERNES	Entrega normal	2	011-Extremo	1	Antofagasta	SCL-ANF	Antofagasta	00) Aereo Norte	Norte	1
+Antofagasta	Claudio Castro (Antofagasta)	77300326-2	Regiones	SI	1000	Claudio Castro (Antofagasta)	LUNES A VIERNES	Entrega normal	2	011-Extremo	1	Antofagasta	SCL-ANF	Antofagasta	00) Aereo Norte	Norte	1
+Hornitos	Claudio Castro (Antofagasta)	77300326-2	Regiones	SI	1000	Claudio Castro (Antofagasta)	LUNES A VIERNES	Entrega normal	2	011-Extremo	1	Antofagasta	SCL-ANF	Antofagasta	00) Aereo Norte	Norte	1
+Taltal	Claudio Castro (Antofagasta)	77300326-2	Regiones	SI	1000	Claudio Castro (Antofagasta)	LUNES A VIERNES	Entrega normal	2	011-Extremo	1	Antofagasta	SCL-ANF	Antofagasta	00) Aereo Norte	Norte	1
+Cabildo	Jose Caneo (La Ligua)	11942383-K	Regiones	NO	1000	Comercializadora Musso Ltda	MARTES Y JUEVES	Frecuencia especial	5	031-La Calera	1		0	La Ligua	03) Troncal Norte (Santiago-Coquimbo)	2. La Ligua	2
+Calle Larga	Micael Figueroa (Los Andes)	17657150-0	Regiones	NO	1000	Micael Figueroa (Los Andes)	MARTES Y JUEVES	Frecuencia especial	5	031-La Calera	1			Llay llay	03) Troncal Norte (Santiago-Coquimbo)	1. Llay Llay	1
+CATEMU	Micael Figueroa (Los Andes)	17657150-0	Regiones	NO	1000	Micael Figueroa (Los Andes)	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Llay llay	03) Troncal Norte (Santiago-Coquimbo)	1. Llay Llay	1
+El Belloto	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1			Viña del Mar	02) Troncal V Region	4. V Region Costa Int. Sur	4
+HIJUELAS	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	MARTES Y JUEVES	Frecuencia especial	5	031-La Calera	1			Viña del Mar	02) Troncal V Region	2. V Region Costa Int. Norte	2
+La Calera	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Viña del Mar	02) Troncal V Region	2. V Region Costa Int. Norte	2
+Calera	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Viña del Mar	02) Troncal V Region	2. V Region Costa Int. Norte	2
+LA CRUZ	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	VIERNES	Frecuencia especial	5	031-La Calera	1			Viña del Mar	02) Troncal V Region	2. V Region Costa Int. Norte	2
+LALIGUA	Jose Caneo (La Ligua)	11942383-K	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	031-La Calera	1		0	La Ligua	03) Troncal Norte (Santiago-Coquimbo)	2. La Ligua	2
+La Ligua	Jose Caneo (La Ligua)	11942383-K	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	031-La Calera	1		0	La Ligua	03) Troncal Norte (Santiago-Coquimbo)	2. La Ligua	2
+Limache	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1			Viña del Mar	02) Troncal V Region	4. V Region Costa Int. Sur	4
+Llaillay	Micael Figueroa (Los Andes)	17657150-0	Regiones	NO	1000	Micael Figueroa (Los Andes)	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Llay llay	03) Troncal Norte (Santiago-Coquimbo)	1. Llay Llay	1
+LLAYLLAY	Micael Figueroa (Los Andes)	17657150-0	Regiones	NO	1000	Micael Figueroa (Los Andes)	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Llay llay	03) Troncal Norte (Santiago-Coquimbo)	1. Llay Llay	1
+Llay Llay	Micael Figueroa (Los Andes)	17657150-0	Regiones	NO	1000	Micael Figueroa (Los Andes)	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Llay llay	03) Troncal Norte (Santiago-Coquimbo)	1. Llay Llay	1
+LLAY-LLAY	Micael Figueroa (Los Andes)	17657150-0	Regiones	NO	1000	Micael Figueroa (Los Andes)	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Llay llay	03) Troncal Norte (Santiago-Coquimbo)	1. Llay Llay	1
+Los Andes	Micael Figueroa (Los Andes)	17657150-0	Regiones	NO	1000	Micael Figueroa (Los Andes)	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Llay llay	03) Troncal Norte (Santiago-Coquimbo)	1. Llay Llay	1
+MAINTENCILLO	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Viña del Mar	02) Troncal V Region	3. V Region Costa interior	3
+Maitencillo	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Viña del Mar	02) Troncal V Region	3. V Region Costa interior	3
+Olmué	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1			Viña del Mar	02) Troncal V Region	4. V Region Costa Int. Sur	4
+Olmue	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1			Viña del Mar	02) Troncal V Region	4. V Region Costa Int. Sur	4
+Panquehue	Micael Figueroa (Los Andes)	17657150-0	Regiones	NO	1000	Micael Figueroa (Los Andes)	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Llay llay	03) Troncal Norte (Santiago-Coquimbo)	1. Llay Llay	1
+Papudo	Jose Caneo (La Ligua)	11942383-K	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	031-La Calera	1		0	La Ligua	03) Troncal Norte (Santiago-Coquimbo)	2. La Ligua	2
+PENABLANCA	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	MARTES Y JUEVES	Frecuencia especial	5	031-La Calera	1			Viña del Mar	02) Troncal V Region	4. V Region Costa Int. Sur	4
+Petorca	Jose Caneo (La Ligua)	11942383-K	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	031-La Calera	1		0	La Ligua	03) Troncal Norte (Santiago-Coquimbo)	2. La Ligua	2
+Puchuncaví	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Viña del Mar	02) Troncal V Region	3. V Region Costa interior	3
+Puchuncavi	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Viña del Mar	02) Troncal V Region	3. V Region Costa interior	3
+Putaendo	Micael Figueroa (Los Andes)	17657150-0	Regiones	NO	1000	Micael Figueroa (Los Andes)	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Llay llay	03) Troncal Norte (Santiago-Coquimbo)	1. Llay Llay	1
+Quillota	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Viña del Mar	02) Troncal V Region	2. V Region Costa Int. Norte	2
+Quilpué	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1			Viña del Mar	02) Troncal V Region	4. V Region Costa Int. Sur	4
+Quilpue	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1			Viña del Mar	02) Troncal V Region	4. V Region Costa Int. Sur	4
+Quintero	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Viña del Mar	02) Troncal V Region	3. V Region Costa interior	3
+Quinteros	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Viña del Mar	02) Troncal V Region	3. V Region Costa interior	3
+Rinconada	Micael Figueroa (Los Andes)	17657150-0	Regiones	NO	1000	Micael Figueroa (Los Andes)	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Llay llay	03) Troncal Norte (Santiago-Coquimbo)	1. Llay Llay	1
+San Esteban	Micael Figueroa (Los Andes)	17657150-0	Regiones	NO	1000	Micael Figueroa (Los Andes)	MARTES Y JUEVES	Frecuencia especial	5	031-La Calera	1			Llay llay	03) Troncal Norte (Santiago-Coquimbo)	1. Llay Llay	1
+San Felipe	Micael Figueroa (Los Andes)	17657150-0	Regiones	NO	1000	Micael Figueroa (Los Andes)	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Llay llay	03) Troncal Norte (Santiago-Coquimbo)	1. Llay Llay	1
+Santa Mar僘	Micael Figueroa (Los Andes)	17657150-0	Regiones	NO	1000	Micael Figueroa (Los Andes)	LUNES A VIERNES	Entrega normal	5	031-La Calera	1			Llay llay	03) Troncal Norte (Santiago-Coquimbo)	1. Llay Llay	1
+Villa Alemana	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1			Viña del Mar	02) Troncal V Region	4. V Region Costa Int. Sur	4
+Zapallar	Jose Caneo (La Ligua)	11942383-K	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	031-La Calera	1		0	La Ligua	03) Troncal Norte (Santiago-Coquimbo)	2. La Ligua	2
+TIL TIL	4N Til Til	77346078-7	RM	NO	1000	4N Til Til	LUNES A VIERNES	Entrega normal	13	02 - RM	1			Til Til	03) Troncal Norte (Santiago-Coquimbo)	7. Til Til	7
+TILTIL	4N Til Til	77346078-7	RM	NO	1000	4N Til Til	LUNES A VIERNES	Entrega normal	13	02 - RM	1			Til Til	03) Troncal Norte (Santiago-Coquimbo)	7. Til Til	7
+Til-Til	4N Til Til	77346078-7	RM	NO	1000	4N Til Til	LUNES A VIERNES	Entrega normal	13	02 - RM	1			Til Til	03) Troncal Norte (Santiago-Coquimbo)	7. Til Til	7
+Monte Patria	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES A VIERNES	Entrega normal	4	033-Ovalle	1			Envio externo	99) Envio externo	Externo	0
+Ovalle	Jose Caneo (Ovalle)	11942383-K	Regiones	NO	1000	Jose Caneo (Ovalle)	LUNES A VIERNES	Entrega normal	4	033-Ovalle	1			Ovalle	03) Troncal Norte (Santiago-Coquimbo)	4. Ovalle	4
+Punitaqui	Envio externo	0-0	Regiones	NO	1000	Envio externo	LUNES A VIERNES	Entrega normal	4	033-Ovalle	1			Envio externo	99) Envio externo	Externo	0
+Tongoy	Jose Caneo (La Ligua)	11942383-K	Regiones	NO	1000	Cristian Campaña (Los Vilos)	MARTES Y JUEVES	Entrega normal	4	032-Los Vilos	1			Los Vilos	03) Troncal Norte (Santiago-Coquimbo)	3. los Vilos	3
+Canela	Jose Caneo (La Ligua)	11942383-K	Regiones	NO	1000	Cristian Campaña (Los Vilos)	MARTES Y JUEVES	Entrega normal	4	032-Los Vilos	1			Los Vilos	03) Troncal Norte (Santiago-Coquimbo)	3. los Vilos	3
+Combarbalá	Jose Caneo (La Ligua)	11942383-K	Regiones	NO	1000	Cristian Campaña (Los Vilos)	MARTES Y JUEVES	Entrega normal	4	032-Los Vilos	1			Los Vilos	03) Troncal Norte (Santiago-Coquimbo)	3. los Vilos	3
+Combarbala	Jose Caneo (La Ligua)	11942383-K	Regiones	NO	1000	Cristian Campaña (Los Vilos)	MARTES Y JUEVES	Entrega normal	4	032-Los Vilos	1			Los Vilos	03) Troncal Norte (Santiago-Coquimbo)	3. los Vilos	3
+Illapel	Jose Caneo (La Ligua)	11942383-K	Regiones	NO	1000	Cristian Campaña (Los Vilos)	MARTES Y JUEVES	Entrega normal	4	032-Los Vilos	1			Los Vilos	03) Troncal Norte (Santiago-Coquimbo)	3. los Vilos	3
+Los Vilos	Jose Caneo (La Ligua)	11942383-K	Regiones	NO	1000	Cristian Campaña (Los Vilos)	LUNES A VIERNES	Entrega normal	4	032-Los Vilos	1			Los Vilos	03) Troncal Norte (Santiago-Coquimbo)	3. los Vilos	3
+Salamanca	Jose Caneo (La Ligua)	11942383-K	Regiones	NO	1000	Cristian Campaña (Los Vilos)	MARTES Y JUEVES	Entrega normal	4	032-Los Vilos	1			Los Vilos	03) Troncal Norte (Santiago-Coquimbo)	3. los Vilos	3
+Litueche	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+Chépica	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+Chepica	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+Chimbarongo	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+Las Cabras	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	MARTES Y JUEVES	Frecuencia especial	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+Nancagua	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	MARTES Y VIERNES	Frecuencia especial	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+Navidad	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+Peralillo	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+Peumo	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	MARTES Y JUEVES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+PICHIDEGUA	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+Pichilemu	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	MARTES Y JUEVES	Frecuencia especial	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+Placilla	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+Rengo	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+San Fernando	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+San Vicente	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+San vicente de tagua tagua	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+San Vicente de TT	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+SAN VICENTE DE T.T.	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+SAN VICENTE T  T	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+SAN VICENTE T T	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+SAN VICENTE T. T.	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+SAN VICENTE TT	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+Santa Cruz	Daphne Katalina Meza Ramos (San Fernando)	76064767-5	Regiones	NO	1000	Daphne Katalina Meza Ramos (San Fernando)	LUNES A VIERNES	Entrega normal	6	042-San Fernando	1			San Fernando	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	3
+Los Lagos	4N Troncal Sur 3	77346078-7	Regiones	SI	1400	4N Troncal Sur 3	LUNES A VIERNES	Entrega normal	10	025-Valdivia	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Paillaco	4N Troncal Sur 3	77346078-7	Regiones	SI	1400	4N Troncal Sur 3	LUNES A VIERNES	Entrega normal	10	025-Valdivia	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Valdivia	Deyna (Valdivia)	77458608-3	Regiones	SI	1400	Deyna (Valdivia)	LUNES A VIERNES	Entrega normal	10	025-Valdivia	1			Valdivia	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	10
+Achao	Fabian Pino (Isla)	16945660-7	Regiones	NO	1000	Fabian Pino (Isla)	MARTES Y JUEVES	Frecuencia especial	10	028-Puerto Montt	1			Ancud	01) Troncal Sur (Santiago-Chillan)	5. Troncal Sur (Puerto Montt-Isla Chiloe)	13
+Ancud	Fabian Pino (Isla)	16945660-7	Regiones	NO	1000	Fabian Pino (Isla)	MARTES Y JUEVES	Frecuencia especial	10	028-Puerto Montt	1			Ancud	01) Troncal Sur (Santiago-Chillan)	5. Troncal Sur (Puerto Montt-Isla Chiloe)	13
+Castro	Fabian Pino (Isla)	16945660-7	Regiones	NO	1000	Fabian Pino (Isla)	MARTES Y JUEVES	Frecuencia especial	10	028-Puerto Montt	1			Ancud	01) Troncal Sur (Santiago-Chillan)	5. Troncal Sur (Puerto Montt-Isla Chiloe)	13
+Chiloe	Fabian Pino (Isla)	16945660-7	Regiones	NO	1000	Fabian Pino (Isla)	MARTES Y JUEVES	Frecuencia especial	10	028-Puerto Montt	1			Ancud	01) Troncal Sur (Santiago-Chillan)	5. Troncal Sur (Puerto Montt-Isla Chiloe)	13
+CHONCHI	Fabian Pino (Isla)	16945660-7	Regiones	NO	1000	Fabian Pino (Isla)	VIERNES	Frecuencia especial	10	028-Puerto Montt	1			Ancud	01) Troncal Sur (Santiago-Chillan)	5. Troncal Sur (Puerto Montt-Isla Chiloe)	13
+Curaco de Vélez	Fabian Pino (Isla)	16945660-7	Regiones	NO	1000	Fabian Pino (Isla)	VIERNES	Frecuencia especial	10	028-Puerto Montt	1			Ancud	01) Troncal Sur (Santiago-Chillan)	5. Troncal Sur (Puerto Montt-Isla Chiloe)	13
+Curaco De V駘ez	Fabian Pino (Isla)	16945660-7	Regiones	NO	1000	Fabian Pino (Isla)	VIERNES	Frecuencia especial	10	028-Puerto Montt	1			Ancud	01) Troncal Sur (Santiago-Chillan)	5. Troncal Sur (Puerto Montt-Isla Chiloe)	13
+Dalcahue	Fabian Pino (Isla)	16945660-7	Regiones	NO	1000	Fabian Pino (Isla)	MARTES Y JUEVES	Frecuencia especial	10	028-Puerto Montt	1			Ancud	01) Troncal Sur (Santiago-Chillan)	5. Troncal Sur (Puerto Montt-Isla Chiloe)	13
+Quellón	Fabian Pino (Isla)	16945660-7	Regiones	NO	1000	Fabian Pino (Isla)	MARTES Y JUEVES	Frecuencia especial	10	028-Puerto Montt	1			Ancud	01) Troncal Sur (Santiago-Chillan)	5. Troncal Sur (Puerto Montt-Isla Chiloe)	13
+Maullín	Fabian Pino (Isla)	16945660-7	Regiones	NO	1000	Fabian Pino (Isla)	MARTES Y JUEVES	Frecuencia especial	10	028-Puerto Montt	1			Ancud	01) Troncal Sur (Santiago-Chillan)	5. Troncal Sur (Puerto Montt-Isla Chiloe)	13
+Quellon	Fabian Pino (Isla)	16945660-7	Regiones	NO	1000	Fabian Pino (Isla)	MARTES Y JUEVES	Frecuencia especial	10	028-Puerto Montt	1			Ancud	01) Troncal Sur (Santiago-Chillan)	5. Troncal Sur (Puerto Montt-Isla Chiloe)	13
+Quemchi	Fabian Pino (Isla)	16945660-7	Regiones	NO	1000	Fabian Pino (Isla)	VIERNES	Frecuencia especial	10	028-Puerto Montt	1			Ancud	01) Troncal Sur (Santiago-Chillan)	5. Troncal Sur (Puerto Montt-Isla Chiloe)	13
+QUINCHAO	Fabian Pino (Isla)	16945660-7	Regiones	NO	1000	Fabian Pino (Isla)	LUNES Y MIERCOLES	Frecuencia especial	10	028-Puerto Montt	1			Ancud	01) Troncal Sur (Santiago-Chillan)	5. Troncal Sur (Puerto Montt-Isla Chiloe)	13
+Ninhue	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	027-San Carlos	1		0	Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+San Carlos	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	027-San Carlos	1		0	Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+Caldera	Graciela Burgos (Copiapo)	77301587-2	Regiones	SI	1000	Graciela Burgos (Copiapo)	MARTES Y JUEVES	Frecuencia especial	3	036-Copiapo	1			Copiapo	03) Troncal Norte (Santiago-Coquimbo)	2. Troncal Norte 2 (Coquimbo-Copiapo)	6
+Chanaral	Graciela Burgos (Copiapo)	77301587-2	Regiones	SI	1000	Graciela Burgos (Copiapo)	MARTES Y JUEVES	Frecuencia especial	3	036-Copiapo	1			Copiapo	03) Troncal Norte (Santiago-Coquimbo)	2. Troncal Norte 2 (Coquimbo-Copiapo)	6
+Chañaral	Graciela Burgos (Copiapo)	77301587-2	Regiones	SI	1000	Graciela Burgos (Copiapo)	MARTES Y JUEVES	Frecuencia especial	3	036-Copiapo	1			Copiapo	03) Troncal Norte (Santiago-Coquimbo)	2. Troncal Norte 2 (Coquimbo-Copiapo)	6
+Copiapo	Graciela Burgos (Copiapo)	77301587-2	Regiones	SI	1000	Graciela Burgos (Copiapo)	LUNES A VIERNES	Entrega normal	3	036-Copiapo	1			Copiapo	03) Troncal Norte (Santiago-Coquimbo)	2. Troncal Norte 2 (Coquimbo-Copiapo)	6
+CopiapÓ	Graciela Burgos (Copiapo)	77301587-2	Regiones	SI	1000	Graciela Burgos (Copiapo)	LUNES A VIERNES	Entrega normal	3	036-Copiapo	1			Copiapo	03) Troncal Norte (Santiago-Coquimbo)	2. Troncal Norte 2 (Coquimbo-Copiapo)	6
+Copiapo El Palomar	Graciela Burgos (Copiapo)	77301587-2	Regiones	SI	1000	Graciela Burgos (Copiapo)	LUNES A VIERNES	Entrega normal	3	036-Copiapo	1			Copiapo	03) Troncal Norte (Santiago-Coquimbo)	2. Troncal Norte 2 (Coquimbo-Copiapo)	6
+Diego Almagro	Graciela Burgos (Copiapo)	77301587-2	Regiones	SI	1000	Graciela Burgos (Copiapo)	MARTES Y JUEVES	Frecuencia especial	3	036-Copiapo	1			Copiapo	03) Troncal Norte (Santiago-Coquimbo)	2. Troncal Norte 2 (Coquimbo-Copiapo)	6
+Diego de Almagro	Graciela Burgos (Copiapo)	77301587-2	Regiones	SI	1000	Graciela Burgos (Copiapo)	MARTES Y JUEVES	Frecuencia especial	3	036-Copiapo	1			Copiapo	03) Troncal Norte (Santiago-Coquimbo)	2. Troncal Norte 2 (Coquimbo-Copiapo)	6
+Freirina	Graciela Burgos (Copiapo)	77301587-2	Regiones	SI	1000	Graciela Burgos (Copiapo)	MARTES Y JUEVES	Frecuencia especial	3	036-Copiapo	1			Copiapo	03) Troncal Norte (Santiago-Coquimbo)	2. Troncal Norte 2 (Coquimbo-Copiapo)	6
+Tierra Amarilla	Graciela Burgos (Copiapo)	77301587-2	Regiones	SI	1000	Graciela Burgos (Copiapo)	MARTES Y JUEVES	Frecuencia especial	3	036-Copiapo	1			Copiapo	03) Troncal Norte (Santiago-Coquimbo)	2. Troncal Norte 2 (Coquimbo-Copiapo)	6
+SALVADOR	Graciela Burgos (Vallenar)	77301587-2	Regiones	SI	1000	Graciela Burgos (Vallenar)	LUNES A VIERNES	Entrega normal	3	035-Vallenar	1			Copiapo	03) Troncal Norte (Santiago-Coquimbo)	2. Troncal Norte 2 (Coquimbo-Copiapo)	6
+El Salvador	Graciela Burgos (Vallenar)	77301587-2	Regiones	SI	1000	Graciela Burgos (Vallenar)	LUNES A VIERNES	Entrega normal	3	035-Vallenar	1			Copiapo	03) Troncal Norte (Santiago-Coquimbo)	2. Troncal Norte 2 (Coquimbo-Copiapo)	6
+Huasco	Graciela Burgos (Vallenar)	77301587-2	Regiones	SI	1000	Graciela Burgos (Vallenar)	LUNES A VIERNES	Entrega normal	3	035-Vallenar	1			Copiapo	03) Troncal Norte (Santiago-Coquimbo)	2. Troncal Norte 2 (Coquimbo-Copiapo)	6
+Callenar	Graciela Burgos (Vallenar)	77301587-2	Regiones	SI	1000	Graciela Burgos (Vallenar)	LUNES A VIERNES	Entrega normal	3	035-Vallenar	1			Copiapo	03) Troncal Norte (Santiago-Coquimbo)	2. Troncal Norte 2 (Coquimbo-Copiapo)	6
+Vallenar	Graciela Burgos (Vallenar)	77301587-2	Regiones	SI	1000	Graciela Burgos (Vallenar)	LUNES A VIERNES	Entrega normal	3	035-Vallenar	1			Copiapo	03) Troncal Norte (Santiago-Coquimbo)	2. Troncal Norte 2 (Coquimbo-Copiapo)	6
+Coquimbo	Hector Rivera (Coquimbo)	9846947-8	Regiones	SI	1000	Hector Rivera (Coquimbo)	LUNES A VIERNES	Entrega normal	4	034-Serena	1			Coquimbo	03) Troncal Norte (Santiago-Coquimbo)	5. Coquimbo	5
+La Serena	Hector Rivera (Coquimbo)	9846947-8	Regiones	SI	1000	Hector Rivera (Coquimbo)	LUNES A VIERNES	Entrega normal	4	034-Serena	1			Coquimbo	03) Troncal Norte (Santiago-Coquimbo)	5. Coquimbo	5
+Paihuano	Hector Rivera (Coquimbo)	9846947-8	Regiones	SI	1000	Hector Rivera (Coquimbo)	LUNES A VIERNES	Entrega normal	4	034-Serena	1			Coquimbo	03) Troncal Norte (Santiago-Coquimbo)	5. Coquimbo	5
+Vicuña	Hector Rivera (Coquimbo)	9846947-8	Regiones	SI	1000	Hector Rivera (Coquimbo)	MARTES Y VIERNES	Frecuencia especial	4	034-Serena	1			Coquimbo	03) Troncal Norte (Santiago-Coquimbo)	5. Coquimbo	5
+Vicuna	Hector Rivera (Coquimbo)	9846947-8	Regiones	SI	1000	Hector Rivera (Coquimbo)	MARTES Y VIERNES	Frecuencia especial	4	034-Serena	1			Coquimbo	03) Troncal Norte (Santiago-Coquimbo)	5. Coquimbo	5
+Coinco	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	MARTES Y VIERNES	Frecuencia especial	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+Coltauco	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	MARTES Y VIERNES	Frecuencia especial	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+Doñihue	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	MARTES Y VIERNES	Frecuencia especial	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+Donihue	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	MARTES Y VIERNES	Frecuencia especial	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+Dohue	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	MARTES Y VIERNES	Frecuencia especial	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+Graneros	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	MARTES Y VIERNES	Frecuencia especial	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+GULTRO	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	LUNES A VIERNES	Entrega normal	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+La estrella	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	MARTES Y VIERNES	Frecuencia especial	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+Machalí	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	LUNES A VIERNES	Entrega normal	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+Machali	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	LUNES A VIERNES	Entrega normal	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+MACHALÌ	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	LUNES A VIERNES	Entrega normal	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+Marchigüe	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	MARTES Y VIERNES	Frecuencia especial	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+Marchihue	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	MARTES Y VIERNES	Frecuencia especial	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+Mostazal	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	LUNES Y JUEVES	Frecuencia especial	6	081-META	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+San Francisco de Mostazal	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	LUNES Y JUEVES	Frecuencia especial	6	081-META	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+OLIVAR	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	MARTES Y VIERNES	Frecuencia especial	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+Palmilla	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	MARTES Y VIERNES	Frecuencia especial	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+Pelarco	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	MARTES Y VIERNES	Frecuencia especial	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+QUINTA DE TILCOCO	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	MARTES Y VIERNES	Frecuencia especial	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+QUINTA DE TILCOCO - RANCAGUA	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	MARTES Y VIERNES	Frecuencia especial	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+Rancagua	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	LUNES A VIERNES	Entrega normal	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+Requínoa	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	MARTES Y VIERNES	Frecuencia especial	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+REQUINOA	Hugo Lopez (Rancagua)	8906841-K	Regiones	SI	1000	Hugo Lopez (Rancagua)	MARTES Y VIERNES	Frecuencia especial	6	041-Rancagua	1			Rancagua	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	2
+La Unión	Johanna Oyarzo (Osorno)	13590206-3	Regiones	SI	1000	Johanna Oyarzo (Osorno)	MARTES Y VIERNES	Frecuencia especial	10	029-Ruta Sur	1			Osorno	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	11
+La Union	Johanna Oyarzo (Osorno)	13590206-3	Regiones	SI	1000	Johanna Oyarzo (Osorno)	MARTES Y VIERNES	Frecuencia especial	10	029-Ruta Sur	1			Osorno	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	11
+La Uni	Johanna Oyarzo (Osorno)	13590206-3	Regiones	SI	1000	Johanna Oyarzo (Osorno)	MARTES Y VIERNES	Frecuencia especial	10	029-Ruta Sur	1			Osorno	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	11
+La Uni	Johanna Oyarzo (Osorno)	13590206-3	Regiones	SI	1000	Johanna Oyarzo (Osorno)	MARTES Y VIERNES	Frecuencia especial	10	029-Ruta Sur	1			Osorno	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	11
+Lago Ranco	Johanna Oyarzo (Osorno)	13590206-3	Regiones	SI	1000	Johanna Oyarzo (Osorno)	MARTES Y VIERNES	Frecuencia especial	10	029-Ruta Sur	1			Osorno	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	11
+Osorno	Johanna Oyarzo (Osorno)	13590206-3	Regiones	SI	1000	Johanna Oyarzo (Osorno)	LUNES A VIERNES	Entrega normal	10	026-Osorno	1			Osorno	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	11
+Puerto Octay	Johanna Oyarzo (Osorno)	13590206-3	Regiones	SI	1000	Johanna Oyarzo (Osorno)	MARTES Y VIERNES	Frecuencia especial	10	029-Ruta Sur	1			Osorno	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	11
+Purranque	Johanna Oyarzo (Osorno)	13590206-3	Regiones	SI	1000	Johanna Oyarzo (Osorno)	MARTES Y VIERNES	Frecuencia especial	10	029-Ruta Sur	1			Osorno	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	11
+Puyehue	Johanna Oyarzo (Osorno)	13590206-3	Regiones	SI	1000	Johanna Oyarzo (Osorno)	MARTES Y VIERNES	Frecuencia especial	10	029-Ruta Sur	1			Osorno	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	11
+Río Bueno	Johanna Oyarzo (Osorno)	13590206-3	Regiones	SI	1000	Johanna Oyarzo (Osorno)	MARTES Y VIERNES	Frecuencia especial	10	029-Ruta Sur	1			Osorno	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	11
+Rio Bueno	Johanna Oyarzo (Osorno)	13590206-3	Regiones	SI	1000	Johanna Oyarzo (Osorno)	MARTES Y VIERNES	Frecuencia especial	10	029-Ruta Sur	1			Osorno	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	11
+Rio Negro	Johanna Oyarzo (Osorno)	13590206-3	Regiones	SI	1000	Johanna Oyarzo (Osorno)	MARTES Y VIERNES	Frecuencia especial	10	029-Ruta Sur	1			Osorno	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	11
+R卲 Bueno	Johanna Oyarzo (Osorno)	13590206-3	Regiones	SI	1000	Johanna Oyarzo (Osorno)	MARTES Y VIERNES	Frecuencia especial	10	029-Ruta Sur	1			Osorno	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	11
+R卲 Negro	Johanna Oyarzo (Osorno)	13590206-3	Regiones	SI	1000	Johanna Oyarzo (Osorno)	MARTES Y VIERNES	Frecuencia especial	10	029-Ruta Sur	1			Osorno	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	11
+Natales	Jorge Gonzalez (ptas Arenas)	76115557-1	Regiones	SI	1000	Jorge Gonzalez (ptas Arenas)	LUNES - MIERCOLES - VIERNES	Frecuencia especial	12	01_Aereo	1	Punta Arenas	SCL-PUQ	Punta Arenas	00) Aereo Sur	Punta Arenas	2
+Porvenir	Jorge Gonzalez (ptas Arenas)	76115557-1	Regiones	SI	1000	Jorge Gonzalez (ptas Arenas)	MARTES Y VIERNES	Frecuencia especial	12	01_Aereo	1	Punta Arenas	SCL-PUQ	Punta Arenas	00) Aereo Sur	Punta Arenas	2
+Puerto Natales	Jorge Gonzalez (ptas Arenas)	76115557-1	Regiones	SI	1000	Jorge Gonzalez (ptas Arenas)	LUNES - MIERCOLES - VIERNES	Frecuencia especial	12	01_Aereo	1	Punta Arenas	SCL-PUQ	Punta Arenas	00) Aereo Sur	Punta Arenas	2
+Punta Arenas	Jorge Gonzalez (ptas Arenas)	76115557-1	Regiones	SI	1000	Jorge Gonzalez (ptas Arenas)	LUNES A VIERNES	Entrega normal	12	01_Aereo	1	Punta Arenas	SCL-PUQ	Punta Arenas	00) Aereo Sur	Punta Arenas	2
+San Gregorio	Jorge Gonzalez (ptas Arenas)	76115557-1	Regiones	SI	1000	Jorge Gonzalez (ptas Arenas)	LUNES A VIERNES	Entrega normal	12	01_Aereo	1	Punta Arenas	SCL-PUQ	Punta Arenas	00) Aereo Sur	Punta Arenas	2
+Torres Del Paine	Jorge Gonzalez (ptas Arenas)	76115557-1	Regiones	SI	1000	Jorge Gonzalez (ptas Arenas)	LUNES - MIERCOLES - VIERNES	Frecuencia especial	12	01_Aereo	1	Punta Arenas	SCL-PUQ	Punta Arenas	00) Aereo Sur	Punta Arenas	2
+Isla De Pascua	Latam	0-0	Regiones	NO	1000	Latam	VIERNES	Frecuencia especial	5	081-META	1			Isla de Pascua	00) Aereo Pacifico	Isla de Pascua	1
+Calama	Victor Robledo (Calama)	13013180-8	Regiones	SI	1000	Victor Robledo (Calama)	LUNES A VIERNES	Entrega normal	2	011-Extremo	1	Calama	SCL-CJC	Calama	00) Aereo Norte	Calama	2
+San Pedro De Atacama	Victor Robledo (Calama)	13013180-8	Regiones	SI	1000	Victor Robledo (Calama)	MIERCOLES	Frecuencia especial	2	011-Extremo	1	Calama	SCL-CJC	Calama	00) Aereo Norte	Calama	2
+Sierra Gorda	Victor Robledo (Calama)	13013180-8	Regiones	SI	1000	Victor Robledo (Calama)	LUNES A VIERNES	Entrega normal	2	011-Extremo	1	Calama	SCL-CJC	Calama	00) Aereo Norte	Calama	2
+Tocopilla	Victor Robledo (Calama)	13013180-8	Regiones	SI	1000	Victor Robledo (Calama)	LUNES - MIERCOLES - VIERNES	Entrega normal	2	011-Extremo	1	Calama	SCL-CJC	Calama	00) Aereo Norte	Calama	2
+Negrete	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	9	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Alto Biobío	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	9	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+ALTO BIO BIO	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	9	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Alto Biob卲	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	9	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Angol	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	9	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Antuco	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	9	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Arauco	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Bulnes	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Cabrero	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+Cañete	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Canete	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+CAﾑETE	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Cate	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Chiguayante	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Chiguallante	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Chillán	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+Chillan	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+Chillán Viejo	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+Chillan Viejo	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+Chill疣	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+Chill疣 Viejo	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+Cobquecura	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Coelemu	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+COHIUECO	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES Y JUEVES	Frecuencia especial	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+Coihueco	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+Concepcion	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+CONCEPCIÓN	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+CONCEPCIÒN	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+CONCEPCION II	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Concepci	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Contulmo	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	9	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Coronel	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+CORRAL	Envio externo	0-0	Regiones	SI	1000	Envio externo	LUNES A VIERNES	Entrega normal	9		1			Envio externo	99) Envio externo	Externo	0
+CARANILAHUE	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y JUEVES	Frecuencia especial	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Curanilahue	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y JUEVES	Frecuencia especial	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+El Carmen	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y JUEVES	Frecuencia especial	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Florida	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Hualpén	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Hualpen	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Hualp駭	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Hualqui	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Quilaco	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Huepil	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+LAGUNILLAS	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES Y JUEVES	Frecuencia especial	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Laja	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Laraquete	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	9	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Lebu	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+LOMAS COLORADA	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES Y JUEVES	Frecuencia especial	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Los Alamos	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Los Angeles	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Los Angeles Almagro	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Los Sauces	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	9	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Los ﾁngeles	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Lota	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Mulchén	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Mulchen	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Mulch駭	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Nacimiento	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Pemuco	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+Penco	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+PENUELAS	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES Y JUEVES	Frecuencia especial	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Pinto	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Portezuelo	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	9	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+Quillón	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+Quillon	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+Quirihue	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+R疣quil	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+San Nicolás	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+San Nicolas	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+San Nicol疽	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+SAN PERO DE LA PAZ	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+San Pedro De La Paz	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+SAN PEDRO DE LAPAZ	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+San Rosendo	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Santa Juana	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y JUEVES	Frecuencia especial	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Talcahuano	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Tomé	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Tome	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+TUCAPEL	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	9	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Yumbel	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES - MIERCOLES - SABADO	Frecuencia especial	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Curicó	Miguel Celis (Curico)	76528088-5	Regiones	SI	1000	Miguel Celis (Curico)	LUNES A VIERNES	Entrega normal	7	043-Curico	1			Curico	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	4
+Curico	Miguel Celis (Curico)	76528088-5	Regiones	SI	1000	Miguel Celis (Curico)	LUNES A VIERNES	Entrega normal	7	043-Curico	1			Curico	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	4
+CURICO - GD 51180	Miguel Celis (Curico)	76528088-5	Regiones	SI	1000	Miguel Celis (Curico)	LUNES A VIERNES	Entrega normal	7	043-Curico	1			Curico	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	4
+Hualañé	Miguel Celis (Curico)	76528088-5	Regiones	SI	1000	Miguel Celis (Curico)	LUNES A VIERNES	Entrega normal	7	043-Curico	1			Curico	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	4
+Hualane	Miguel Celis (Curico)	76528088-5	Regiones	SI	1000	Miguel Celis (Curico)	LUNES A VIERNES	Entrega normal	7	043-Curico	1			Curico	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	4
+Licantén	Miguel Celis (Curico)	76528088-5	Regiones	SI	1000	Miguel Celis (Curico)	LUNES A VIERNES	Entrega normal	7	043-Curico	1			Curico	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	4
+LICANTEN	Miguel Celis (Curico)	76528088-5	Regiones	SI	1000	Miguel Celis (Curico)	LUNES A VIERNES	Entrega normal	7	043-Curico	1			Curico	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	4
+Lincanten	Miguel Celis (Curico)	76528088-5	Regiones	SI	1000	Miguel Celis (Curico)	MARTES Y VIERNES	Frecuencia especial	7	043-Curico	1			Curico	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	4
+Lolol	Miguel Celis (Curico)	76528088-5	Regiones	SI	1000	Miguel Celis (Curico)	LUNES A VIERNES	Entrega normal	7	043-Curico	1			Curico	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	4
+Molina	Miguel Celis (Curico)	76528088-5	Regiones	SI	1000	Miguel Celis (Curico)	MARTES Y VIERNES	Frecuencia especial	7	043-Curico	1			Curico	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	4
+Romeral	Miguel Celis (Curico)	76528088-5	Regiones	SI	1000	Miguel Celis (Curico)	LUNES A VIERNES	Entrega normal	7	043-Curico	1			Curico	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	4
+Sagrada Familia	Miguel Celis (Curico)	76528088-5	Regiones	SI	1000	Miguel Celis (Curico)	LUNES - MIERCOLES - SABADO	Frecuencia especial	7	043-Curico	1			Curico	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	4
+Teno	Miguel Celis (Curico)	76528088-5	Regiones	SI	1000	Miguel Celis (Curico)	LUNES A VIERNES	Entrega normal	7	043-Curico	1			Curico	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	4
+Vichuquén	Miguel Celis (Curico)	76528088-5	Regiones	SI	1000	Miguel Celis (Curico)	LUNES A VIERNES	Entrega normal	7	043-Curico	1			Curico	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	4
+Vichuquen	Miguel Celis (Curico)	76528088-5	Regiones	SI	1000	Miguel Celis (Curico)	LUNES A VIERNES	Entrega normal	7	043-Curico	1			Curico	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	4
+Arica	Nelson Cisterna (Arica)	10124367-2	Regiones	SI	1000	Nelson Cisterna (Arica)	LUNES A VIERNES	Entrega normal	1	011-Extremo	1	Arica	SCL-ARI	Arica	00) Aereo Norte	Arica	4
+Camarones	Nelson Cisterna (Arica)	10124367-2	Regiones	SI	1000	Nelson Cisterna (Arica)	LUNES A VIERNES	Entrega normal	1	011-Extremo	1	Arica	SCL-ARI	Arica	00) Aereo Norte	Arica	4
+Colchane	Nelson Cisterna (Arica)	10124367-2	Regiones	SI	1000	Nelson Cisterna (Arica)	LUNES A VIERNES	Entrega normal	1	011-Extremo	1	Arica	SCL-ARI	Arica	00) Aereo Norte	Arica	4
+Pozo Almonte	Nelson Cisterna (Arica)	10124367-2	Regiones	SI	1000	Nelson Cisterna (Arica)	LUNES A VIERNES	Entrega normal	1	011-Extremo	1	Arica	SCL-ARI	Arica	00) Aereo Norte	Arica	4
+Putre	Nelson Cisterna (Arica)	10124367-2	Regiones	SI	1000	Nelson Cisterna (Arica)	LUNES A VIERNES	Entrega normal	1	011-Extremo	1	Arica	SCL-ARI	Arica	00) Aereo Norte	Arica	4
+META	Envio externo	0-0	RM	NO	1000	Envio externo	LUNES A VIERNES	Entrega normal	13	0_Bluex	1		0	Envio externo	99) Envio externo	Externo	0
+Chile Chico	Envio externo	0-0	RM	NO	1000	Envio externo	LUNES A VIERNES	Entrega normal	13	0_Bluex	1		0	Envio externo	99) Envio externo	Externo	0
+Curacaví	Operador Curacavi	77201525-9	Regiones	NO	1000	Operador Curacavi	LUNES A VIERNES	Entrega normal	13	061-V Costa	1		0	Curacavi	02) Troncal V Region	6. Curacavi	6
+Curacavi	Operador Curacavi	77201525-9	Regiones	NO	1000	Operador Curacavi	LUNES A VIERNES	Entrega normal	13	061-V Costa	1		0	Curacavi	02) Troncal V Region	6. Curacavi	6
+Alto Hospicio	Postman Cargo (Alto Hospicio)	76556632-0	Regiones	SI	1000	Postman Cargo (Alto Hospicio)	MARTES Y JUEVES	Frecuencia especial	1	011-Extremo	1	Iquique	SCL-IQQ	Iquique	00) Aereo Norte	Iquique	3
+Huara	Postman Cargo (Iquique)	76556632-0	Regiones	SI	1000	Postman Cargo (Iquique)	MARTES Y JUEVES	Frecuencia especial	1	011-Extremo	1	Iquique	SCL-IQQ	Iquique	00) Aereo Norte	Iquique	3
+IQUIQUQE	Postman Cargo (Iquique)	76556632-0	Regiones	SI	1000	Postman Cargo (Iquique)	LUNES A VIERNES	Entrega normal	1	011-Extremo	1	Iquique	SCL-IQQ	Iquique	00) Aereo Norte	Iquique	3
+IQUIQU	Postman Cargo (Iquique)	76556632-0	Regiones	SI	1000	Postman Cargo (Iquique)	LUNES A VIERNES	Entrega normal	1	011-Extremo	1	Iquique	SCL-IQQ	Iquique	00) Aereo Norte	Iquique	3
+Iquique	Postman Cargo (Iquique)	76556632-0	Regiones	SI	1000	Postman Cargo (Iquique)	LUNES A VIERNES	Entrega normal	1	011-Extremo	1	Iquique	SCL-IQQ	Iquique	00) Aereo Norte	Iquique	3
+ALERCE	Sergio Pino (Pto Montt)	7481733-5	Regiones	SI	1000	Sergio Pino (Pto Montt)	LUNES Y JUEVES	Frecuencia especial	10	028-Puerto Montt	1			Puerto Montt	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	12
+Calbuco	Sergio Pino (Pto Montt)	7481733-5	Regiones	SI	1000	Sergio Pino (Pto Montt)	MARTES Y JUEVES	Frecuencia especial	10	028-Puerto Montt	1			Puerto Montt	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	12
+de los lagos	Sergio Pino (Pto Montt)	7481733-5	Regiones	SI	1000	Sergio Pino (Pto Montt)	LUNES Y JUEVES	Frecuencia especial	10	028-Puerto Montt	1			Puerto Montt	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	12
+FUTILLAR	Sergio Pino (Pto Montt)	7481733-5	Regiones	SI	1000	Sergio Pino (Pto Montt)	LUNES A VIERNES	Entrega normal	10	029-Ruta Sur	1			Puerto Montt	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	12
+Frutillar	Sergio Pino (Pto Montt)	7481733-5	Regiones	SI	1000	Sergio Pino (Pto Montt)	LUNES A VIERNES	Entrega normal	10	029-Ruta Sur	1			Puerto Montt	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	12
+Cochamó	Envio externo	0-0	RM	NO	1000	Envio externo	LUNES A VIERNES	Entrega normal	13	0_Bluex	1			Puerto Montt	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	12
+Llanquihue	Sergio Pino (Pto Montt)	7481733-5	Regiones	SI	1000	Sergio Pino (Pto Montt)	MARTES Y VIERNES	Frecuencia especial	10	028-Puerto Montt	1			Puerto Montt	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	12
+Los Muermos	Sergio Pino (Pto Montt)	7481733-5	Regiones	SI	1000	Sergio Pino (Pto Montt)	LUNES Y JUEVES	Frecuencia especial	10	028-Puerto Montt	1			Puerto Montt	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	12
+Puerto Monnt	Sergio Pino (Pto Montt)	7481733-5	Regiones	SI	1000	Sergio Pino (Pto Montt)	LUNES Y JUEVES	Frecuencia especial	10	028-Puerto Montt	1			Puerto Montt	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	12
+Puerto Montt	Sergio Pino (Pto Montt)	7481733-5	Regiones	SI	1000	Sergio Pino (Pto Montt)	LUNES A VIERNES	Entrega normal	10	028-Puerto Montt	1			Puerto Montt	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	12
+puerto montt 2	Sergio Pino (Pto Montt)	7481733-5	Regiones	SI	1000	Sergio Pino (Pto Montt)	LUNES Y JUEVES	Frecuencia especial	10	028-Puerto Montt	1			Puerto Montt	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	12
+Puerto Varas	Sergio Pino (Pto Montt)	7481733-5	Regiones	SI	1000	Sergio Pino (Pto Montt)	LUNES A VIERNES	Entrega normal	10	029-Ruta Sur	1			Puerto Montt	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	12
+Concón	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1		0	Viña del Mar	02) Troncal V Region	1. V Region Centro	1
+Concon	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1		0	Viña del Mar	02) Troncal V Region	1. V Region Centro	1
+CONCÒN	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1		0	Viña del Mar	02) Troncal V Region	1. V Region Centro	1
+Conc	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1		0	Viña del Mar	02) Troncal V Region	1. V Region Centro	1
+curauma	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1			Viña del Mar	02) Troncal V Region	1. V Region Centro	1
+Nogales	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1			Viña del Mar	02) Troncal V Region	4. V Region Costa Int. Sur	4
+Renaca	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1		0	Viña del Mar	02) Troncal V Region	1. V Region Centro	1
+Valparaíso	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1		0	Viña del Mar	02) Troncal V Region	1. V Region Centro	1
+Valparaiso	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1		0	Viña del Mar	02) Troncal V Region	1. V Region Centro	1
+Vina Del Mar	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1		0	Viña del Mar	02) Troncal V Region	1. V Region Centro	1
+Vina Del Mar 2	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1		0	Viña del Mar	02) Troncal V Region	1. V Region Centro	1
+Viña Del Mar 2	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1		0	Viña del Mar	02) Troncal V Region	1. V Region Centro	1
+EL MONTE	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	ESPECIAL	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+ISLA DE MAIPO	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	081-META	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+malloco	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	061-V Costa	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+Maria Elena	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	061-V Costa	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+María Pinto	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	061-V Costa	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+Maria Pinto	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	061-V Costa	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+MariaPinto	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	061-V Costa	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+Melipilla	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	061-V Costa	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+Melipillla	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	061-V Costa	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+Padre Hurtado	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	061-V Costa	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+Penaflor	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	061-V Costa	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+Peñaflor	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	061-V Costa	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+⁠Peñaflor	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	061-V Costa	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+PEﾑAFLOR	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	061-V Costa	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+Peflor	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	061-V Costa	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+San Pedro de Melipilla	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	061-V Costa	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+Talagante	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	061-V Costa	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+Chaitén	Tamara Maldonado (Balmaceda)	77417055-3	Regiones	SI	1000	Tamara Maldonado (Balmaceda)	LUNES A VIERNES	Entrega normal	11	011-Extremo	1	Balmaceda	SCL-BBA	Balmaceda	00) Aereo Sur	Balmaceda	1
+Aysén	Tamara Maldonado (Balmaceda)	77417055-3	Regiones	SI	1000	Tamara Maldonado (Balmaceda)	LUNES A VIERNES	Entrega normal	11	011-Extremo	1	Balmaceda	SCL-BBA	Balmaceda	00) Aereo Sur	Balmaceda	1
+Puerto Ays駭	Tamara Maldonado (Balmaceda)	77417055-3	Regiones	SI	1000	Tamara Maldonado (Balmaceda)	LUNES A VIERNES	Entrega normal	11	011-Extremo	1	Balmaceda	SCL-BBA	Balmaceda	00) Aereo Sur	Balmaceda	1
+Aysen	Tamara Maldonado (Balmaceda)	77417055-3	Regiones	SI	1000	Tamara Maldonado (Balmaceda)	LUNES A VIERNES	Entrega normal	11	011-Extremo	1	Balmaceda	SCL-BBA	Balmaceda	00) Aereo Sur	Balmaceda	1
+Ays駭	Tamara Maldonado (Balmaceda)	77417055-3	Regiones	SI	1000	Tamara Maldonado (Balmaceda)	LUNES A VIERNES	Entrega normal	11	011-Extremo	1	Balmaceda	SCL-BBA	Balmaceda	00) Aereo Sur	Balmaceda	1
+Cochrane	Tamara Maldonado (Balmaceda)	77417055-3	Regiones	SI	1000	Tamara Maldonado (Balmaceda)	LUNES - MIERCOLES - SABADO	Frecuencia especial	11	011-Extremo	1	Balmaceda	SCL-BBA	Balmaceda	00) Aereo Sur	Balmaceda	1
+COYAHIQUE	Tamara Maldonado (Balmaceda)	77417055-3	Regiones	SI	1000	Tamara Maldonado (Balmaceda)	LUNES A VIERNES	Entrega normal	11	011-Extremo	1	Balmaceda	SCL-BBA	Balmaceda	00) Aereo Sur	Balmaceda	1
+Coyhaique	Tamara Maldonado (Balmaceda)	77417055-3	Regiones	SI	1000	Tamara Maldonado (Balmaceda)	LUNES A VIERNES	Entrega normal	11	011-Extremo	1	Balmaceda	SCL-BBA	Balmaceda	00) Aereo Sur	Balmaceda	1
+palena	Tamara Maldonado (Balmaceda)	77417055-3	Regiones	SI	1000	Tamara Maldonado (Balmaceda)	LUNES A VIERNES	Entrega normal	11	011-Extremo	1	Balmaceda	SCL-BBA	Balmaceda	00) Aereo Sur	Balmaceda	1
+Puerto Aysen	Tamara Maldonado (Balmaceda)	77417055-3	Regiones	SI	1000	Tamara Maldonado (Balmaceda)	LUNES A VIERNES	Entrega normal	11	011-Extremo	1	Balmaceda	SCL-BBA	Balmaceda	00) Aereo Sur	Balmaceda	1
+Rio Ibanez	Tamara Maldonado (Balmaceda)	77417055-3	Regiones	SI	1000	Tamara Maldonado (Balmaceda)	LUNES - MIERCOLES - SABADO	Frecuencia especial	11	011-Extremo	1	Balmaceda	SCL-BBA	Balmaceda	00) Aereo Sur	Balmaceda	1
+Tolt駭	Tamara Maldonado (Balmaceda)	77417055-3	Regiones	SI	1000	Tamara Maldonado (Balmaceda)	LUNES - MIERCOLES - SABADO	Frecuencia especial	11	011-Extremo	1	Balmaceda	SCL-BBA	Balmaceda	00) Aereo Sur	Balmaceda	1
+Tortel	Tamara Maldonado (Balmaceda)	77417055-3	Regiones	SI	1000	Tamara Maldonado (Balmaceda)	LUNES - MIERCOLES - SABADO	Frecuencia especial	11	011-Extremo	1	Balmaceda	SCL-BBA	Balmaceda	00) Aereo Sur	Balmaceda	1
+Valpara﨎o	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1		0	Viña del Mar	02) Troncal V Region	1. V Region Centro	1
+Huiscapi	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	LUNES A VIERNES	Entrega normal	9	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Colina	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	02 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Viña Del Mar	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1		0	Viña del Mar	02) Troncal V Region	1. V Region Centro	1
+Renaico	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	9	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+Hu駱il	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+CHICURERO	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	02 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Penafllor	Transporte Mandame (Talagante)	76147222-4	Regiones	NO	1000	Transporte Mandame	LUNES A VIERNES	Entrega normal	13	061-V Costa	1			Talagante	02) Troncal V Region	8. Ruta 78	8
+MAIPﾚ	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	12 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+PUERTO AYSÉN	Tamara Maldonado (Balmaceda)	77417055-3	Regiones	SI	1000	Tamara Maldonado (Balmaceda)	LUNES A VIERNES	Entrega normal	11	011-Extremo	1	Balmaceda	SCL-BBA	Balmaceda	00) Aereo Sur	Balmaceda	1
+ﾑua	4N RM	77346078-7	RM	NO	1000	4N RM	LUNES A VIERNES	Entrega normal	13	08 - RM	2			Quilicura	CD 4N	Bodega 4N	0
+Panguipilli	4N Temuco	77346078-7	Regiones	NO	1000	Jorge Gonzalez (Temuco)	MARTES Y JUEVES	Frecuencia especial	10	024-Temuco	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+CON CON	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1		0	Viña del Mar	02) Troncal V Region	1. V Region Centro	1
+_Con Con	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1		0	Viña del Mar	02) Troncal V Region	1. V Region Centro	1
+San José de la Mariquina	4N Troncal Sur 3	77346078-7	Regiones	NO	1000		LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1			Temuco	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	9
+Huelpen	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+REÑACA	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Soc. de inversiones Santa Cruz de Yanguas ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1		0	Viña del Mar	02) Troncal V Region	1. V Region Centro	1
+Quilleco	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	9	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8
+San Fabián	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+Ñiquén	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	MIERCOLES	Frecuencia especial	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+San Ignacio	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+San Pedr de la Paz	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	022-Concepcion	1			Concepcion	01) Troncal Sur (Santiago-Chillan)	2. Troncal Sur (Chillan-Concepcion)	7
+Ranquil	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	MARTES Y VIERNES	Frecuencia especial	8	021-Chillan	1			Chillan	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	6
+Río Negro	Johanna Oyarzo (Osorno)	13590206-3	Regiones	SI	1000	Johanna Oyarzo (Osorno)	MARTES Y VIERNES	Frecuencia especial	10	029-Ruta Sur	1			Osorno	01) Troncal Sur (Santiago-Chillan)	4. Troncal sur (Temuco-Pto. Montt)	11
+SALADILLO	Micael Figueroa (Los Andes)	17657150-0	Regiones	NO	1000	Micael Figueroa (Los Andes)	LUNES - MIERCOLES - SABADO	Frecuencia especial	10	029-Ruta Sur	1			Llay llay	03) Troncal Norte (Santiago-Coquimbo)	1. Llay Llay	1
+HUANHUALI	Paula Valencia (Viña del Mar)	19488954-2	Regiones	NO	1000	Comercializadora Musso Ltda	LUNES A VIERNES	Entrega normal	5	051-V Region	1			Viña del Mar	02) Troncal V Region	4. V Region Costa Int. Sur	4
+San Rafael	Carlos Villaseca (Talca)	77145818-1	Regiones	NO	1000	Carlos Villaseca (Talca)	MIERCOLES	Frecuencia especial	7	044-Talca	1			Talca	01) Troncal Sur (Santiago-Chillan)	1. Troncal Sur (Santiago-Chillan)	5
+Quillaco	Mercasur	76052551-0	Regiones	SI	1000	Mercasur	LUNES A VIERNES	Entrega normal	8	023-Los Angeles	1			Los Angeles	01) Troncal Sur (Santiago-Chillan)	3. Troncal sur 02 (Chillan-Temuco)	8

@@ -5,6 +5,8 @@ namespace App\Modules\ProviderPayments;
 use App\Models\Client;
 use App\Models\Coverage;
 use App\Models\ServiceType;
+use App\Models\WeightTransformation;
+use Illuminate\Support\Str;
 
 class ParameterReview
 {
@@ -12,11 +14,14 @@ class ParameterReview
     {
         $clients = $tenantId ? Client::where('tenant_id', $tenantId)->where('is_active', true)->with('serviceTypes')->get() : collect();
         $coverages = $tenantId ? Coverage::where('tenant_id', $tenantId)->where('is_active', true)->get()->groupBy('commune_name') : collect();
+        $coveragesByFoldedName = $coverages->flatten()->groupBy(fn (Coverage $coverage): string => $this->foldedKey($coverage->commune_name));
+        $coveragesByComparableName = $coverages->flatten()->groupBy(fn (Coverage $coverage): string => $this->comparableKey($coverage->commune_name));
         $services = ServiceType::where('is_active', true)->get()->keyBy('name');
+        $weightTransformations = $tenantId ? WeightTransformation::where('tenant_id', $tenantId)->where('is_active', true)->get()->groupBy('comparison_key') : collect();
         $clientsByMerchant = [];
         foreach ($clients as $client) {
             if ($client->source_merchant_name !== null && $client->source_merchant_name !== '') {
-                $clientsByMerchant[$client->source_merchant_name][] = $client;
+                $clientsByMerchant[$this->merchantKey($client->source_merchant_name)][] = $client;
             }
         }
         $groups = [];
@@ -27,13 +32,13 @@ class ParameterReview
                 $value = $values[0];
                 $action = null;
                 if ($category === 'weights') {
-                    $action = trim($value) === ''
-                        ? 'Peso vacío: se aplicará 1 por defecto. Falta configurar su equivalencia de peso transformado.'
-                        : 'Definir la equivalencia a Peso_transformado entero. El maestro de transformación aún no está implementado.';
+                    if (trim($value) !== '' && $weightTransformations->get($this->weightKey($value), collect())->isEmpty()) {
+                        $action = 'Agregar este valor al maestro de pesos e indicar su Peso Transformado entero.';
+                    }
                 } elseif (! $tenantId) {
                     $action = 'Pendiente de comparación: selecciona o registra la empresa propietaria.';
                 } elseif ($category === 'clients') {
-                    $matches = $clientsByMerchant[$value] ?? [];
+                    $matches = $clientsByMerchant[$this->merchantKey($value)] ?? [];
                     if (count($matches) !== 1) {
                         $action = count($matches) > 1
                             ? 'Hay más de un cliente con este Comerciante (Pila). Debe quedar una sola coincidencia dentro de la empresa.'
@@ -41,7 +46,7 @@ class ParameterReview
                     }
                 } elseif ($category === 'services') {
                     $service = $services->get($values[1]);
-                    $matches = $clientsByMerchant[$value] ?? [];
+                    $matches = $clientsByMerchant[$this->merchantKey($value)] ?? [];
                     if (! $service) {
                         $action = 'Crear o relacionar el servicio en el catálogo y asociarlo al cliente.';
                     } elseif (count($matches) !== 1) {
@@ -50,11 +55,18 @@ class ParameterReview
                         $action = 'Asociar este servicio al cliente y activar la relación.';
                     }
                 } elseif ($category === 'coverages') {
-                    $matches = $coverages->get($value, collect());
+                    $coverageValue = $this->coverageAlias($value);
+                    $matches = $coverages->get($coverageValue, collect());
                     if ($matches->isEmpty()) {
-                        $action = 'Registrar una cobertura activa con esta comuna exactamente como viene en el archivo.';
+                        $matches = $coveragesByFoldedName->get($this->foldedKey($coverageValue), collect());
+                    }
+                    if ($matches->isEmpty()) {
+                        $matches = $coveragesByComparableName->get($this->comparableKey($coverageValue), collect());
+                    }
+                    if ($matches->isEmpty()) {
+                        $action = 'Registrar una cobertura activa o un alias para esta comuna.';
                     } elseif ($matches->count() > 1) {
-                        $action = 'Existen varias coberturas activas. Revisar vigencias y proveedor antes de elegir.';
+                        $action = 'Existen varias coberturas equivalentes para este nombre. Revisar proveedor, ruta y vigencia antes de elegir.';
                     } elseif (! $matches->first()->provider_id && ! $matches->first()->provider_tax_id) {
                         $action = 'Asignar proveedor o RUT de proveedor a la cobertura.';
                     }
@@ -64,9 +76,45 @@ class ParameterReview
                 }
             }
             usort($items, fn ($a, $b) => $b['count'] <=> $a['count']);
-            $groups[] = ['title' => $title, 'items' => $items, 'affected' => array_sum(array_column($items, 'count'))];
+            $groups[] = ['key' => $category, 'title' => $title, 'items' => $items, 'affected' => array_sum(array_column($items, 'count'))];
         }
 
         return $groups;
+    }
+
+    private function merchantKey(string $value): string
+    {
+        return Str::of($value)->squish()->lower()->toString();
+    }
+
+    private function comparableKey(string $value): string
+    {
+        return Str::of($value)->squish()->lower()->ascii()->toString();
+    }
+
+    private function foldedKey(string $value): string
+    {
+        return Str::of($value)->squish()->lower()->toString();
+    }
+
+    private function coverageAlias(string $value): string
+    {
+        return match ($this->foldedKey($value)) {
+            '?u?oa' => 'Ñuñoa',
+            'valpara?o' => 'Valparaíso',
+            'chill?' => 'Chillán',
+            'renaca' => 'REÑACA',
+            'puerto aysen' => 'PUERTO AYSÉN',
+            default => $value,
+        };
+    }
+
+    private function weightKey(string $value): string
+    {
+        if (preg_match('/-?\d+(?:[.,]\d+)?/', $value, $matches)) {
+            return rtrim(rtrim(number_format((float) str_replace(',', '.', $matches[0]), 6, '.', ''), '0'), '.');
+        }
+
+        return mb_strtolower(trim($value));
     }
 }

@@ -1,0 +1,9 @@
+@extends('provider-payments::layout')
+@section('title', 'Peso Transformado')
+@push('styles')<style>.weight-tabs{display:flex;gap:10px;margin:0 0 22px}.weight-tabs a{padding:10px 15px;border:1px solid var(--line);border-radius:8px;background:#fff;text-decoration:none;font-weight:750}.weight-tabs a.active{background:var(--turquoise-dark);color:#fff}.metric{font-size:28px;font-weight:850;color:var(--turquoise-dark)}.summary{display:grid;grid-template-columns:repeat(2,minmax(180px,260px));gap:14px;margin-bottom:20px}.summary .card{padding:18px}</style>@endpush
+@section('content')
+<a class="back" href="{{ route('provider-payments.dashboard') }}">← Pago a Proveedores</a><p class="eyebrow">Mantenedor de pesos</p><h1>Peso Transformado</h1><p class="intro">Consulta los pesos finales de cobro y cuántos Pesos Reales están asociados a cada uno.</p>
+<nav class="weight-tabs"><a class="active" href="{{ route('provider-payments.maintainers.pesos.transformados') }}">Peso Transformado</a><a href="{{ route('provider-payments.maintainers.pesos.reales') }}">Peso Real</a></nav>
+<div class="summary"><div class="card"><span class="note">Pesos transformados</span><div class="metric">{{ $groups->count() }}</div></div><div class="card"><span class="note">Equivalencias registradas</span><div class="metric">{{ number_format($groups->sum('real_weight_count'), 0, ',', '.') }}</div></div></div>
+<section class="card"><div class="table-wrap"><table><thead><tr><th>Peso Transformado</th><th>Cantidad de Pesos Reales asociados</th></tr></thead><tbody>@forelse($groups as $group)<tr><td>{{ $group->transformed_weight }}</td><td>{{ number_format($group->real_weight_count, 0, ',', '.') }}</td></tr>@empty<tr><td colspan="2">No hay pesos transformados.</td></tr>@endforelse</tbody></table></div></section>
+@endsection

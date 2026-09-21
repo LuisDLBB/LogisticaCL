@@ -17,7 +17,7 @@ class CourierMovement extends Model
 
     protected $fillable = [
         'tenant_id', 'client_id', 'source_system', 'fecha', 'tracking_number', 'tracking_code', 'external_code',
-        'cost_center', 'purchase_order', 'dispatch_guide', 'weight_kg', 'peso_real', 'peso_transformado', 'peso_final', 'tipo_pago', 'length_cm', 'width_cm', 'height_cm',
+        'cost_center', 'purchase_order', 'dispatch_guide', 'weight_kg', 'peso_real', 'peso_transformado', 'peso_final', 'tipo_pago', 'nombre_proceso', 'length_cm', 'width_cm', 'height_cm',
         'status', 'delivery_attempts', 'merchant_name', 'service_name', 'campaign_name', 'recipient_name',
         'recipient_company_name', 'recipient_address', 'destination_commune_name', 'recipient_phone',
         'recipient_email', 'declared_value', 'received_at', 'estimated_delivery_date', 'delivered_at',

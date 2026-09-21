@@ -15,6 +15,7 @@ class Client extends Model
         'tax_id_number',
         'tax_id_check_digit',
         'source_merchant_name',
+        'billing_company_code',
         'commercial_name',
         'legal_name',
         'billing_address',

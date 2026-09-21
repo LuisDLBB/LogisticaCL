@@ -1,0 +1,42 @@
+Id	Rut	Nombre completo	RutEmpresa	Empresa	Usuario	Clave Provisoria	Correo corporativo	Área	Perfil	Tipo Licencia	Localidad	Vencimiento Licencia conducir	Numero Telefono
+1	10970119-K	Orlando Marcelo Godoy Sáez	77346078-7	4N	10970119-K	109701	Marcelo@4nlogistica.cl	Gerente	Gerente	No Aplica	RM	No Aplica	56990991461
+2	16914825-2	Natalia Francisca Leyton Carreras	77639015-1	PMCB	16914825-2	169148	Natalialeyton@4nlogistica.cl	Finanzas	Administrador	No Aplica	RM	No Aplica	56964685869
+3	20240576-2	Elias Gabriel Andres Correa Pedrero	77346078-7	4N	20240576-2	202405	EliasCorrea@4nlogistica.cl	Sistema	Administrador	No Aplica	RM	No Aplica	56988479998
+4	16696219-6	Hans Enrique Robert De la Barra Beroiza	77346078-7	4N	16696219-6	166962	hansdelabarra@4nlogistica.cl	Comercial	Administrador	No Aplica	RM	No Aplica	56963080077
+5	14901120-k	Elizabeth Del Carmen Obreque Fuentes	77346078-7	4N	14901120-k	149011	Elizabeth.obreque@4nlogistica.cl	Postventa	Postventa	No Aplica	RM	No Aplica	56968781963
+6	18150912-0	Daniela Veronica Medina Puebla	77346078-7	4N	18150912-0	181509	Daniela.medina@4nlogistica.cl	Postventa	Postventa	No Aplica	RM	No Aplica	56953189617
+7	15669703-6	Maria Francisca Salas Adasme	77639015-1	PMCB	15669703-6	156697	Francisca.salas@4nlogistica.cl	Postventa	Postventa	No Aplica	RM	No Aplica	56942647697
+8	15603913-6	Jocelyn Alejandra Guerrero Gonzalez	77639015-1	PMCB	15603913-6	156039	Jocelynguerrero@4nlogistica.cl	Comercial	Comercial	No Aplica	RM	No Aplica	56920428641
+9	10213004-9	Nora Maritza Cuadros Medina 	77346078-7	4N	10213004-9	102130	Maritzacuadros@4nlogistica.cl	Comercial	Comercial	No Aplica	RM	No Aplica	56979663292
+10	15783616-1	Luis Fabian De la Barra Beroiza	77639015-1	PMCB	15783616-1	157836	Luisdelabarra@4nlogistica.cl	Operaciones	Administrador	No Aplica	RM	No Aplica	56973895071
+11	15536015-1	Raul Israel Suazo Moreno	77346078-7	4N	15536015-1	155360	Raul.suazo@4nlogistica.cl	Operaciones	Operaciones	A4-D	RM	2027-01-01 00:00:00	56920376685
+12	13835669-8	Mariela Del Carme Diaz Sanchez	77346078-7	4N	13835669-8	138356	Marieladiaz@4nlogistica.cl	Operaciones	Operaciones	B	RM	2027-01-01 00:00:00	56983602465
+13	19382177-4	Luis Antonio Silva Donoso 	77346078-7	4N	19382177-4	193821	Luisislva@4nlogistica.cl	Operaciones	Operaciones	B	RM	2027-01-01 00:00:00	56931977138
+14	15536672-9	Nelson Andres Lopez Carreño	77346078-7	4N	15536672-9	155366	Sin Mail	Operaciones	Operaciones	B-D	RM	2027-01-01 00:00:00	56989999945
+15	12022801-3	Juan Pablo Soza Barros	77346078-7	4N	12022801-3	120228	Jp.soza@4nlogistica.cl	Operaciones	Operaciones	A4-D	RM	2027-01-01 00:00:00	56979880991
+16	10536634-5	Juan David Castro Avila	77346078-7	4N	10536634-5	105366	Sin Mail	Operaciones	Operaciones	B	RM	2027-01-01 00:00:00	56991925863
+17	17850576-9	Jorge Daniel Madrid Bustos	77346078-7	4N	17850576-9	178505	Sin Mail	Operaciones	Operaciones	B-D	RM	2027-01-01 00:00:00	56968982158
+18	17667637-K	Patricio Adrián Yáñez Hernandez	77346078-7	4N	17667637-K	176676	Sin Mail	Conductor	App Conductor	B-D	RM	2027-01-01 00:00:00	56990865416
+19	10320311-2	Nelson Enrique Torres Castro	77639015-1	PMCB	10320311-2	103203	Sin Mail	Conductor	App Conductor	B	RM	2027-01-01 00:00:00	56971465614
+20	10291894-0	Jimenez Mora, Luis Jaime	77639015-1	PMCB	10291894-0	102918	Sin Mail	Ayudante	App Conductor	No Aplica	RM	No Aplica	56926449227
+21	7698608-8	Juan Ricardo Zuñiga Alvarez	77346078-7	4N	7698608-8	769860	Sin Mail	Conductor	App Conductor	A1 ANTIGUA	RM	2027-01-01 00:00:00	56990471549
+22	15371400-2	Carlos Alberto Riquelme Herrera	77639015-1	Pmcb	15371400-2	153714	Sin Mail	Conductor	App Conductor	A4-A2	RM	2027-01-01 00:00:00	56948458681
+23	19566037-9	Juan Eduardo Alfaro Mateluna 	77639015-1	Pmcb	19566037-9	195660	Sin Mail	Conductor	App Conductor	A4-A2	RM	2027-01-01 00:00:00	56985932949
+24	27232997-4	Fernando Leandro Escudero Vasquez	77639015-1	PMCB	27232997-4	272329	Sin Mail	Conductor A5	App Conductor	A5	RM	2027-01-01 00:00:00	56982532232
+25	13251599-9	Mauricio Andres Provoste Cerda 	77639015-1	Pmcb	13251599-9	132515	Sin Mail	Conductor A5	App Conductor	A4-A2-D	RM	2027-01-01 00:00:00	56962330081
+26	9481156-2	Erwin Patricio Salazar Valenzuela	77346078-7	4N	9481156-2	948115	Sin Mail	Conductor	App Conductor	A4	RM	2027-01-01 00:00:00	56956217622
+27	10250821-1	Luis Enrique De la Barra Martinez	77639015-1	PMCB	10250821-1	102508	Sin Mail	Conductor	App Conductor	A4	RM	2027-01-01 00:00:00	56954063295
+28	7220635-5	Esnedi Del Carmen Beroiza Beroiza	77639015-1	PMCB	7220635-5	722063	Sin Mail	Ayudante	App Conductor	No Aplica	RM	No Aplica	56984174349
+29	10453630-1	Merced Patricio Cheuquian Rumian 	77639015-1	Pmcb	10453630-1	104536	Sin Mail	Conductor A5	App Conductor	A4	RM	2027-01-01 00:00:00	56988871349
+30	19842998-8	Perez Molina, Valentin Alejandro	77639015-1	PMCB	19842998-8	198429	Sin Mail	Ayudante	App Conductor	No Aplica	RM	No Aplica	56982959708
+31	13559367-2	Nicolas Gabriel Gonzalez Zambrano	77346078-7	4N	13559367-2	135593	Sin Mail	Coodinador Temuco	App Conductor	No Aplica	TMCO	No Aplica	56969032094
+32	12024301-2	Raul Antonio Neira Cardenas	77639015-1	PMCB	12024301-2	120243	Sin Mail	Conductor	App Conductor	A4	TMCO	2027-01-01 00:00:00	56987630228
+33	10853448-6	Macser Bernardo Cartes Jara	77639015-1	PMCB	10853448-6	108534	Sin Mail	Conductor	App Conductor	A4	TMCO	2027-01-01 00:00:00	56989999314
+34	15656855-4	Jonatan José Pino Lagos	77639015-1	Pmcb	15656855-4	156568	Sin Mail	Conductor	App Conductor	A4	TMCO	2027-01-01 00:00:00	56963899127
+35	20824827-8	Daniel Echague Pardo	77201525-9	DS GROUP SPA	20824827-8	208248	Sin Mail	Conductor	App Conductor	A2-B-D	RM	2027-01-01 00:00:00	56963918190
+36	11348815-8	Guillermo Raul Guevara Candia	78464442-1	GRC LOGÍSTICA Y DISTRIBUCIÓN SPA	11348815-8	113488	Sin Mail	Conductor	App Conductor	B-D	RM	2027-01-01 00:00:00	56972660346
+37	8114358-7	Sergio Humberto Toro Delson	77201525-9	DS GROUP SPA	8114358-7	811435	Sin Mail	Conductor	App Conductor	A1 ANTIGUA	RM	2027-01-01 00:00:00	56986902807
+38	20341697-0	Homero Pardo	77201525-9	DS GROUP SPA	20341697-0	203416	Sin Mail	Conductor	App Conductor	A4-B-D	RM	2027-01-01 00:00:00	56984234704
+39	10629309-0	Jorge tarbes	10629309-0	Jorge Luis Tarbes Vergara	10629309-0	106293	Sin Mail	Conductor	App Conductor	B	RM	2027-01-01 00:00:00	56998213853
+40	64860771	Victor Efrain Torres Figueroa	77390761-7	TRANSPORTE BAG SPA - CONTADO	64860771	648607	Sin Mail	Conductor	App Conductor	A4	RM	2027-01-01 00:00:00	56949049513
+41	12007929-8	Cristian Rubilar	15474387-1	Maria Jose Boada Gonzalez	12007929-8	120079	Sin Mail	Conductor	App Conductor	A2-A4-C	RM	2027-01-01 00:00:00	56957819766
