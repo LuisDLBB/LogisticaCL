@@ -307,6 +307,27 @@ class CourierParameterReviewTest extends TestCase
             ->assertSee('STANDART REGIONES');
     }
 
+    public function test_cost_center_keys_can_be_browsed_by_client_or_provider(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $client = Client::create(['tenant_id' => $tenant->id, 'tax_id' => '12345678-5', 'tax_id_number' => '12345678', 'tax_id_check_digit' => '5', 'source_merchant_name' => 'Cliente Navegable', 'commercial_name' => 'Cliente Navegable', 'legal_name' => 'Cliente Navegable SPA']);
+        $provider = Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '11111111-1', 'tax_id_number' => '11111111', 'tax_id_check_digit' => '1', 'legal_name' => 'Proveedor Navegable', 'operator_type' => 'Courier']);
+        $service = ServiceType::factory()->create(['service_code' => 88, 'name' => 'Servicio Navegable']);
+        CostCenterKey::create([
+            'tenant_id' => $tenant->id, 'provider_id' => $provider->id, 'client_id' => $client->id, 'service_type_id' => $service->id,
+            'provider_tax_id' => $provider->tax_id, 'agent_name' => 'Agencia Navegable', 'client_tax_id' => $client->tax_id,
+            'merchant_name' => $client->source_merchant_name, 'service_code' => $service->service_code, 'service_name' => $service->name,
+            'key_code' => '11111111-1/12345678-5/88', 'key_text' => 'Llave navegable', 'payment_status' => 'SI', 'is_active' => true,
+        ]);
+
+        $this->get(route('provider-payments.maintainers.llave-centro-costos', ['vista' => 'cliente']))
+            ->assertOk()->assertSee('Ver por cliente')->assertSee('Ver por proveedor')
+            ->assertSee('Cliente Navegable')->assertSee('Servicio Navegable')->assertSee('Proveedor Navegable');
+
+        $this->get(route('provider-payments.maintainers.llave-centro-costos', ['vista' => 'proveedor']))
+            ->assertOk()->assertSee('Proveedor Navegable')->assertSee('Cliente Navegable')->assertSee('Servicio Navegable');
+    }
+
     public function test_ready_file_loads_movements_and_can_replace_duplicates(): void
     {
         Storage::fake('local');
@@ -500,7 +521,7 @@ class CourierParameterReviewTest extends TestCase
         $this->get(route('provider-payments.maintainers.vehiculos'))->assertOk()->assertSee('Nuevo vehículo');
         $this->get(route('provider-payments.maintainers.estados'))->assertOk()->assertSee('El nombre permanece protegido');
         $this->get(route('provider-payments.maintainers.coberturas'))->assertOk()->assertSee('Crear cobertura');
-        $this->get(route('provider-payments.maintainers.llave-centro-costos'))->assertOk()->assertSee('Nueva llave');
+        $this->get(route('provider-payments.maintainers.llave-centro-costos'))->assertOk()->assertSee('Crear nueva llave');
     }
 
     public function test_provider_bank_and_account_type_are_limited_to_the_master_tables(): void

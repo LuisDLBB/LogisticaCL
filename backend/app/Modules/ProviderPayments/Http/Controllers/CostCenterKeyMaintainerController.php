@@ -24,9 +24,16 @@ class CostCenterKeyMaintainerController
         $merchantName = trim((string) $request->query('merchant'));
         $serviceName = trim((string) $request->query('service'));
         if ($merchantName === '' || $serviceName === '') {
+            $keys = CostCenterKey::query()->where('tenant_id', $tenant->id)
+                ->with(['provider', 'client', 'serviceType', 'costCenter'])
+                ->orderBy('merchant_name')->orderBy('service_name')->orderBy('provider_tax_id')->get();
+
             return view('provider-payments::cost-center-keys-index', [
-                'keys' => CostCenterKey::query()->where('tenant_id', $tenant->id)->with(['provider', 'client', 'serviceType', 'costCenter'])->latest()->limit(500)->get(),
-                'total' => CostCenterKey::query()->where('tenant_id', $tenant->id)->count(),
+                'keys' => $keys,
+                'keysByClient' => $keys->groupBy(fn (CostCenterKey $key): string => (string) ($key->client_id ?: 'merchant:'.$key->merchant_name)),
+                'keysByProvider' => $keys->groupBy(fn (CostCenterKey $key): string => (string) ($key->provider_id ?: 'rut:'.$key->provider_tax_id)),
+                'viewMode' => $request->query('vista') === 'proveedor' ? 'proveedor' : 'cliente',
+                'total' => $keys->count(),
                 'providers' => Provider::query()->where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('legal_name')->get(),
                 'clients' => Client::query()->where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('source_merchant_name')->get(),
                 'services' => ServiceType::query()->where('is_active', true)->orderBy('name')->get(),
