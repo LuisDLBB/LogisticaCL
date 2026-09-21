@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Banco;
 use App\Models\Client;
 use App\Models\CostCenter;
 use App\Models\CostCenterKey;
@@ -12,9 +13,12 @@ use App\Models\Provider;
 use App\Models\ProviderBankAccount;
 use App\Models\ServiceType;
 use App\Models\Tenant;
+use App\Models\TipoCuentaBancaria;
 use App\Models\Vehicle;
 use App\Models\WeightTransformation;
 use App\Modules\ProviderPayments\ParameterReview;
+use Database\Seeders\BancoSeeder;
+use Database\Seeders\TipoCuentaBancariaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -487,14 +491,48 @@ class CourierParameterReviewTest extends TestCase
     public function test_operational_master_pages_render_existing_records(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        Banco::create(['id_banco' => 99, 'banco' => 'Banco Prueba', 'codigo_sbif' => 999, 'nombre_entidad_financiera' => 'Entidad Financiera de Prueba', 'marcas_productos_asociados' => 'Marca Prueba']);
         $provider = Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '11111111-1', 'tax_id_number' => '11111111', 'tax_id_check_digit' => '1', 'legal_name' => 'Proveedor Visible', 'operator_type' => 'Courier']);
         ProviderBankAccount::create(['provider_id' => $provider->id, 'account_holder_name' => 'Proveedor Visible', 'account_holder_tax_id' => '11111111-1', 'bank_name' => 'Banco Prueba', 'account_type' => 'Corriente', 'account_number' => '123456789']);
 
-        $this->get(route('provider-payments.maintainers.proveedores'))->assertOk()->assertSee('Proveedor Visible');
-        $this->get(route('provider-payments.maintainers.bancos'))->assertOk()->assertSee('Banco Prueba')->assertDontSee('123456789');
+        $this->get(route('provider-payments.maintainers.proveedores'))->assertOk()->assertSee('Proveedor Visible')->assertSee('Banco Prueba')->assertSee('•••• 6789')->assertDontSee('123456789');
+        $this->get(route('provider-payments.maintainers.bancos'))->assertOk()->assertSee('Banco Prueba')->assertSee('Entidad Financiera de Prueba')->assertDontSee('Proveedor Visible')->assertDontSee('123456789');
         $this->get(route('provider-payments.maintainers.vehiculos'))->assertOk()->assertSee('Nuevo vehículo');
         $this->get(route('provider-payments.maintainers.estados'))->assertOk()->assertSee('El nombre permanece protegido');
         $this->get(route('provider-payments.maintainers.coberturas'))->assertOk()->assertSee('Crear cobertura');
         $this->get(route('provider-payments.maintainers.llave-centro-costos'))->assertOk()->assertSee('Nueva llave');
+    }
+
+    public function test_provider_bank_and_account_type_are_limited_to_the_master_tables(): void
+    {
+        $this->seed([BancoSeeder::class, TipoCuentaBancariaSeeder::class]);
+
+        $this->assertDatabaseCount('bancos', 26);
+        $this->assertDatabaseHas('bancos', ['id_banco' => 1, 'banco' => 'Banco Chile', 'codigo_sbif' => 1]);
+        $this->assertDatabaseHas('bancos', ['id_banco' => 26, 'banco' => 'Lautaro', 'codigo_sbif' => 677]);
+        $this->assertDatabaseCount('tipos_cuenta_bancaria', 4);
+        $this->assertSame(
+            ['Cuenta Corriente', 'Cuenta Vista', 'Cuenta RUT', 'Cuenta Ahorro'],
+            TipoCuentaBancaria::query()->orderBy('id_tipo_cuenta')->pluck('tipo_cuenta')->all(),
+        );
+
+        $this->get(route('provider-payments.maintainers.proveedores'))
+            ->assertOk()
+            ->assertSee('Banco Chile · SBIF 1')
+            ->assertSee('Cuenta Corriente')
+            ->assertSee('Cuenta Vista')
+            ->assertSee('Cuenta RUT')
+            ->assertSee('Cuenta Ahorro');
+
+        $this->post(route('provider-payments.maintainers.proveedores.store'), [
+            'tax_id' => '22222222-2',
+            'legal_name' => 'Proveedor con datos inválidos',
+            'operator_type' => 'Courier',
+            'bank_name' => 'Banco inexistente',
+            'account_type' => 'Cuenta inventada',
+            'account_number' => '123456',
+        ])->assertSessionHasErrors(['bank_name', 'account_type']);
+
+        $this->assertDatabaseMissing('providers', ['tax_id' => '22222222-2']);
     }
 }

@@ -16,5 +16,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(MasterDataSeeder::class);
         $this->call(TipoEnvioSeeder::class);
+        $this->call(BancoSeeder::class);
+        $this->call(TipoCuentaBancariaSeeder::class);
     }
 }
