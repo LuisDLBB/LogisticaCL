@@ -40,7 +40,7 @@
             <label>Teléfono<input name="contact_phone" value="{{ old('contact_phone') }}"></label>
             <label class="wide">Correo<input type="email" name="contact_email" value="{{ old('contact_email') }}"></label>
             <h3 class="form-section">Cuenta bancaria del proveedor</h3>
-            <label>Banco<select name="bank_name"><option value="">Sin cuenta bancaria</option>@foreach($banks as $bank)<option value="{{ $bank->banco }}" @selected(old('bank_name') === $bank->banco)>{{ $bank->banco }} · SBIF {{ $bank->codigo_sbif }}</option>@endforeach</select></label>
+            <label>Banco<select name="bank_name"><option value="">Sin cuenta bancaria</option>@foreach($banks as $bank)<option value="{{ $bank->banco }}" @selected(old('bank_name') === $bank->banco)>{{ $bank->banco }}</option>@endforeach</select></label>
             <label>Tipo de cuenta<select name="account_type"><option value="">Selecciona un tipo</option>@foreach($accountTypes as $accountType)<option value="{{ $accountType->tipo_cuenta }}" @selected(old('account_type') === $accountType->tipo_cuenta)>{{ $accountType->tipo_cuenta }}</option>@endforeach</select></label>
             <label class="wide">Número de cuenta<input name="account_number" value="{{ old('account_number') }}"></label>
             @if($errors->any())<p class="warning wide">{{ $errors->first() }}</p>@endif
@@ -67,7 +67,7 @@
                     <label>Correo<input type="email" name="contact_email" value="{{ $provider->contact_email }}"></label>
                     <label>Estado<select name="is_active"><option value="1" @selected($provider->is_active)>Activo</option><option value="0" @selected(!$provider->is_active)>Inactivo</option></select></label>
                     <h3 class="form-section">Cuenta bancaria del proveedor</h3>
-                    <label>Banco<select name="bank_name"><option value="">Sin cuenta bancaria</option>@foreach($banks as $bank)<option value="{{ $bank->banco }}" @selected($bankAccount?->bank_name === $bank->banco)>{{ $bank->banco }} · SBIF {{ $bank->codigo_sbif }}</option>@endforeach</select></label>
+                    <label>Banco<select name="bank_name"><option value="">Sin cuenta bancaria</option>@foreach($banks as $bank)<option value="{{ $bank->banco }}" @selected($bankAccount?->bank_name === $bank->banco)>{{ $bank->banco }}</option>@endforeach</select></label>
                     <label>Tipo de cuenta<select name="account_type"><option value="">Selecciona un tipo</option>@foreach($accountTypes as $accountType)<option value="{{ $accountType->tipo_cuenta }}" @selected($bankAccount?->account_type === $accountType->tipo_cuenta)>{{ $accountType->tipo_cuenta }}</option>@endforeach</select></label>
                     <label class="wide">Número de cuenta<input name="account_number" value="" placeholder="{{ $bankAccount ? $bankAccount->maskedAccountNumber().' · dejar vacío para conservar' : 'Ingresa el número de cuenta' }}"></label>
                     <button class="wide" type="submit">Guardar cambios seguros</button>

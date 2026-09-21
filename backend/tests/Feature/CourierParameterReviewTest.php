@@ -518,7 +518,8 @@ class CourierParameterReviewTest extends TestCase
 
         $this->get(route('provider-payments.maintainers.proveedores'))
             ->assertOk()
-            ->assertSee('Banco Chile · SBIF 1')
+            ->assertSee('Banco Chile')
+            ->assertDontSee('Banco Chile · SBIF 1')
             ->assertSee('Cuenta Corriente')
             ->assertSee('Cuenta Vista')
             ->assertSee('Cuenta RUT')

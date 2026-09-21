@@ -33,10 +33,10 @@
         <h2>Bancos creados <span class="note">({{ $banks->count() }})</span></h2>
         @forelse($banks as $bank)
             <details class="record">
-                <summary>IDBanco {{ $bank->id_banco }} · {{ $bank->banco }} · SBIF {{ $bank->codigo_sbif }} <span class="badge {{ $bank->is_active ? '' : 'off' }}">{{ $bank->is_active ? 'Activo' : 'Inactivo' }}</span><br><span class="record-meta">{{ $bank->nombre_entidad_financiera }} · {{ $bank->marcas_productos_asociados }}</span></summary>
+                <summary>{{ $bank->banco }} <span class="badge {{ $bank->is_active ? '' : 'off' }}">{{ $bank->is_active ? 'Activo' : 'Inactivo' }}</span><br><span class="record-meta">{{ $bank->nombre_entidad_financiera }} · {{ $bank->marcas_productos_asociados }}</span></summary>
                 <form class="form-grid" method="post" action="{{ route('provider-payments.maintainers.bancos.update', $bank) }}">
                     @csrf @method('PUT')
-                    <div class="protected wide"><strong>Llaves protegidas:</strong> IDBanco {{ $bank->id_banco }} · Código SBIF {{ $bank->codigo_sbif }}</div>
+                    <div class="protected wide"><strong>Identificadores internos protegidos.</strong></div>
                     <label>Banco<input name="banco" value="{{ $bank->banco }}" required></label>
                     <label>Estado<select name="is_active"><option value="1" @selected($bank->is_active)>Activo</option><option value="0" @selected(!$bank->is_active)>Inactivo</option></select></label>
                     <label class="wide">Nombre de la entidad financiera<input name="nombre_entidad_financiera" value="{{ $bank->nombre_entidad_financiera }}" required></label>
