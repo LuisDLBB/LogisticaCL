@@ -54,6 +54,16 @@ class CourierMovementCompileController
 
     public function work(Request $request): View
     {
+        $filters = $request->validate([
+            'zone' => ['nullable', 'string', 'max:150'],
+            'matrix' => ['nullable', 'string', 'max:150'],
+            'client' => ['nullable', 'string', 'max:255'],
+            'operational_name' => ['nullable', 'string', 'max:255'],
+            'document_type' => ['nullable', 'string', 'max:100'],
+            'delivery_user' => ['nullable', 'string', 'max:160'],
+            'company' => ['nullable', 'string', 'max:20'],
+        ]);
+        $filters = array_map(fn ($value): string => trim((string) $value), $filters);
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $periods = CourierMovement::query()->where('tenant_id', $tenant->id)
             ->where('nombre_proceso', 'like', '______-%')
@@ -67,9 +77,22 @@ class CourierMovementCompileController
             ->selectRaw('nombre_proceso, COUNT(*) AS total')->groupBy('nombre_proceso')->orderBy('nombre_proceso')->get();
         $compiled = $period === '' ? collect() : CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
             ->where('periodo', $period)->selectRaw('nombre_proceso, COUNT(*) AS total')->groupBy('nombre_proceso')->pluck('total', 'nombre_proceso');
-        $rows = CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
-            ->when($period !== '', fn ($query) => $query->where('periodo', $period), fn ($query) => $query->whereRaw('1 = 0'))
-            ->orderByDesc('id')->paginate(100)->withQueryString();
+        $rowsQuery = CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
+            ->when($period !== '', fn ($query) => $query->where('periodo', $period), fn ($query) => $query->whereRaw('1 = 0'));
+        foreach (['zone' => 'zona', 'matrix' => 'comuna_matriz', 'operational_name' => 'nombre_operacional', 'document_type' => 'tipo_documento', 'delivery_user' => 'usuario_entrega', 'company' => 'empresa_mandante'] as $filter => $column) {
+            if (($filters[$filter] ?? '') !== '') {
+                $rowsQuery->where($column, 'like', '%'.$filters[$filter].'%');
+            }
+        }
+        if (($filters['client'] ?? '') !== '') {
+            $search = '%'.$filters['client'].'%';
+            $rowsQuery->where(function ($query) use ($search): void {
+                $query->where('comerciante_pila', 'like', $search)
+                    ->orWhere('rut_cliente', 'like', $search)
+                    ->orWhere('razon_social_cliente', 'like', $search);
+            });
+        }
+        $rows = $rowsQuery->orderByDesc('id')->paginate(100)->withQueryString();
         $nonPayableStatuses = CourierStatus::query()->where('consider_for_payment', false)->orderBy('name')->pluck('name');
         $nonPayableCounts = $period === '' ? collect() : CourierPaymentMovement::query()
             ->where('tenant_id', $tenant->id)->where('periodo', $period)
@@ -79,7 +102,7 @@ class CourierMovementCompileController
             ->where('tenant_id', $tenant->id)->where('periodo', $period)
             ->where('rut_proveedor', '77346078-7')->whereIn('comuna_matriz', ['4N RM', '4N Temuco'])->count();
 
-        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates'));
+        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates', 'filters'));
     }
 
     public function updateFourNorthProviders(Request $request): RedirectResponse
