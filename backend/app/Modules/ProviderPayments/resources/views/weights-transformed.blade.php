@@ -7,7 +7,7 @@
 @endpush
 @section('content')
 <a class="back" href="{{ route('provider-payments.dashboard') }}">← Pago a Proveedores</a><p class="eyebrow">Mantenedor de pesos</p><h1>Peso Transformado</h1><p class="intro">Administra la equivalencia entre cada Peso Fuente recibido y el Peso Transformado utilizado por el proceso.</p>
-<nav class="weight-tabs"><a class="active" href="{{ route('provider-payments.maintainers.pesos.transformados') }}">Peso Transformado</a><a href="{{ route('provider-payments.maintainers.pesos.reales') }}">Peso Real</a></nav>
+<nav class="weight-tabs"><a class="active" href="{{ route('provider-payments.maintainers.pesos.transformados') }}">Peso Transformado</a></nav>
 @if(session('status'))<div class="status">{{ session('status') }}</div>@endif
 <div class="summary"><div class="card"><span class="note">Pesos fuente registrados</span><div class="metric">{{ number_format($weights->count(), 0, ',', '.') }}</div></div><div class="card"><span class="note">Equivalencias activas</span><div class="metric">{{ number_format($weights->where('is_active', true)->count(), 0, ',', '.') }}</div></div></div>
 <div class="weight-actions"><h2>Equivalencias registradas</h2><a class="button" href="{{ route('provider-payments.maintainers.pesos.transformados', ['discover' => 1]) }}">Buscar nuevos pesos</a></div>
