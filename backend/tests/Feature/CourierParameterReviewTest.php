@@ -303,6 +303,7 @@ class CourierParameterReviewTest extends TestCase
         CostCenter::updateOrCreate(['cost_center_code' => 3], ['dispatch_guide_detail' => 'Centro 3', 'additional_kilo_value' => 0, 'is_active' => true]);
         $template = CostCenterKey::create(['tenant_id' => $tenant->id, 'provider_tax_id' => '11111111-1', 'agent_name' => 'Agente Plantilla', 'client_tax_id' => '22222222-2', 'merchant_name' => 'Plantilla', 'service_code' => 99, 'service_name' => 'Servicio Nuevo', 'key_code' => '11111111-1/22222222-2/99', 'key_text' => 'Plantilla', 'payment_status' => 'SI', 'cost_center_code' => 2, 'is_active' => true]);
         $secondTemplate = CostCenterKey::create(['tenant_id' => $tenant->id, 'provider_tax_id' => '33333333-3', 'agent_name' => 'Segundo Agente', 'client_tax_id' => '22222222-2', 'merchant_name' => 'Plantilla', 'service_code' => 99, 'service_name' => 'Servicio Nuevo', 'key_code' => '33333333-3/22222222-2/99', 'key_text' => 'Plantilla 2', 'payment_status' => 'NO', 'cost_center_code' => 3, 'is_active' => true]);
+        CostCenterKey::create(['tenant_id' => $tenant->id, 'provider_tax_id' => '44444444-4', 'agent_name' => 'Llave heredada', 'client_tax_id' => '#N/D', 'merchant_name' => 'Cliente Nuevo', 'service_code' => 99, 'service_name' => 'Servicio Nuevo', 'key_code' => '44444444-4/#N/D/99', 'key_text' => 'Llave heredada', 'payment_status' => 'SI', 'cost_center_code' => 2, 'is_active' => true]);
         $batchId = (string) Str::uuid();
         CourierImportError::create(['tenant_id' => $tenant->id, 'batch_id' => $batchId, 'file_name' => 'prueba.csv', 'category' => 'services', 'source_key' => 'Cliente Nuevo → Servicio Nuevo', 'source_values' => ['Cliente Nuevo', 'Servicio Nuevo'], 'affected_records' => 2, 'action' => 'Crear combinación', 'status' => 'PENDIENTE']);
 
@@ -317,6 +318,7 @@ class CourierParameterReviewTest extends TestCase
         $this->assertDatabaseHas('llave_centro_costos', ['client_id' => $client->id, 'agent_name' => 'Agente Editado']);
         $this->assertDatabaseHas('llave_centro_costos', ['tenant_id' => $tenant->id, 'client_id' => $client->id, 'service_type_id' => $service->id, 'provider_tax_id' => '33333333-3', 'payment_status' => 'NO', 'cost_center_code' => 3, 'key_code' => '33333333-3/12345678-5/99']);
         $this->assertSame(2, CostCenterKey::query()->where('client_id', $client->id)->where('service_type_id', $service->id)->count());
+        $this->assertDatabaseMissing('llave_centro_costos', ['tenant_id' => $tenant->id, 'client_id' => null, 'merchant_name' => 'Cliente Nuevo', 'service_code' => 99]);
         $this->assertDatabaseHas('client_service_type', ['client_id' => $client->id, 'service_type_id' => $service->id, 'is_active' => true]);
         $this->assertDatabaseHas('courier_import_errors', ['batch_id' => $batchId, 'source_key' => 'Cliente Nuevo → Servicio Nuevo', 'status' => 'RESUELTO']);
     }

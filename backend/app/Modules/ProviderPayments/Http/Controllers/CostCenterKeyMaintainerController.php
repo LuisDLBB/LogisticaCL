@@ -119,8 +119,14 @@ class CostCenterKeyMaintainerController
         }
 
         DB::transaction(function () use ($client, $service, $templateRows, $validated): void {
-            CostCenterKey::query()->where('tenant_id', $client->tenant_id)->where('client_id', $client->id)
-                ->where('service_type_id', $service->id)->delete();
+            CostCenterKey::query()
+                ->where('tenant_id', $client->tenant_id)
+                ->where('service_code', $service->service_code)
+                ->where(function ($query) use ($client): void {
+                    $query->where('client_id', $client->id)
+                        ->orWhereRaw('LOWER(TRIM(merchant_name)) = ?', [mb_strtolower(trim($client->source_merchant_name))]);
+                })
+                ->delete();
             foreach ($validated['rows'] as $submittedRow) {
                 $template = $templateRows->get((int) $submittedRow['source_id']);
                 $key = $template->replicate();
