@@ -193,19 +193,23 @@ class CourierMovementImportController
         $tenants = $tenant ? collect([$tenant]) : collect();
 
         $groups = $snapshot ? $reviewer->compare($snapshot['groups'], $tenant?->id) : [];
+        $excludedServices = $request->session()->get('courier_review_exclusions.services', []);
         if ($snapshot && $tenant) {
-            $this->syncErrors($snapshot, $groups, $tenant->id, $request->session()->get('courier_review_exclusions.coverages', []));
+            $this->syncErrors($snapshot, $groups, $tenant->id, $request->session()->get('courier_review_exclusions.coverages', []), $excludedServices);
         }
         $resolvedCoverageKeys = array_merge(
             $request->session()->get('courier_review_exclusions.coverages', []),
             array_keys($request->session()->get('courier_review_corrections.coverages', [])),
         );
         $groups = $this->hideExcludedCoverages($groups, $resolvedCoverageKeys);
+        $groups = $this->hideExcludedGroupItems($groups, 'services', $excludedServices);
 
         return view('provider-payments::courier-movements-parameters', [
             'snapshot' => $snapshot, 'tenants' => $tenants, 'tenant' => $tenant,
             'groups' => $groups,
             'excludedCoverages' => $request->session()->get('courier_review_exclusions.coverages', []),
+            'excludedServices' => $excludedServices,
+            'serviceComments' => $request->session()->get('courier_review_comments.services', []),
             'coverageComments' => $request->session()->get('courier_review_comments.coverages', []),
             'coverageCorrections' => $request->session()->get('courier_review_corrections.coverages', []),
             'coverageOptions' => $tenant ? Coverage::query()->where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('commune_name')->pluck('commune_name')->unique()->values() : collect(),
@@ -240,6 +244,7 @@ class CourierMovementImportController
                 array_keys($request->session()->get('courier_review_corrections.coverages', [])),
             ),
         );
+        $groups = $this->hideExcludedGroupItems($groups, 'services', $request->session()->get('courier_review_exclusions.services', []));
         if ($snapshot['missing_columns'] !== [] || collect($groups)->contains(fn (array $group): bool => $group['items'] !== [])) {
             return redirect()->route('provider-payments.courier-movements.review-parameters')
                 ->withErrors(['import' => 'Todavía existen parámetros pendientes. Corrígelos antes de cargar movimientos.']);
@@ -255,6 +260,7 @@ class CourierMovementImportController
             $processName,
             $processType === 'variables' ? 'Variables' : $processSuffix,
             $processType,
+            $request->session()->get('courier_review_exclusions.services', []),
         );
         Storage::disk('local')->delete($snapshot['stored_path']);
         $request->session()->forget(['courier_review', 'courier_review_exclusions', 'courier_review_comments', 'courier_review_corrections']);
@@ -304,6 +310,32 @@ class CourierMovementImportController
         return redirect()->route('provider-payments.courier-movements.review-parameters')->with('status', 'La selección de registros que no se cargarán quedó guardada.');
     }
 
+    public function excludeServices(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'service_errors' => ['nullable', 'array'],
+            'service_errors.*.source_key' => ['required', 'string', 'max:500'],
+            'service_errors.*.exclude' => ['nullable', 'boolean'],
+            'service_errors.*.comment' => ['nullable', 'string', 'max:2000'],
+        ]);
+        $rows = $validated['service_errors'] ?? [];
+        $excluded = collect($rows)->filter(fn (array $row): bool => (bool) ($row['exclude'] ?? false))->pluck('source_key')->unique()->values()->all();
+        $comments = collect($rows)->mapWithKeys(fn (array $row): array => [$row['source_key'] => trim((string) ($row['comment'] ?? ''))])->all();
+        $request->session()->put('courier_review_exclusions.services', $excluded);
+        $request->session()->put('courier_review_comments.services', $comments);
+
+        $snapshot = $request->session()->get('courier_review');
+        if ($snapshot) {
+            CourierImportError::query()->where('batch_id', $snapshot['batch_id'])->where('category', 'services')->update(['exclude_from_import' => false, 'status' => 'PENDIENTE']);
+            CourierImportError::query()->where('batch_id', $snapshot['batch_id'])->where('category', 'services')->whereIn('source_key', $excluded)->update(['exclude_from_import' => true, 'status' => 'NO_CARGAR']);
+            foreach ($comments as $sourceKey => $comment) {
+                CourierImportError::query()->where('batch_id', $snapshot['batch_id'])->where('category', 'services')->where('source_key', $sourceKey)->update(['comment' => $comment ?: null]);
+            }
+        }
+
+        return redirect()->route('provider-payments.courier-movements.review-parameters')->with('status', 'Los servicios que no se cargarán quedaron guardados.');
+    }
+
     public function downloadErrors(Request $request): StreamedResponse
     {
         $snapshot = $request->session()->get('courier_review');
@@ -321,18 +353,24 @@ class CourierMovementImportController
         }, 'errores_'.$snapshot['batch_id'].'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
-    private function syncErrors(array $snapshot, array $groups, int $tenantId, array $excludedCoverages): void
+    private function syncErrors(array $snapshot, array $groups, int $tenantId, array $excludedCoverages, array $excludedServices): void
     {
         $batchId = $snapshot['batch_id'] ?? (string) Str::uuid();
         $comments = session('courier_review_comments.coverages', []);
+        $serviceComments = session('courier_review_comments.services', []);
         CourierImportError::query()->where('batch_id', $batchId)->update(['status' => 'RESUELTO']);
         foreach ($groups as $group) {
             foreach ($group['items'] as $item) {
                 $sourceKey = implode(' → ', $item['values']);
-                $excluded = $group['key'] === 'coverages' && in_array($sourceKey, $excludedCoverages, true);
+                $excluded = ($group['key'] === 'coverages' && in_array($sourceKey, $excludedCoverages, true))
+                    || ($group['key'] === 'services' && in_array($sourceKey, $excludedServices, true));
                 CourierImportError::query()->updateOrCreate(
                     ['batch_id' => $batchId, 'category' => $group['key'], 'source_key' => $sourceKey],
-                    ['tenant_id' => $tenantId, 'file_name' => $snapshot['file'], 'source_values' => $item['values'], 'affected_records' => $item['count'], 'action' => $item['action'], 'status' => $excluded ? 'NO_CARGAR' : 'PENDIENTE', 'exclude_from_import' => $excluded, 'comment' => $group['key'] === 'coverages' ? ($comments[$sourceKey] ?? null) : null],
+                    ['tenant_id' => $tenantId, 'file_name' => $snapshot['file'], 'source_values' => $item['values'], 'affected_records' => $item['count'], 'action' => $item['action'], 'status' => $excluded ? 'NO_CARGAR' : 'PENDIENTE', 'exclude_from_import' => $excluded, 'comment' => match ($group['key']) {
+                        'coverages' => $comments[$sourceKey] ?? null,
+                        'services' => $serviceComments[$sourceKey] ?? null,
+                        default => null,
+                    }],
                 );
             }
         }
@@ -348,6 +386,20 @@ class CourierMovementImportController
                 $group['items'],
                 fn (array $item): bool => ! in_array(implode(' → ', $item['values']), $excludedCoverages, true),
             ));
+            $group['affected'] = array_sum(array_column($group['items'], 'count'));
+        }
+        unset($group);
+
+        return $groups;
+    }
+
+    private function hideExcludedGroupItems(array $groups, string $groupKey, array $excludedKeys): array
+    {
+        foreach ($groups as &$group) {
+            if ($group['key'] !== $groupKey) {
+                continue;
+            }
+            $group['items'] = array_values(array_filter($group['items'], fn (array $item): bool => ! in_array(implode(' → ', $item['values']), $excludedKeys, true)));
             $group['affected'] = array_sum(array_column($group['items'], 'count'));
         }
         unset($group);
@@ -384,7 +436,7 @@ class CourierMovementImportController
     }
 
     /** @return array{created:int,replaced:int,duplicates:int,excluded:int,invalid:int,total:int} */
-    private function importStoredFile(string $path, string $extension, int $tenantId, bool $replaceDuplicates, array $excludedCommunes, array $correctedCommunes, string $processName, string $paymentType, string $processType): array
+    private function importStoredFile(string $path, string $extension, int $tenantId, bool $replaceDuplicates, array $excludedCommunes, array $correctedCommunes, string $processName, string $paymentType, string $processType, array $excludedServices): array
     {
         $reader = $extension === 'csv' ? new CsvReader(new CsvOptions(FIELD_DELIMITER: $this->detectCsvDelimiter($path))) : new XlsxReader;
         $clients = Client::query()->where('tenant_id', $tenantId)->where('is_active', true)->get()
@@ -392,6 +444,7 @@ class CourierMovementImportController
         $weights = WeightTransformation::query()->where('tenant_id', $tenantId)->where('is_active', true)->get()->keyBy('comparison_key');
         $excluded = collect($excludedCommunes)->map(fn (string $value): string => $this->comparisonKey($value))->flip();
         $corrections = collect($correctedCommunes)->mapWithKeys(fn (string $commune, string $source): array => [$this->comparisonKey($source) => $commune]);
+        $excludedServiceKeys = collect($excludedServices)->map(fn (string $value): string => $this->comparisonKey($value))->flip();
         $result = ['created' => 0, 'replaced' => 0, 'duplicates' => 0, 'excluded' => 0, 'invalid' => 0, 'total' => 0];
         $seenTrackings = [];
         $reader->open($path);
@@ -437,6 +490,12 @@ class CourierMovementImportController
                 }
                 $commune = $corrections->get($coverageKey, $commune);
                 $merchant = trim($this->rowValue($values, $indexes, ['comerciante']));
+                $service = trim($this->rowValue($values, $indexes, ['servicio']));
+                if ($excludedServiceKeys->has($this->comparisonKey($merchant.' → '.$service))) {
+                    $result['excluded']++;
+
+                    continue;
+                }
                 $client = $clients->get($this->comparisonKey($merchant));
                 $weightSource = trim($this->rowValue($values, $indexes, ['peso']));
                 $weightNumber = $this->number($weightSource) ?? 1;
@@ -453,7 +512,7 @@ class CourierMovementImportController
                     'weight_kg' => $weightNumber, 'peso_real' => null, 'peso_transformado' => $transformedWeight, 'peso_final' => null, 'tipo_pago' => $paymentType, 'nombre_proceso' => $processName,
                     'length_cm' => $this->number($this->rowValue($values, $indexes, ['largo'])), 'width_cm' => $this->number($this->rowValue($values, $indexes, ['ancho'])), 'height_cm' => $this->number($this->rowValue($values, $indexes, ['alto'])),
                     'status' => $this->nullable($this->rowValue($values, $indexes, ['estado de entrega', 'estado'])), 'delivery_attempts' => (int) ($this->number($this->rowValue($values, $indexes, ['intentos de entrega'])) ?? 0),
-                    'merchant_name' => $this->nullable($merchant), 'service_name' => $this->nullable($this->rowValue($values, $indexes, ['servicio'])), 'campaign_name' => $this->nullable($this->rowValue($values, $indexes, ['nombre de campana'])),
+                    'merchant_name' => $this->nullable($merchant), 'service_name' => $this->nullable($service), 'campaign_name' => $this->nullable($this->rowValue($values, $indexes, ['nombre de campana'])),
                     'recipient_name' => $this->encrypted($recipientName), 'recipient_company_name' => $this->encrypted($this->rowValue($values, $indexes, ['empresa del destinatario'])), 'recipient_address' => $this->encrypted($address),
                     'destination_commune_name' => $this->nullable($commune), 'recipient_phone' => $this->encrypted($this->rowValue($values, $indexes, ['telefono del destinatario'])), 'recipient_email' => $this->encrypted($this->rowValue($values, $indexes, ['email del destinatario'])),
                     'declared_value' => $this->number($this->rowValue($values, $indexes, ['valor'])) ?? 0, 'received_at' => $this->dateTime($this->rowValue($values, $indexes, ['fecha de recepcion'])), 'estimated_delivery_date' => $this->dateTime($this->rowValue($values, $indexes, ['entrega estimada']), true), 'delivered_at' => $this->dateTime($this->rowValue($values, $indexes, ['fecha de entrega'])),

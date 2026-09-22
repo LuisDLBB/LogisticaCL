@@ -464,6 +464,37 @@ class CourierParameterReviewTest extends TestCase
         $this->assertDatabaseHas('courier_import_errors', ['batch_id' => $snapshot['batch_id'], 'source_key' => '#N/D', 'status' => 'NO_CARGAR', 'comment' => 'Sin comuna identificable']);
     }
 
+    public function test_pending_service_can_be_excluded_to_continue_the_import(): void
+    {
+        Storage::fake('local');
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $client = Client::create(['tenant_id' => $tenant->id, 'tax_id' => '12345678-5', 'tax_id_number' => '12345678', 'tax_id_check_digit' => '5', 'source_merchant_name' => 'Solventa', 'commercial_name' => 'Solventa', 'legal_name' => 'Solventa SPA']);
+        $validService = ServiceType::create(['service_code' => 90, 'name' => 'Servicio Válido', 'is_active' => true]);
+        $client->serviceTypes()->attach($validService->id, ['is_active' => true]);
+        WeightTransformation::create(['tenant_id' => $tenant->id, 'source_weight' => '1.00 kg', 'comparison_key' => '1', 'transformed_weight' => 1, 'is_active' => true]);
+        $header = "Seguimiento paquete;Peso;Estado de entrega;Comerciante;Servicio;Comuna de destino;Dirección;Nombre del destinatario\n";
+        Storage::disk('local')->put('courier-imports/servicios.csv', $header
+            ."4N202611013621-529;1.00 kg;Entregado;Solventa;Servicio Pendiente;Temuco;Calle 1;Persona Uno\n"
+            ."4N202611013622-530;1.00 kg;Entregado;Solventa;Servicio Válido;Temuco;Calle 2;Persona Dos\n");
+        $snapshot = [
+            'batch_id' => (string) Str::uuid(), 'file' => 'servicios.csv', 'stored_path' => 'courier-imports/servicios.csv', 'extension' => 'csv',
+            'records' => 2, 'missing_columns' => [], 'process_type' => 'variables', 'process_suffix' => 'Variable',
+            'groups' => ['services' => [['values' => ['Solventa', 'Servicio Pendiente'], 'count' => 1]]],
+        ];
+
+        $this->withSession(['courier_review' => $snapshot])->get(route('provider-payments.courier-movements.review-parameters'))
+            ->assertOk()->assertSee('No cargar')->assertSee('Servicio Pendiente');
+        $this->withSession(['courier_review' => $snapshot])->post(route('provider-payments.courier-movements.exclude-services'), [
+            'service_errors' => [['source_key' => 'Solventa → Servicio Pendiente', 'exclude' => 1, 'comment' => 'Excluir de esta carga']],
+        ])->assertRedirect();
+
+        $this->get(route('provider-payments.courier-movements.review-parameters'))->assertDontSee('Servicio Pendiente');
+        $this->assertDatabaseHas('courier_import_errors', ['batch_id' => $snapshot['batch_id'], 'source_key' => 'Solventa → Servicio Pendiente', 'status' => 'NO_CARGAR']);
+        $this->post(route('provider-payments.courier-movements.store'), ['process_year' => 2026, 'process_month' => 11, 'process_name' => '202611-Variable'])->assertOk();
+        $this->assertDatabaseMissing('movimientos_courier', ['tracking_number' => '4N202611013621-529']);
+        $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => '4N202611013622-530', 'service_name' => 'Servicio Válido']);
+    }
+
     public function test_coverage_can_be_corrected_using_its_address_and_an_existing_commune(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
