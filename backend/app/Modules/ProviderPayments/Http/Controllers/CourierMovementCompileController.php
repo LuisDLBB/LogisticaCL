@@ -5,6 +5,7 @@ namespace App\Modules\ProviderPayments\Http\Controllers;
 use App\Models\CourierMovement;
 use App\Models\CourierPaymentMovement;
 use App\Models\Coverage;
+use App\Models\Provider;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,31 +55,32 @@ class CourierMovementCompileController
         $period = $validated['period'];
         $names = array_map(fn (string $type): string => $period.'-'.$type, array_unique($validated['processes']));
         $coverages = Coverage::query()->where('tenant_id', $tenant->id)->where('is_active', true)
-            ->whereNotNull('provider_id')->with('provider')->get()
-            ->filter(fn (Coverage $coverage): bool => $coverage->provider !== null)
+            ->with('provider')->get()
             ->groupBy(fn (Coverage $coverage): string => $this->communeKey($coverage->commune_name));
+        $providersByRut = Provider::query()->where('tenant_id', $tenant->id)->get()->keyBy('tax_id');
         $count = 0;
         $pendingProviders = 0;
         CourierMovement::query()->where('tenant_id', $tenant->id)->whereIn('nombre_proceso', $names)
-            ->with('client')->chunkById(500, function ($movements) use ($tenant, $coverages, &$count, &$pendingProviders): void {
+            ->with('client')->chunkById(500, function ($movements) use ($tenant, $coverages, $providersByRut, &$count, &$pendingProviders): void {
                 $now = now();
                 $rows = [];
                 foreach ($movements as $movement) {
                     $matches = $coverages->get($this->communeKey((string) $movement->destination_commune_name), collect());
-                    $providers = $matches->pluck('provider_id')->unique();
-                    $coverage = $providers->count() === 1 ? $matches->first() : null;
-                    if ($coverage === null) {
+                    $zones = $matches->pluck('zone')->filter()->unique();
+                    $providers = $matches->map(fn (Coverage $coverage) => $coverage->provider ?: $providersByRut->get($coverage->provider_tax_id))
+                        ->filter()->unique('id');
+                    $provider = $providers->count() === 1 ? $providers->first() : null;
+                    if ($provider === null) {
                         $pendingProviders++;
                     }
-                    $provider = $coverage?->provider;
                     $rows[] = [
                         'tenant_id' => $tenant->id,
                         'courier_movement_id' => $movement->id,
-                        'zona' => $coverage?->zone,
+                        'zona' => $zones->count() === 1 ? $zones->first() : null,
                         'tipo_pago' => $movement->tipo_pago ?: substr((string) $movement->nombre_proceso, 7),
                         'nombre_proceso' => substr((string) $movement->nombre_proceso, 7),
                         'periodo' => substr((string) $movement->nombre_proceso, 0, 6),
-                        'codigo_seguimiento' => $movement->tracking_code,
+                        'seguimiento_paquete' => $movement->tracking_number,
                         'fecha' => $movement->fecha?->toDateString(),
                         'direccion' => $movement->getRawOriginal('recipient_address'),
                         'comuna_destino' => $movement->destination_commune_name,
