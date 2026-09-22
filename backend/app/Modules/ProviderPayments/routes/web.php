@@ -17,6 +17,12 @@ Route::prefix('pago-proveedores')
     ->group(function (): void {
         Route::get('/', ProviderPaymentsDashboardController::class)->name('dashboard');
         Route::view('/carga-movimientos-courier', 'provider-payments::courier-movements-upload')->name('courier-movements.upload');
+        Route::view('/carga-movimientos-courier/lanas', 'provider-payments::placeholder', ['title' => 'Courier Lanas'])->name('courier-movements.lanas');
+        Route::view('/carga-movimientos-courier/retornos', 'provider-payments::placeholder', ['title' => 'Courier Retornos'])->name('courier-movements.retornos');
+        Route::view('/carga-movimientos-courier/especiales', 'provider-payments::placeholder', ['title' => 'Courier Especiales'])->name('courier-movements.especiales');
+        Route::view('/carga-movimientos-courier/rutas-cv', 'provider-payments::placeholder', ['title' => 'Rutas CV'])->name('courier-movements.rutas-cv');
+        Route::view('/carga-movimientos-courier/servicios', 'provider-payments::placeholder', ['title' => 'Servicios Courier'])->name('courier-movements.servicios');
+        Route::view('/carga-movimientos-courier/acuerdos', 'provider-payments::placeholder', ['title' => 'Acuerdos Courier'])->name('courier-movements.acuerdos');
         Route::post('/carga-movimientos-courier/validar', [CourierMovementImportController::class, 'validateFile'])->name('courier-movements.validate');
         Route::post('/carga-movimientos-courier/no-cargar-coberturas', [CourierMovementImportController::class, 'excludeCoverages'])->name('courier-movements.exclude-coverages');
         Route::get('/carga-movimientos-courier/errores.csv', [CourierMovementImportController::class, 'downloadErrors'])->name('courier-movements.errors.download');

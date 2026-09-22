@@ -29,6 +29,18 @@ class CourierParameterReviewTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_courier_load_menu_assigns_the_existing_flow_to_variables(): void
+    {
+        $this->get(route('provider-payments.courier-movements.upload'))
+            ->assertOk()->assertSee('Carga Movimientos Courier')->assertSee('Courier Variables')
+            ->assertSee('Courier Lanas')->assertSee('Courier Retornos')->assertSee('Courier Especiales')
+            ->assertSee('Rutas CV')->assertSee('Servicios')->assertSee('Acuerdos');
+
+        foreach (['lanas', 'retornos', 'especiales', 'rutas-cv', 'servicios', 'acuerdos'] as $module) {
+            $this->get(route('provider-payments.courier-movements.'.$module))->assertOk();
+        }
+    }
+
     public function test_file_is_required_with_a_spanish_message(): void
     {
         $this->post(route('provider-payments.courier-movements.validate'))

@@ -18,7 +18,7 @@
         .nav-link,.nav-summary { display:block; width:100%; padding:12px 15px; border-radius:9px; color:#26474c; cursor:pointer; font-size:14px; font-weight:700; text-decoration:none; }
         .nav-link:hover,.nav-summary:hover,.nav-link.active { background:var(--turquoise-soft); color:#006d70; }
         .nav-summary { list-style:none; }.nav-summary::-webkit-details-marker{display:none}.nav-summary::after{float:right;content:'⌄';color:var(--turquoise-dark)}details[open]>.nav-summary::after{content:'⌃'}
-        .subnav a { display:block; padding:9px 15px 9px 30px; color:#53696d; font-size:13px; text-decoration:none; }.subnav a:hover{color:var(--turquoise-dark)}
+        .subnav a { display:block; padding:9px 15px 9px 30px; color:#53696d; font-size:13px; text-decoration:none; }.subnav a:hover,.subnav a.active{color:var(--turquoise-dark);font-weight:800}
         .content { min-width:0; padding:36px clamp(24px,5vw,84px) 60px; }
         .eyebrow { margin:0 0 8px; color:var(--turquoise-dark); font-size:11px; font-weight:900; letter-spacing:1.6px; text-transform:uppercase; }
         h1 { margin:0; color:#071b1d; font-size:30px; line-height:1.15; } h2{color:#071b1d}.intro{margin:8px 0 26px;color:var(--muted)}
@@ -40,7 +40,18 @@
 <div class="shell">
     <aside class="sidebar" aria-label="Menú Pago Proveedores">
         <a class="nav-link {{ request()->routeIs('provider-payments.dashboard') ? 'active' : '' }}" href="{{ route('provider-payments.dashboard') }}">Resumen</a>
-        <a class="nav-link {{ request()->routeIs('provider-payments.courier-movements.upload') || request()->routeIs('provider-payments.courier-movements.validate') || request()->routeIs('provider-payments.courier-movements.review-parameters') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.upload') }}">Carga Movimientos Courier</a>
+        <details {{ request()->routeIs('provider-payments.courier-movements.*') && ! request()->routeIs('provider-payments.courier-movements.compile') ? 'open' : '' }}>
+            <summary class="nav-summary">Carga Movimientos Courier</summary>
+            <nav class="subnav">
+                <a class="{{ request()->routeIs('provider-payments.courier-movements.upload', 'provider-payments.courier-movements.validate', 'provider-payments.courier-movements.review-parameters') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.upload') }}">Courier Variables</a>
+                <a class="{{ request()->routeIs('provider-payments.courier-movements.lanas') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.lanas') }}">Courier Lanas</a>
+                <a class="{{ request()->routeIs('provider-payments.courier-movements.retornos') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.retornos') }}">Courier Retornos</a>
+                <a class="{{ request()->routeIs('provider-payments.courier-movements.especiales') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.especiales') }}">Courier Especiales</a>
+                <a class="{{ request()->routeIs('provider-payments.courier-movements.rutas-cv') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.rutas-cv') }}">Rutas CV</a>
+                <a class="{{ request()->routeIs('provider-payments.courier-movements.servicios') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.servicios') }}">Servicios</a>
+                <a class="{{ request()->routeIs('provider-payments.courier-movements.acuerdos') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.acuerdos') }}">Acuerdos</a>
+            </nav>
+        </details>
         <a class="nav-link {{ request()->routeIs('provider-payments.courier-movements.compile') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.compile') }}">Compilar Movimientos</a>
         <details {{ request()->routeIs('provider-payments.maintainers.*') ? 'open' : '' }}><summary class="nav-summary">Mantenedores</summary><nav class="subnav">
             @foreach (['Clientes', 'Sucursales', 'Servicios', 'Centro de Costos'] as $name)
