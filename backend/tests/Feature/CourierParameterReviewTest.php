@@ -11,6 +11,7 @@ use App\Models\CourierMovement;
 use App\Models\Coverage;
 use App\Models\Provider;
 use App\Models\ProviderBankAccount;
+use App\Models\RealWeight;
 use App\Models\ServiceType;
 use App\Models\Tenant;
 use App\Models\TipoCuentaBancaria;
@@ -632,7 +633,7 @@ class CourierParameterReviewTest extends TestCase
         $this->get(route('provider-payments.maintainers.pesos.transformados', ['discover' => 1]))
             ->assertOk()->assertSee('Nuevos pesos encontrados')->assertSee('2.75 kg')->assertSee('2');
         $this->get(route('provider-payments.maintainers.pesos.reales'))
-            ->assertOk()->assertSee('Proceso independiente')->assertSee('Módulo de Peso Real en preparación')->assertDontSee('1.25 kg');
+            ->assertOk()->assertSee('Peso Real')->assertSee('Seguimiento paquete')->assertSee('Fecha Proceso')->assertDontSee('1.25 kg');
 
         $this->post(route('provider-payments.maintainers.pesos.transformados.store'), ['source_weight' => '2.75 kg', 'transformed_weight' => 3, 'return_to' => 'discovery'])
             ->assertRedirect(route('provider-payments.maintainers.pesos.transformados', ['discover' => 1]));
@@ -642,6 +643,17 @@ class CourierParameterReviewTest extends TestCase
         $this->put(route('provider-payments.maintainers.pesos.transformados.update', $weight), ['transformed_weight' => 4, 'is_active' => 0])
             ->assertRedirect(route('provider-payments.maintainers.pesos.transformados'));
         $this->assertDatabaseHas('weight_transformations', ['id' => $weight->id, 'transformed_weight' => 4, 'is_active' => false]);
+    }
+
+    public function test_real_weight_table_lists_and_filters_its_independent_records(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        RealWeight::create(['tenant_id' => $tenant->id, 'seguimiento_paquete' => '4N202608030402-056', 'peso_real' => 11, 'codigo_seguimiento' => '4N202608030402', 'fecha_proceso' => '2026-08-10', 'comerciante' => 'Cliente Peso Real', 'servicio' => 'Servicio Real']);
+        RealWeight::create(['tenant_id' => $tenant->id, 'seguimiento_paquete' => '4N202607030402-999', 'peso_real' => 2, 'codigo_seguimiento' => '4N202607030402', 'fecha_proceso' => '2026-07-10', 'comerciante' => 'Otro Cliente', 'servicio' => 'Otro Servicio']);
+
+        $this->get(route('provider-payments.maintainers.pesos.reales', ['period' => '2026-08', 'merchant' => 'Cliente Peso Real']))
+            ->assertOk()->assertSee('4N202608030402-056')->assertSee('11')->assertSee('Cliente Peso Real')->assertSee('Servicio Real')
+            ->assertDontSee('4N202607030402-999');
     }
 
     public function test_provider_rut_remains_immutable_when_operational_data_is_updated(): void

@@ -3,6 +3,7 @@
 namespace App\Modules\ProviderPayments\Http\Controllers;
 
 use App\Models\CourierMovement;
+use App\Models\RealWeight;
 use App\Models\Tenant;
 use App\Models\WeightTransformation;
 use Illuminate\Http\RedirectResponse;
@@ -41,9 +42,36 @@ class WeightMaintainerController
         ]);
     }
 
-    public function real(): View
+    public function real(Request $request): View
     {
-        return view('provider-payments::weights-real');
+        $tenant = $this->tenant();
+        $period = trim((string) $request->query('period', ''));
+        $merchant = trim((string) $request->query('merchant', ''));
+        $service = trim((string) $request->query('service', ''));
+        $search = trim((string) $request->query('q', ''));
+        $base = RealWeight::query()->where('tenant_id', $tenant->id);
+        $periods = (clone $base)->selectRaw("strftime('%Y-%m', fecha_proceso) AS period")
+            ->distinct()->orderByDesc('period')->pluck('period');
+        if ($period === '') {
+            $period = (string) ($periods->first() ?? '');
+        }
+        $merchants = (clone $base)->select('comerciante')->distinct()->orderBy('comerciante')->pluck('comerciante');
+        $services = (clone $base)->select('servicio')->distinct()->orderBy('servicio')->pluck('servicio');
+        $rows = (clone $base)
+            ->when($period !== '', fn ($query) => $query->whereRaw("strftime('%Y-%m', fecha_proceso) = ?", [$period]))
+            ->when($merchant !== '', fn ($query) => $query->where('comerciante', $merchant))
+            ->when($service !== '', fn ($query) => $query->where('servicio', $service))
+            ->when($search !== '', fn ($query) => $query->where(function ($query) use ($search): void {
+                $query->where('seguimiento_paquete', 'like', '%'.$search.'%')
+                    ->orWhere('codigo_seguimiento', 'like', '%'.$search.'%')
+                    ->orWhere('comerciante', 'like', '%'.$search.'%')
+                    ->orWhere('servicio', 'like', '%'.$search.'%');
+            }))
+            ->orderByDesc('fecha_proceso')->orderByDesc('id')->paginate(100)->withQueryString();
+
+        return view('provider-payments::weights-real', compact(
+            'rows', 'periods', 'period', 'merchants', 'merchant', 'services', 'service', 'search',
+        ));
     }
 
     public function storeReal(Request $request): RedirectResponse
