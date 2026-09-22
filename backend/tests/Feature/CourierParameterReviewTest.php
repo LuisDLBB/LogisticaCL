@@ -71,6 +71,38 @@ class CourierParameterReviewTest extends TestCase
         ])->assertOk()->assertSee('1 registros procesados')->assertSessionHas('courier_review.process_type', 'lanas')->assertSessionHas('courier_review.process_suffix', 'Lanas');
     }
 
+    public function test_retornos_previews_and_loads_transformed_destinations(): void
+    {
+        Storage::fake('local');
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        Client::create(['tenant_id' => $tenant->id, 'tax_id' => '12345678-5', 'tax_id_number' => '12345678', 'tax_id_check_digit' => '5', 'source_merchant_name' => 'Cliente Retornos', 'commercial_name' => 'Cliente Retornos', 'legal_name' => 'Cliente Retornos SPA']);
+        WeightTransformation::create(['tenant_id' => $tenant->id, 'source_weight' => '1.00 kg', 'comparison_key' => '1', 'transformed_weight' => 1, 'is_active' => true]);
+
+        $header = "Seguimiento paquete;Peso;Estado de entrega;Comerciante;Servicio;Comuna de destino;Dirección;Nombre del destinatario\n";
+        $csv = $header."4N202610013620-528;1.00 kg;Entregado;Cliente Retornos;Retornos;Santiago;Calle 1;Desde Viña del Mar\n";
+        $response = $this->post(route('provider-payments.courier-movements.validate'), [
+            'process_type' => 'retornos',
+            'file' => UploadedFile::fake()->createWithContent('retornos.csv', $csv),
+        ]);
+
+        $response->assertOk()->assertSee('Revisión agrupada de direcciones y comunas transformadas')
+            ->assertSee('Calle 1 - Santiago')->assertSee('Viña del Mar')
+            ->assertSessionHas('courier_review.process_type', 'retornos')
+            ->assertSessionHas('courier_review.process_suffix', 'Retornos');
+
+        $snapshot = session('courier_review');
+        $snapshot['groups'] = [];
+        $this->withSession(['courier_review' => $snapshot])
+            ->post(route('provider-payments.courier-movements.store'), ['process_year' => 2026, 'process_month' => 10, 'process_name' => 'nombre-manipulado'])
+            ->assertOk()->assertSee('202610-Retornos');
+
+        $movement = CourierMovement::query()->where('tracking_number', '4N202610013620-528')->firstOrFail();
+        $this->assertSame('Retornos', $movement->tipo_pago);
+        $this->assertSame('202610-Retornos', $movement->nombre_proceso);
+        $this->assertSame('Calle 1 - Santiago', $movement->recipient_address);
+        $this->assertSame('Viña del Mar', $movement->destination_commune_name);
+    }
+
     public function test_semicolon_delimited_csv_is_detected_automatically(): void
     {
         $csv = "Seguimiento paquete;Comerciante;Servicio;Comuna;Peso;Estado\n4N20260916A;Cliente;Normal;Temuco;5;Entregado\n";

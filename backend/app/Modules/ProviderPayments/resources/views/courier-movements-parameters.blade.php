@@ -6,7 +6,8 @@
 </style>
 @endpush
 @section('content')
-<a class="back" href="{{ route(($snapshot['process_type'] ?? 'variables') === 'lanas' ? 'provider-payments.courier-movements.lanas' : 'provider-payments.courier-movements.upload') }}">← Cargar otro archivo</a>
+@php($uploadRoute = match($snapshot['process_type'] ?? 'variables') {'lanas' => 'provider-payments.courier-movements.lanas', 'retornos' => 'provider-payments.courier-movements.retornos', default => 'provider-payments.courier-movements.upload'})
+<a class="back" href="{{ route($uploadRoute) }}">← Cargar otro archivo</a>
 <p class="eyebrow">Pago a proveedores</p><h1>Revisión de inconsistencias</h1><p class="intro">Comprueba los datos pendientes antes de incorporar los movimientos.</p>
 @if(session('status'))<p class="success">{{ session('status') }}</p>@endif
 @if($errors->any())<p class="warning">{{ $errors->first() }}</p>@endif
@@ -28,7 +29,7 @@
         <div class="tenant-row">
             <label>Año del proceso<select id="process_year" name="process_year">@for($year = now()->year + 1; $year >= 2020; $year--)<option value="{{ $year }}" @selected($year === ($snapshot['suggested_year'] ?? now()->year))>{{ $year }}</option>@endfor</select></label>
             <label>Mes del proceso<select id="process_month" name="process_month">@foreach([1=>'Enero',2=>'Febrero',3=>'Marzo',4=>'Abril',5=>'Mayo',6=>'Junio',7=>'Julio',8=>'Agosto',9=>'Septiembre',10=>'Octubre',11=>'Noviembre',12=>'Diciembre'] as $month => $monthName)<option value="{{ $month }}" @selected($month === ($snapshot['suggested_month'] ?? now()->month))>{{ $monthName }}</option>@endforeach</select></label>
-            <label>Nombre del proceso<input id="process_name" name="process_name" value="{{ sprintf('%04d%02d-%s', $snapshot['suggested_year'] ?? now()->year, $snapshot['suggested_month'] ?? now()->month, $snapshot['process_suffix'] ?? 'Variable') }}" maxlength="100" @readonly(($snapshot['process_type'] ?? 'variables') === 'lanas')></label>
+            <label>Nombre del proceso<input id="process_name" name="process_name" value="{{ sprintf('%04d%02d-%s', $snapshot['suggested_year'] ?? now()->year, $snapshot['suggested_month'] ?? now()->month, $snapshot['process_suffix'] ?? 'Variable') }}" maxlength="100" @readonly(in_array(($snapshot['process_type'] ?? 'variables'), ['lanas', 'retornos'], true))></label>
         </div>
         <label><input type="checkbox" name="replace_duplicates" value="1"> Reemplazar seguimientos que ya existan</label>
         <p class="note">Si no marcas la opción, los seguimientos existentes se conservarán y serán omitidos.</p>

@@ -31,7 +31,7 @@ class CourierMovementImportController
         $validated = $request->validate(
             [
                 'file' => ['required', 'file', 'extensions:xlsx,csv', 'mimetypes:text/plain,text/csv,application/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip', 'max:102400'],
-                'process_type' => ['nullable', Rule::in(['variables', 'lanas'])],
+                'process_type' => ['nullable', Rule::in(['variables', 'lanas', 'retornos'])],
             ],
             [
                 'file.required' => 'Archivo con problema: debes seleccionar un archivo. Formato recomendado: CSV UTF-8 con extensión .csv. También se admite Excel .xlsx.',
@@ -68,6 +68,8 @@ class CourierMovementImportController
             $serviceIndex = null;
             $communeIndex = null;
             $addressIndex = null;
+            $recipientNameIndex = null;
+            $destinationPreview = [];
 
             foreach ($reader->getSheetIterator() as $sheet) {
                 foreach ($sheet->getRowIterator() as $row) {
@@ -89,6 +91,7 @@ class CourierMovementImportController
                         $serviceIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => in_array($header, ['servicio', 'service', 'service_name'], true));
                         $communeIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => in_array($header, ['comuna', 'comuna destino', 'comuna de destino', 'destination_commune_name'], true));
                         $addressIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => in_array($header, ['direccion', 'direccion destinatario', 'recipient_address'], true));
+                        $recipientNameIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => in_array($header, ['nombre del destinatario', 'recipient_name'], true));
 
                         continue;
                     }
@@ -102,13 +105,20 @@ class CourierMovementImportController
                     $rawService = (string) ($serviceIndex === null ? '' : ($values[$serviceIndex] ?? ''));
                     $rawCommune = (string) ($communeIndex === null ? '' : ($values[$communeIndex] ?? ''));
                     $rawAddress = (string) ($addressIndex === null ? '' : ($values[$addressIndex] ?? ''));
+                    $rawRecipientName = (string) ($recipientNameIndex === null ? '' : ($values[$recipientNameIndex] ?? ''));
+                    [$reviewAddress, $reviewCommune] = $this->destinationValues($processType, $rawAddress, $rawCommune, $rawRecipientName);
                     $rawWeight = (string) ($weightIndex === null ? '' : ($values[$weightIndex] ?? ''));
-                    foreach (['clients' => [$rawMerchant], 'services' => [$rawMerchant, $rawService], 'coverages' => [$rawCommune, $rawAddress], 'weights' => [$rawWeight]] as $category => $parts) {
+                    foreach (['clients' => [$rawMerchant], 'services' => [$rawMerchant, $rawService], 'coverages' => [$reviewCommune, $reviewAddress], 'weights' => [$rawWeight]] as $category => $parts) {
                         $key = serialize($parts);
                         if (! isset($parameters[$category][$key])) {
                             $parameters[$category][$key] = ['values' => $parts, 'count' => 0];
                         }
                         $parameters[$category][$key]['count']++;
+                    }
+                    if ($processType === 'retornos') {
+                        $destinationKey = serialize([$reviewAddress, $reviewCommune]);
+                        $destinationPreview[$destinationKey] ??= ['address' => $reviewAddress, 'commune' => $reviewCommune, 'count' => 0];
+                        $destinationPreview[$destinationKey]['count']++;
                     }
                     $merchant = trim((string) ($merchantIndex === null ? '' : $values[$merchantIndex] ?? '')) ?: 'Sin comerciante';
                     $status = trim((string) ($statusIndex === null ? '' : $values[$statusIndex] ?? '')) ?: 'Sin estado';
@@ -153,16 +163,18 @@ class CourierMovementImportController
                     'Comerciante' => $merchantIndex === null,
                     'Servicio' => $serviceIndex === null,
                     'Comuna destino' => $communeIndex === null,
+                    'Dirección' => $processType === 'retornos' && $addressIndex === null,
+                    'Nombre del destinatario' => $processType === 'retornos' && $recipientNameIndex === null,
                     'Peso' => $weightIndex === null,
                 ])),
                 'suggested_year' => (int) substr($suggestedPeriod, 0, 4),
                 'suggested_month' => (int) substr($suggestedPeriod, 4, 2),
                 'process_type' => $processType,
-                'process_suffix' => $processType === 'lanas' ? 'Lanas' : 'Variable',
+                'process_suffix' => $this->processSuffix($processType),
             ]);
             $request->session()->forget('courier_review_exclusions');
 
-            return view('provider-payments::courier-movements-summary', ['processType' => $processType, 'validation' => ['file_name' => $file->getClientOriginalName(), 'records' => $records, 'has_tracking' => $trackingIndex !== null, 'has_merchant' => $merchantIndex !== null, 'has_weight' => $weightIndex !== null, 'missing_tracking' => $missingTracking, 'invalid_date' => $invalidDate, 'missing_weight' => $missingWeight, 'merchant_counts' => $merchantCounts, 'status_counts' => $statusCounts]]);
+            return view('provider-payments::courier-movements-summary', ['processType' => $processType, 'validation' => ['file_name' => $file->getClientOriginalName(), 'records' => $records, 'has_tracking' => $trackingIndex !== null, 'has_merchant' => $merchantIndex !== null, 'has_weight' => $weightIndex !== null, 'missing_tracking' => $missingTracking, 'invalid_date' => $invalidDate, 'missing_weight' => $missingWeight, 'merchant_counts' => $merchantCounts, 'status_counts' => $statusCounts, 'destination_preview' => array_values($destinationPreview)]]);
         } catch (Throwable $exception) {
             report($exception);
 
@@ -210,14 +222,15 @@ class CourierMovementImportController
             'process_name' => ['nullable', 'string', 'max:100'],
         ]);
         $snapshot = $request->session()->get('courier_review');
-        $processSuffix = ($snapshot['process_type'] ?? 'variables') === 'lanas' ? 'Lanas' : 'Variable';
-        $processName = $processSuffix === 'Lanas' ? '' : trim((string) ($validated['process_name'] ?? ''));
+        $processType = $snapshot['process_type'] ?? 'variables';
+        $processSuffix = $this->processSuffix($processType);
+        $processName = in_array($processType, ['lanas', 'retornos'], true) ? '' : trim((string) ($validated['process_name'] ?? ''));
         if ($processName === '') {
             $processName = sprintf('%04d%02d-%s', $validated['process_year'], $validated['process_month'], $processSuffix);
         }
         $tenant = Tenant::query()->where('code', '4N')->where('is_active', true)->firstOrFail();
         if (! $snapshot || empty($snapshot['stored_path']) || ! Storage::disk('local')->exists($snapshot['stored_path'])) {
-            return redirect()->route(($snapshot['process_type'] ?? 'variables') === 'lanas' ? 'provider-payments.courier-movements.lanas' : 'provider-payments.courier-movements.upload')
+            return redirect()->route($this->uploadRoute($processType))
                 ->withErrors(['file' => 'Debes seleccionar y validar nuevamente el archivo para completar la carga.']);
         }
         $groups = $this->hideExcludedCoverages(
@@ -240,7 +253,8 @@ class CourierMovementImportController
             $request->session()->get('courier_review_exclusions.coverages', []),
             $request->session()->get('courier_review_corrections.coverages', []),
             $processName,
-            $processSuffix === 'Lanas' ? 'Lanas' : 'Variables',
+            $processType === 'variables' ? 'Variables' : $processSuffix,
+            $processType,
         );
         Storage::disk('local')->delete($snapshot['stored_path']);
         $request->session()->forget(['courier_review', 'courier_review_exclusions', 'courier_review_comments', 'courier_review_corrections']);
@@ -370,7 +384,7 @@ class CourierMovementImportController
     }
 
     /** @return array{created:int,replaced:int,duplicates:int,excluded:int,invalid:int,total:int} */
-    private function importStoredFile(string $path, string $extension, int $tenantId, bool $replaceDuplicates, array $excludedCommunes, array $correctedCommunes, string $processName, string $paymentType): array
+    private function importStoredFile(string $path, string $extension, int $tenantId, bool $replaceDuplicates, array $excludedCommunes, array $correctedCommunes, string $processName, string $paymentType, string $processType): array
     {
         $reader = $extension === 'csv' ? new CsvReader(new CsvOptions(FIELD_DELIMITER: $this->detectCsvDelimiter($path))) : new XlsxReader;
         $clients = Client::query()->where('tenant_id', $tenantId)->where('is_active', true)->get()
@@ -413,6 +427,8 @@ class CourierMovementImportController
                 $seenTrackings[$tracking] = true;
                 $commune = trim($this->rowValue($values, $indexes, ['comuna de destino', 'comuna destino', 'comuna']));
                 $address = trim($this->rowValue($values, $indexes, ['direccion']));
+                $recipientName = trim($this->rowValue($values, $indexes, ['nombre del destinatario']));
+                [$address, $commune] = $this->destinationValues($processType, $address, $commune, $recipientName);
                 $coverageKey = $this->comparisonKey($this->coverageSourceKey($commune, $address));
                 if ($excluded->has($coverageKey) || $excluded->has($this->comparisonKey($commune))) {
                     $result['excluded']++;
@@ -438,7 +454,7 @@ class CourierMovementImportController
                     'length_cm' => $this->number($this->rowValue($values, $indexes, ['largo'])), 'width_cm' => $this->number($this->rowValue($values, $indexes, ['ancho'])), 'height_cm' => $this->number($this->rowValue($values, $indexes, ['alto'])),
                     'status' => $this->nullable($this->rowValue($values, $indexes, ['estado de entrega', 'estado'])), 'delivery_attempts' => (int) ($this->number($this->rowValue($values, $indexes, ['intentos de entrega'])) ?? 0),
                     'merchant_name' => $this->nullable($merchant), 'service_name' => $this->nullable($this->rowValue($values, $indexes, ['servicio'])), 'campaign_name' => $this->nullable($this->rowValue($values, $indexes, ['nombre de campana'])),
-                    'recipient_name' => $this->encrypted($this->rowValue($values, $indexes, ['nombre del destinatario'])), 'recipient_company_name' => $this->encrypted($this->rowValue($values, $indexes, ['empresa del destinatario'])), 'recipient_address' => $this->encrypted($this->rowValue($values, $indexes, ['direccion'])),
+                    'recipient_name' => $this->encrypted($recipientName), 'recipient_company_name' => $this->encrypted($this->rowValue($values, $indexes, ['empresa del destinatario'])), 'recipient_address' => $this->encrypted($address),
                     'destination_commune_name' => $this->nullable($commune), 'recipient_phone' => $this->encrypted($this->rowValue($values, $indexes, ['telefono del destinatario'])), 'recipient_email' => $this->encrypted($this->rowValue($values, $indexes, ['email del destinatario'])),
                     'declared_value' => $this->number($this->rowValue($values, $indexes, ['valor'])) ?? 0, 'received_at' => $this->dateTime($this->rowValue($values, $indexes, ['fecha de recepcion'])), 'estimated_delivery_date' => $this->dateTime($this->rowValue($values, $indexes, ['entrega estimada']), true), 'delivered_at' => $this->dateTime($this->rowValue($values, $indexes, ['fecha de entrega'])),
                     'merchant_pickup' => in_array($this->comparisonKey($this->rowValue($values, $indexes, ['retiro en comerciante'])), ['si', 'yes', '1'], true), 'pickup_warehouse_name' => $this->nullable($this->rowValue($values, $indexes, ['bodega de retiro'])), 'delivery_route_code' => $this->nullable($this->rowValue($values, $indexes, ['ruta de entrega'])),
@@ -552,5 +568,38 @@ class CourierMovementImportController
     private function coverageSourceKey(string $commune, string $address): string
     {
         return $address === '' ? $commune : $commune.' → '.$address;
+    }
+
+    /** @return array{0:string,1:string} */
+    private function destinationValues(string $processType, string $address, string $commune, string $recipientName): array
+    {
+        $address = trim($address);
+        $commune = trim($commune);
+        if ($processType !== 'retornos') {
+            return [$address, $commune];
+        }
+
+        $combinedAddress = implode(' - ', array_filter([$address, $commune], fn (string $value): bool => $value !== ''));
+        $destinationCommune = trim((string) preg_replace('/^\s*Desde\s+/iu', '', trim($recipientName)));
+
+        return [$combinedAddress, $destinationCommune];
+    }
+
+    private function processSuffix(string $processType): string
+    {
+        return match ($processType) {
+            'lanas' => 'Lanas',
+            'retornos' => 'Retornos',
+            default => 'Variable',
+        };
+    }
+
+    private function uploadRoute(string $processType): string
+    {
+        return match ($processType) {
+            'lanas' => 'provider-payments.courier-movements.lanas',
+            'retornos' => 'provider-payments.courier-movements.retornos',
+            default => 'provider-payments.courier-movements.upload',
+        };
     }
 }
