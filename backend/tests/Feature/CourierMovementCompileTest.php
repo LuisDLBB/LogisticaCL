@@ -42,8 +42,8 @@ class CourierMovementCompileTest extends TestCase
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $client = Client::create(['tenant_id' => $tenant->id, 'tax_id' => '11111111-1', 'tax_id_number' => '11111111', 'tax_id_check_digit' => '1', 'commercial_name' => 'Comerciante', 'source_merchant_name' => 'Pila', 'legal_name' => 'Cliente SA']);
         $provider = Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '22222222-2', 'tax_id_number' => '22222222', 'tax_id_check_digit' => '2', 'legal_name' => 'Proveedor SA', 'operational_name' => 'Repartidor Norte', 'operator_type' => 'Courier', 'tax_document_type' => 'Factura']);
-        Coverage::create(['tenant_id' => $tenant->id, 'provider_id' => $provider->id, 'commune_name' => 'Viña del Mar', 'zone' => 'Z1']);
-        Coverage::create(['tenant_id' => $tenant->id, 'provider_tax_id' => $provider->tax_id, 'commune_name' => 'Peñalolén', 'zone' => 'RM']);
+        Coverage::create(['tenant_id' => $tenant->id, 'provider_id' => $provider->id, 'commune_name' => 'Viña del Mar', 'matrix_commune_name' => 'Valparaíso', 'zone' => 'Z1']);
+        Coverage::create(['tenant_id' => $tenant->id, 'provider_tax_id' => $provider->tax_id, 'commune_name' => 'Peñalolén', 'matrix_commune_name' => '4N RM', 'zone' => 'RM']);
         $matched = CourierMovement::create(['tenant_id' => $tenant->id, 'client_id' => $client->id, 'tracking_number' => '4N202608050001-111', 'tracking_code' => '4N202608050001', 'nombre_proceso' => '202608-Variable', 'tipo_pago' => 'Variable', 'fecha' => '2026-08-05', 'recipient_address' => 'Calle 1', 'destination_commune_name' => 'Vina del Mar', 'peso_real' => 8, 'peso_transformado' => 5, 'status' => 'Entregado']);
         CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202608050002-222', 'nombre_proceso' => '202608-Lanas', 'peso_transformado' => 7]);
         CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202608050003-333', 'nombre_proceso' => '202608-Variable', 'destination_commune_name' => 'Penalolen', 'peso_transformado' => 7]);
@@ -53,8 +53,8 @@ class CourierMovementCompileTest extends TestCase
         $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => '202608', 'processes' => ['Variable']])->assertRedirect();
 
         $this->assertDatabaseCount('Pago_Movimientos_Courier', 2);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $matched->id, 'zona' => 'Z1', 'periodo' => '202608', 'nombre_proceso' => 'Variable', 'seguimiento_paquete' => '4N202608050001-111', 'peso_final' => 5, 'rut_cliente' => '11111111-1', 'rut_proveedor' => '22222222-2', 'empresa_mandante' => '4N']);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => '4N202608050003-333', 'zona' => 'RM', 'rut_proveedor' => '22222222-2', 'peso_final' => 1]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $matched->id, 'zona' => 'Z1', 'comuna_matriz' => 'Valparaíso', 'periodo' => '202608', 'nombre_proceso' => 'Variable', 'seguimiento_paquete' => '4N202608050001-111', 'peso_final' => 5, 'rut_cliente' => '11111111-1', 'rut_proveedor' => '22222222-2', 'empresa_mandante' => '4N']);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => '4N202608050003-333', 'zona' => 'RM', 'comuna_matriz' => '4N RM', 'rut_proveedor' => '22222222-2', 'peso_final' => 1]);
         $this->assertSame('Calle 1', CourierPaymentMovement::query()->where('courier_movement_id', $matched->id)->firstOrFail()->direccion);
         $this->assertSame(8, $matched->fresh()->peso_real);
         $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => '202608', 'processes' => ['Variable']])->assertRedirect();

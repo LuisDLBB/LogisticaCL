@@ -114,6 +114,7 @@ class CourierMovementCompileController
                 foreach ($movements as $movement) {
                     $matches = $coverages->get($this->communeKey((string) $movement->destination_commune_name), collect());
                     $zones = $matches->pluck('zone')->filter()->unique();
+                    $matrices = $matches->pluck('matrix_commune_name')->filter()->unique();
                     $providers = $matches->map(fn (Coverage $coverage) => $coverage->provider ?: $providersByRut->get($coverage->provider_tax_id))
                         ->filter()->unique('id');
                     $provider = $providers->count() === 1 ? $providers->first() : null;
@@ -124,6 +125,7 @@ class CourierMovementCompileController
                         'tenant_id' => $tenant->id,
                         'courier_movement_id' => $movement->id,
                         'zona' => $zones->count() === 1 ? $zones->first() : null,
+                        'comuna_matriz' => $matrices->count() === 1 ? $matrices->first() : null,
                         'tipo_pago' => $movement->tipo_pago ?: substr((string) $movement->nombre_proceso, 7),
                         'nombre_proceso' => substr((string) $movement->nombre_proceso, 7),
                         'periodo' => substr((string) $movement->nombre_proceso, 0, 6),
