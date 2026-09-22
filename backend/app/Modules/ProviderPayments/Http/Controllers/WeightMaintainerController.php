@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use App\Models\WeightTransformation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -72,6 +73,43 @@ class WeightMaintainerController
         return view('provider-payments::weights-real', compact(
             'rows', 'periods', 'period', 'merchants', 'merchant', 'services', 'service', 'search',
         ));
+    }
+
+    public function syncRealWeights(): RedirectResponse
+    {
+        $tenant = $this->tenant();
+        $updated = 0;
+        CourierMovement::query()->where('tenant_id', $tenant->id)->select(['id', 'tenant_id', 'tracking_number', 'weight_kg', 'peso_transformado'])
+            ->chunkById(1000, function ($movements) use ($tenant, &$updated): void {
+                $realWeights = RealWeight::query()->where('tenant_id', $tenant->id)
+                    ->whereIn('seguimiento_paquete', $movements->pluck('tracking_number'))
+                    ->pluck('peso_real', 'seguimiento_paquete');
+                $updates = [];
+                foreach ($movements as $movement) {
+                    $realWeight = $realWeights->get($movement->tracking_number);
+                    if ($realWeight === null) {
+                        continue;
+                    }
+                    $updates[] = [
+                        'id' => $movement->id,
+                        'tenant_id' => $movement->tenant_id,
+                        'tracking_number' => $movement->tracking_number,
+                        'weight_kg' => $movement->weight_kg,
+                        'peso_real' => (int) $realWeight,
+                        'peso_final' => $movement->peso_transformado !== null
+                            ? min((int) $realWeight, (int) $movement->peso_transformado)
+                            : null,
+                        'updated_at' => now(),
+                    ];
+                }
+                if ($updates !== []) {
+                    DB::table('movimientos_courier')->upsert($updates, ['id'], ['peso_real', 'peso_final', 'updated_at']);
+                    $updated += count($updates);
+                }
+            });
+
+        return redirect()->route('provider-payments.maintainers.pesos.reales')
+            ->with('status', number_format($updated, 0, ',', '.').' movimientos Courier actualizados con Peso Real.');
     }
 
     public function storeReal(Request $request): RedirectResponse

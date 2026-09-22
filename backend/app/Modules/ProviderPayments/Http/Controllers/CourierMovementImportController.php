@@ -538,6 +538,16 @@ class CourierMovementImportController
     private function persistMovementChunk(array $rows, int $tenantId, bool $replace, array &$result): void
     {
         $trackings = array_column($rows, 'tracking_number');
+        $realWeights = DB::table('peso_real')->where('tenant_id', $tenantId)
+            ->whereIn('seguimiento_paquete', $trackings)->pluck('peso_real', 'seguimiento_paquete');
+        foreach ($rows as &$row) {
+            $realWeight = $realWeights->get($row['tracking_number']);
+            $row['peso_real'] = $realWeight !== null ? (int) $realWeight : null;
+            $row['peso_final'] = $row['peso_real'] !== null && $row['peso_transformado'] !== null
+                ? min($row['peso_real'], $row['peso_transformado'])
+                : null;
+        }
+        unset($row);
         $existing = DB::table('movimientos_courier')->where('tenant_id', $tenantId)->whereIn('tracking_number', $trackings)->pluck('tracking_number')->flip();
         $newRows = array_values(array_filter($rows, fn (array $row): bool => ! $existing->has($row['tracking_number'])));
         $duplicateRows = array_values(array_filter($rows, fn (array $row): bool => $existing->has($row['tracking_number'])));

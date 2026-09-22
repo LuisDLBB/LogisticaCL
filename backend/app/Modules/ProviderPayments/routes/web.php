@@ -50,6 +50,7 @@ Route::prefix('pago-proveedores')
         Route::post('/mantenedor/pesos/transformados', [WeightMaintainerController::class, 'storeReal'])->name('maintainers.pesos.transformados.store');
         Route::put('/mantenedor/pesos/transformados/{weight}', [WeightMaintainerController::class, 'update'])->name('maintainers.pesos.transformados.update');
         Route::get('/mantenedor/pesos/reales', [WeightMaintainerController::class, 'real'])->name('maintainers.pesos.reales');
+        Route::post('/mantenedor/pesos/reales/sincronizar', [WeightMaintainerController::class, 'syncRealWeights'])->name('maintainers.pesos.reales.sync');
         Route::get('/mantenedor/proveedores', [OperationalMasterMaintainerController::class, 'providers'])->name('maintainers.proveedores');
         Route::post('/mantenedor/proveedores', [OperationalMasterMaintainerController::class, 'storeProvider'])->name('maintainers.proveedores.store');
         Route::put('/mantenedor/proveedores/{provider}', [OperationalMasterMaintainerController::class, 'updateProvider'])->name('maintainers.proveedores.update');
