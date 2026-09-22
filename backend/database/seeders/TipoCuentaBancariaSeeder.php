@@ -23,7 +23,7 @@ class TipoCuentaBancariaSeeder extends Seeder
         foreach ($accountTypes as $accountTypeId => $accountType) {
             TipoCuentaBancaria::query()->updateOrCreate(
                 ['id_tipo_cuenta' => $accountTypeId],
-                ['tipo_cuenta' => $accountType],
+                ['tipo_cuenta' => $accountType, 'is_active' => true],
             );
         }
 

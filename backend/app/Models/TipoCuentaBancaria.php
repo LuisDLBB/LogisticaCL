@@ -19,5 +19,10 @@ class TipoCuentaBancaria extends Model
 
     protected $keyType = 'int';
 
-    protected $fillable = ['id_tipo_cuenta', 'tipo_cuenta'];
+    protected $fillable = ['id_tipo_cuenta', 'tipo_cuenta', 'is_active'];
+
+    protected function casts(): array
+    {
+        return ['is_active' => 'boolean'];
+    }
 }

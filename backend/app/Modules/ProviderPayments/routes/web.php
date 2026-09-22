@@ -46,6 +46,8 @@ Route::prefix('pago-proveedores')
         Route::get('/mantenedor/bancos', [OperationalMasterMaintainerController::class, 'banks'])->name('maintainers.bancos');
         Route::post('/mantenedor/bancos', [OperationalMasterMaintainerController::class, 'storeBank'])->name('maintainers.bancos.store');
         Route::put('/mantenedor/bancos/{banco}', [OperationalMasterMaintainerController::class, 'updateBank'])->name('maintainers.bancos.update');
+        Route::post('/mantenedor/bancos/tipos-cuenta', [OperationalMasterMaintainerController::class, 'storeBankAccountType'])->name('maintainers.bancos.tipos-cuenta.store');
+        Route::put('/mantenedor/bancos/tipos-cuenta/{accountType}', [OperationalMasterMaintainerController::class, 'updateBankAccountType'])->name('maintainers.bancos.tipos-cuenta.update');
         Route::get('/mantenedor/vehiculos', [OperationalMasterMaintainerController::class, 'vehicles'])->name('maintainers.vehiculos');
         Route::post('/mantenedor/vehiculos', [OperationalMasterMaintainerController::class, 'storeVehicle'])->name('maintainers.vehiculos.store');
         Route::put('/mantenedor/vehiculos/{vehicle}', [OperationalMasterMaintainerController::class, 'updateVehicle'])->name('maintainers.vehiculos.update');

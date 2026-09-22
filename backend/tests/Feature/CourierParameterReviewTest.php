@@ -322,7 +322,8 @@ class CourierParameterReviewTest extends TestCase
 
         $this->get(route('provider-payments.maintainers.llave-centro-costos', ['vista' => 'cliente']))
             ->assertOk()->assertSee('Ver por cliente')->assertSee('Ver por proveedor')
-            ->assertSee('Cliente Navegable')->assertSee('Servicio Navegable')->assertSee('Proveedor Navegable');
+            ->assertSee('Cliente Navegable')->assertSee('Servicio Navegable')->assertSee('Proveedor Navegable')
+            ->assertSee('data-master-record', false)->assertSee('data-state="active"', false);
 
         $this->get(route('provider-payments.maintainers.llave-centro-costos', ['vista' => 'proveedor']))
             ->assertOk()->assertSee('Proveedor Navegable')->assertSee('Cliente Navegable')->assertSee('Servicio Navegable');
@@ -517,7 +518,7 @@ class CourierParameterReviewTest extends TestCase
         ProviderBankAccount::create(['provider_id' => $provider->id, 'account_holder_name' => 'Proveedor Visible', 'account_holder_tax_id' => '11111111-1', 'bank_name' => 'Banco Prueba', 'account_type' => 'Corriente', 'account_number' => '123456789']);
 
         $this->get(route('provider-payments.maintainers.proveedores'))->assertOk()->assertSee('Proveedor Visible')->assertSee('Banco Prueba')->assertSee('•••• 6789')->assertDontSee('123456789');
-        $this->get(route('provider-payments.maintainers.bancos'))->assertOk()->assertSee('Banco Prueba')->assertSee('Entidad Financiera de Prueba')->assertDontSee('Proveedor Visible')->assertDontSee('123456789');
+        $this->get(route('provider-payments.maintainers.bancos'))->assertOk()->assertSee('Banco Prueba')->assertSee('Entidad Financiera de Prueba')->assertSee('Código SBIF:')->assertSee('999')->assertDontSee('Proveedor Visible')->assertDontSee('123456789');
         $this->get(route('provider-payments.maintainers.vehiculos'))->assertOk()->assertSee('Nuevo vehículo');
         $this->get(route('provider-payments.maintainers.estados'))->assertOk()->assertSee('El nombre permanece protegido');
         $this->get(route('provider-payments.maintainers.coberturas'))->assertOk()->assertSee('Crear cobertura');
@@ -556,5 +557,17 @@ class CourierParameterReviewTest extends TestCase
         ])->assertSessionHasErrors(['bank_name', 'account_type']);
 
         $this->assertDatabaseMissing('providers', ['tax_id' => '22222222-2']);
+
+        $this->post(route('provider-payments.maintainers.bancos.tipos-cuenta.store'), [
+            'tipo_cuenta' => 'Cuenta Digital',
+        ])->assertRedirect();
+        $accountType = TipoCuentaBancaria::query()->where('tipo_cuenta', 'Cuenta Digital')->firstOrFail();
+        $this->assertSame(5, $accountType->id_tipo_cuenta);
+
+        $this->put(route('provider-payments.maintainers.bancos.tipos-cuenta.update', $accountType), [
+            'tipo_cuenta' => 'Cuenta Digital',
+            'is_active' => 0,
+        ])->assertRedirect();
+        $this->assertDatabaseHas('tipos_cuenta_bancaria', ['id_tipo_cuenta' => 5, 'tipo_cuenta' => 'Cuenta Digital', 'is_active' => false]);
     }
 }

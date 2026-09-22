@@ -21,7 +21,7 @@ class OperationalMasterMaintainerController
         return view('provider-payments::providers-index', [
             'providers' => Provider::with('bankAccounts')->where('tenant_id', $this->tenant()->id)->orderBy('legal_name')->get(),
             'banks' => Banco::query()->where('is_active', true)->orderBy('banco')->get(),
-            'accountTypes' => TipoCuentaBancaria::query()->orderBy('id_tipo_cuenta')->get(),
+            'accountTypes' => TipoCuentaBancaria::query()->where('is_active', true)->orderBy('id_tipo_cuenta')->get(),
         ]);
     }
 
@@ -36,7 +36,7 @@ class OperationalMasterMaintainerController
             'contact_name' => ['nullable', 'string', 'max:160'], 'contact_phone' => ['nullable', 'string', 'max:40'],
             'contact_email' => ['nullable', 'email', 'max:160'],
             'bank_name' => ['nullable', 'string', 'max:100', 'required_with:account_number', Rule::exists('bancos', 'banco')->where('is_active', true)],
-            'account_type' => ['nullable', 'string', 'max:80', 'required_with:account_number', Rule::exists('tipos_cuenta_bancaria', 'tipo_cuenta')],
+            'account_type' => ['nullable', 'string', 'max:80', 'required_with:account_number', Rule::exists('tipos_cuenta_bancaria', 'tipo_cuenta')->where('is_active', true)],
             'account_number' => ['nullable', 'string', 'max:100', 'required_with:bank_name,account_type'],
         ]);
         [$number, $digit] = $this->rutParts($data['tax_id']);
@@ -67,7 +67,7 @@ class OperationalMasterMaintainerController
             'contact_name' => ['nullable', 'string', 'max:160'], 'contact_phone' => ['nullable', 'string', 'max:40'],
             'contact_email' => ['nullable', 'email', 'max:160'], 'is_active' => ['required', 'boolean'],
             'bank_name' => ['nullable', 'string', 'max:100', Rule::exists('bancos', 'banco')->where('is_active', true)],
-            'account_type' => ['nullable', 'string', 'max:80', Rule::exists('tipos_cuenta_bancaria', 'tipo_cuenta')],
+            'account_type' => ['nullable', 'string', 'max:80', Rule::exists('tipos_cuenta_bancaria', 'tipo_cuenta')->where('is_active', true)],
             'account_number' => ['nullable', 'string', 'max:100'],
         ]);
         $provider->update(Arr::except($data, ['bank_name', 'account_type', 'account_number']));
@@ -105,7 +105,10 @@ class OperationalMasterMaintainerController
 
     public function banks(): View
     {
-        return view('provider-payments::banks-index', ['banks' => Banco::query()->orderBy('codigo_sbif')->get()]);
+        return view('provider-payments::banks-index', [
+            'banks' => Banco::query()->orderBy('codigo_sbif')->get(),
+            'accountTypes' => TipoCuentaBancaria::query()->orderBy('id_tipo_cuenta')->get(),
+        ]);
     }
 
     public function storeBank(Request $request): RedirectResponse
@@ -131,6 +134,30 @@ class OperationalMasterMaintainerController
         ]));
 
         return back()->with('status', "Banco {$banco->codigo_sbif} actualizado sin modificar su código SBIF.");
+    }
+
+    public function storeBankAccountType(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'tipo_cuenta' => ['required', 'string', 'max:80', Rule::unique('tipos_cuenta_bancaria', 'tipo_cuenta')],
+        ]);
+        TipoCuentaBancaria::query()->create([
+            ...$data,
+            'id_tipo_cuenta' => ((int) TipoCuentaBancaria::query()->max('id_tipo_cuenta')) + 1,
+            'is_active' => true,
+        ]);
+
+        return back()->with('status', 'Tipo de cuenta bancaria creado correctamente.');
+    }
+
+    public function updateBankAccountType(Request $request, TipoCuentaBancaria $accountType): RedirectResponse
+    {
+        $accountType->update($request->validate([
+            'tipo_cuenta' => ['required', 'string', 'max:80', Rule::unique('tipos_cuenta_bancaria', 'tipo_cuenta')->ignore($accountType)],
+            'is_active' => ['required', 'boolean'],
+        ]));
+
+        return back()->with('status', 'Tipo de cuenta bancaria actualizado correctamente.');
     }
 
     public function vehicles(): View

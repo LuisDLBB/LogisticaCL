@@ -3,7 +3,8 @@
         <thead><tr><th>{{ $firstColumn }}</th>@if($firstColumn === 'Servicio')<th>Cliente</th>@else<th>Servicio</th>@endif<th>Agencia</th><th>Centro de costo</th><th>Condición</th><th>Estado</th><th>Llave configurada</th></tr></thead>
         <tbody>
         @foreach($rows as $key)
-            <tr>
+            @php($filterState = ! $key->is_active || in_array(mb_strtoupper(trim((string) $key->payment_status)), ['NO', 'NO PAGAR', 'INACTIVO'], true) ? 'inactive' : 'active')
+            <tr data-master-record data-state="{{ $filterState }}">
                 @if($firstColumn === 'Proveedor')
                     <td>{{ $key->provider?->legal_name ?: ($key->agent_name ?: 'Proveedor sin nombre') }}<br><span class="count">{{ $key->provider?->tax_id ?: $key->provider_tax_id }}</span></td>
                     <td>{{ $key->serviceType?->name ?: $key->service_name }}</td>

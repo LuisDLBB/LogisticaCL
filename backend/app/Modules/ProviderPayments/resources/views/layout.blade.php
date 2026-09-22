@@ -93,15 +93,18 @@
     const status = document.getElementById('master_status');
     const results = document.getElementById('master_results');
     const normalize = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    const candidates = () => [...document.querySelectorAll('.record, table tbody tr')];
+    const candidates = () => {
+        const pageRecords = [...document.querySelectorAll('[data-master-record]')];
+        return pageRecords.length ? pageRecords : [...document.querySelectorAll('.record, table tbody tr')];
+    };
     const apply = () => {
         const query = normalize(search.value.trim());
         let visible = 0;
         const rows = candidates();
         rows.forEach(item => {
             const text = normalize(item.textContent);
-            const inactive = text.includes('inactivo') || text.includes('inactiva') || text.includes('no pagar');
-            const active = !inactive && (text.includes('activo') || text.includes('activa') || text.includes('pagar'));
+            const inactive = item.dataset.state ? item.dataset.state === 'inactive' : text.includes('inactivo') || text.includes('inactiva') || text.includes('no pagar');
+            const active = item.dataset.state ? item.dataset.state === 'active' : !inactive && (text.includes('activo') || text.includes('activa') || text.includes('pagar'));
             const selectedStatus = status?.value || 'all';
             const matchesOperator = selectedStatus.startsWith('operator:')
                 ? normalize(item.dataset.operator) === normalize(selectedStatus.substring(9))
@@ -110,6 +113,17 @@
             const show = text.includes(query) && matchesStatus;
             item.hidden = !show;
             if (show) visible++;
+        });
+        const filtering = query !== '' || (status?.value || 'all') !== 'all';
+        document.querySelectorAll('.subgroup').forEach(group => {
+            const hasVisibleRows = [...group.querySelectorAll('[data-master-record]')].some(row => !row.hidden);
+            group.hidden = !hasVisibleRows;
+            if (filtering && hasVisibleRows) group.open = true;
+        });
+        document.querySelectorAll('.group').forEach(group => {
+            const hasVisibleRows = [...group.querySelectorAll('[data-master-record]')].some(row => !row.hidden);
+            group.hidden = !hasVisibleRows;
+            if (filtering && hasVisibleRows) group.open = true;
         });
         results.textContent = rows.length ? `${visible} de ${rows.length} registros` : 'Sin listado en esta pantalla';
     };
