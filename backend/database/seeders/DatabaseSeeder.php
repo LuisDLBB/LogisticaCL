@@ -18,5 +18,6 @@ class DatabaseSeeder extends Seeder
         $this->call(TipoEnvioSeeder::class);
         $this->call(BancoSeeder::class);
         $this->call(TipoCuentaBancariaSeeder::class);
+        $this->call(ProveedoresUsuarios4NSeeder::class);
     }
 }
