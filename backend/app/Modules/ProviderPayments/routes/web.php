@@ -47,6 +47,7 @@ Route::prefix('pago-proveedores')
         Route::post('/mantenedor/centro-de-costos', [CostCenterMaintainerController::class, 'store'])->name('maintainers.centro-de-costos.store');
         Route::redirect('/mantenedor/pesos', '/pago-proveedores/mantenedor/pesos/transformados')->name('maintainers.pesos');
         Route::get('/mantenedor/pesos/transformados', [WeightMaintainerController::class, 'transformed'])->name('maintainers.pesos.transformados');
+        Route::put('/mantenedor/pesos/transformados/{weight}', [WeightMaintainerController::class, 'update'])->name('maintainers.pesos.transformados.update');
         Route::get('/mantenedor/pesos/reales', [WeightMaintainerController::class, 'real'])->name('maintainers.pesos.reales');
         Route::post('/mantenedor/pesos/reales', [WeightMaintainerController::class, 'storeReal'])->name('maintainers.pesos.reales.store');
         Route::get('/mantenedor/proveedores', [OperationalMasterMaintainerController::class, 'providers'])->name('maintainers.proveedores');

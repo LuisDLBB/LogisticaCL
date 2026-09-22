@@ -622,17 +622,26 @@ class CourierParameterReviewTest extends TestCase
     public function test_weight_maintainer_lists_transformations_and_adds_a_real_weight(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
-        WeightTransformation::create(['tenant_id' => $tenant->id, 'source_weight' => '1.25 kg', 'comparison_key' => '1.25', 'transformed_weight' => 2, 'is_active' => true]);
+        $weight = WeightTransformation::create(['tenant_id' => $tenant->id, 'source_weight' => '1.25 kg', 'comparison_key' => '1.25', 'transformed_weight' => 2, 'is_active' => true]);
+        CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202612040001', 'weight_kg' => 1.25]);
+        CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202612040002', 'weight_kg' => 2.75]);
+        CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202612040003', 'weight_kg' => 2.75]);
 
         $this->get(route('provider-payments.maintainers.pesos.transformados'))
-            ->assertOk()->assertSee('Peso Transformado')->assertSee('Equivalencias registradas');
+            ->assertOk()->assertSee('Peso Transformado')->assertSee('Peso Fuente')->assertSee('Estado')->assertSee('Modificar')->assertSee('Buscar nuevos pesos');
+        $this->get(route('provider-payments.maintainers.pesos.transformados', ['discover' => 1]))
+            ->assertOk()->assertSee('Nuevos pesos encontrados')->assertSee('2.75 kg')->assertSee('2');
         $this->get(route('provider-payments.maintainers.pesos.reales'))
             ->assertOk()->assertSee('1.25 kg')->assertSee('Agregar Peso Real');
 
-        $this->post(route('provider-payments.maintainers.pesos.reales.store'), ['source_weight' => '2.75 kg', 'transformed_weight' => 3])
-            ->assertRedirect(route('provider-payments.maintainers.pesos.reales'));
+        $this->post(route('provider-payments.maintainers.pesos.reales.store'), ['source_weight' => '2.75 kg', 'transformed_weight' => 3, 'return_to' => 'transformed'])
+            ->assertRedirect(route('provider-payments.maintainers.pesos.transformados', ['discover' => 1]));
 
         $this->assertDatabaseHas('weight_transformations', ['tenant_id' => $tenant->id, 'source_weight' => '2.75 kg', 'comparison_key' => '2.75', 'transformed_weight' => 3]);
+
+        $this->put(route('provider-payments.maintainers.pesos.transformados.update', $weight), ['transformed_weight' => 4, 'is_active' => 0])
+            ->assertRedirect(route('provider-payments.maintainers.pesos.transformados'));
+        $this->assertDatabaseHas('weight_transformations', ['id' => $weight->id, 'transformed_weight' => 4, 'is_active' => false]);
     }
 
     public function test_provider_rut_remains_immutable_when_operational_data_is_updated(): void
