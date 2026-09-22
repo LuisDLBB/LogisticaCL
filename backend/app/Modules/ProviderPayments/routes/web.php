@@ -17,6 +17,7 @@ Route::prefix('pago-proveedores')
     ->group(function (): void {
         Route::get('/', ProviderPaymentsDashboardController::class)->name('dashboard');
         Route::get('/movimientos', [ProviderPaymentsDashboardController::class, 'movements'])->name('movements.index');
+        Route::delete('/movimientos/procesos', [ProviderPaymentsDashboardController::class, 'destroyProcess'])->name('movements.processes.destroy');
         Route::view('/carga-movimientos-courier', 'provider-payments::courier-movements-upload', ['processType' => 'variables', 'processTitle' => 'Courier Variables'])->name('courier-movements.upload');
         Route::view('/carga-movimientos-courier/lanas', 'provider-payments::courier-movements-upload', ['processType' => 'lanas', 'processTitle' => 'Courier Lanas'])->name('courier-movements.lanas');
         Route::view('/carga-movimientos-courier/retornos', 'provider-payments::courier-movements-upload', ['processType' => 'retornos', 'processTitle' => 'Courier Retornos'])->name('courier-movements.retornos');

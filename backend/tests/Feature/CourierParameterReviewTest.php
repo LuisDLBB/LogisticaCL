@@ -442,11 +442,11 @@ class CourierParameterReviewTest extends TestCase
         CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202607010003', 'merchant_name' => 'Cliente Nuevo', 'status' => 'Entregado', 'nombre_proceso' => '202607-Lanas']);
 
         $this->get(route('provider-payments.dashboard'))
-            ->assertOk()->assertSee('Registros por servicio')->assertSee('Variable')->assertSee('Lanas')->assertDontSee('202607-Variable')->assertDontSee('202607-Lanas')
+            ->assertOk()->assertSee('Registros por servicio')->assertSee('Variable')->assertSee('Lanas')->assertSee('202607-Variable')->assertSee('202607-Lanas')
             ->assertSee('Cliente Nuevo')->assertDontSee('Cliente Antiguo')->assertSee('3')->assertSee('Registros cargados');
 
         $this->get(route('provider-payments.dashboard', ['period' => '202606']))
-            ->assertOk()->assertSee('Variable')->assertDontSee('202606-Variable')->assertSee('Cliente Antiguo')->assertDontSee('Cliente Nuevo');
+            ->assertOk()->assertSee('Variable')->assertSee('202606-Variable')->assertSee('Cliente Antiguo')->assertDontSee('Cliente Nuevo');
     }
 
     public function test_dashboard_opens_a_read_only_filtered_movement_sheet_with_decrypted_fields(): void
@@ -475,6 +475,34 @@ class CourierParameterReviewTest extends TestCase
 
         $this->get(route('provider-payments.movements.index', ['period' => '202612', 'process' => 'Variable']))
             ->assertOk()->assertDontSee('4N202612010001');
+    }
+
+    public function test_movement_sheet_filters_by_transformed_weight_greater_than_the_entered_value(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202612020001', 'peso_transformado' => 10, 'nombre_proceso' => '202612-Variable']);
+        CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202612020002', 'peso_transformado' => 11, 'nombre_proceso' => '202612-Variable']);
+
+        $this->get(route('provider-payments.movements.index', ['period' => '202612', 'minimum_transformed_weight' => 10]))
+            ->assertOk()->assertSee('Peso transformado mayor que')
+            ->assertDontSee('4N202612020001')->assertSee('4N202612020002');
+    }
+
+    public function test_a_loaded_process_can_be_deleted_without_affecting_other_processes(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202612030001', 'nombre_proceso' => '202612-Lanas']);
+        CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202612030002', 'nombre_proceso' => '202612-Variable']);
+
+        $this->get(route('provider-payments.dashboard', ['period' => '202612']))
+            ->assertOk()->assertSee('Eliminar procesos cargados')->assertSee('202612-Lanas')->assertSee('202612-Variable');
+
+        $this->delete(route('provider-payments.movements.processes.destroy'), ['process_name' => '202612-Lanas'])
+            ->assertRedirect(route('provider-payments.dashboard', ['period' => '202612']))
+            ->assertSessionHas('status', 'Proceso 202612-Lanas eliminado: 1 registros borrados.');
+
+        $this->assertDatabaseMissing('movimientos_courier', ['tracking_number' => '4N202612030001']);
+        $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => '4N202612030002', 'nombre_proceso' => '202612-Variable']);
     }
 
     public function test_excluded_coverage_errors_disappear_from_pending_review_but_remain_in_error_database(): void

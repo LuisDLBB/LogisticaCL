@@ -14,6 +14,7 @@
 <label>Estado<select name="status"><option value="">Todos</option>@foreach($statusOptions as $option)<option value="{{ $option }}" @selected($option === $status)>{{ $option }}</option>@endforeach</select></label>
 <label>Cliente<select name="merchant"><option value="">Todos</option>@foreach($merchantOptions as $option)<option value="{{ $option }}" @selected($option === $merchant)>{{ $option }}</option>@endforeach</select></label>
 <label>Comuna<select name="commune"><option value="">Todas</option>@foreach($communeOptions as $option)<option value="{{ $option }}" @selected($option === $commune)>{{ $option }}</option>@endforeach</select></label>
+<label>Peso transformado mayor que<input type="number" name="minimum_transformed_weight" min="0" step="1" value="{{ $minimumTransformedWeight }}" placeholder="Ejemplo: 10"></label>
 <label>Buscar<input name="q" value="{{ $search }}" placeholder="Seguimiento, cliente, servicio…"></label>
 <div class="sheet-actions"><button type="submit">Aplicar filtros</button><a class="button" href="{{ route('provider-payments.movements.index', ['period' => $period]) }}">Limpiar</a></div>
 </form>

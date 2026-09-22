@@ -6,6 +6,7 @@ use App\Models\CourierMovement;
 use App\Models\Coverage;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -64,6 +65,9 @@ class ProviderPaymentsDashboardController
         $merchant = trim((string) $request->query('merchant', ''));
         $commune = trim((string) $request->query('commune', ''));
         $search = trim((string) $request->query('q', ''));
+        $minimumTransformedWeight = $request->filled('minimum_transformed_weight')
+            ? (int) $request->validate(['minimum_transformed_weight' => ['nullable', 'integer', 'min:0']])['minimum_transformed_weight']
+            : null;
 
         $base = CourierMovement::query()
             ->when($tenant, fn ($query) => $query->where('tenant_id', $tenant->id), fn ($query) => $query->whereRaw('1 = 0'))
@@ -78,6 +82,7 @@ class ProviderPaymentsDashboardController
             ->when($status !== '', fn ($query) => $query->where('status', $status))
             ->when($merchant !== '', fn ($query) => $query->where('merchant_name', $merchant))
             ->when($commune !== '', fn ($query) => $query->where('destination_commune_name', $commune))
+            ->when($minimumTransformedWeight !== null, fn ($query) => $query->where('peso_transformado', '>', $minimumTransformedWeight))
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($query) use ($search): void {
                     foreach (['tracking_number', 'merchant_name', 'service_name', 'status', 'destination_commune_name', 'nombre_proceso'] as $column) {
@@ -96,8 +101,26 @@ class ProviderPaymentsDashboardController
         }
 
         return view('provider-payments::movements-index', compact(
-            'movements', 'periods', 'period', 'process', 'status', 'merchant', 'commune', 'search',
+            'movements', 'periods', 'period', 'process', 'status', 'merchant', 'commune', 'search', 'minimumTransformedWeight',
             'processOptions', 'statusOptions', 'merchantOptions', 'communeOptions',
         ));
+    }
+
+    public function destroyProcess(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'process_name' => ['required', 'string', 'regex:/^\d{6}-.+$/', 'max:100'],
+        ]);
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $processName = $validated['process_name'];
+        $deleted = CourierMovement::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('nombre_proceso', $processName)
+            ->delete();
+
+        return redirect()->route('provider-payments.dashboard', ['period' => substr($processName, 0, 6)])
+            ->with('status', $deleted > 0
+                ? sprintf('Proceso %s eliminado: %s registros borrados.', $processName, number_format($deleted, 0, ',', '.'))
+                : sprintf('El proceso %s ya no tenía registros.', $processName));
     }
 }
