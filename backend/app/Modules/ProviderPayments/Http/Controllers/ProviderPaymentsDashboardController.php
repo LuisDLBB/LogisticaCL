@@ -3,8 +3,10 @@
 namespace App\Modules\ProviderPayments\Http\Controllers;
 
 use App\Models\CourierMovement;
+use App\Models\Coverage;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ProviderPaymentsDashboardController
@@ -84,6 +86,14 @@ class ProviderPaymentsDashboardController
                 });
             })
             ->orderByDesc('id')->paginate(100)->withQueryString();
+        $providersByCommune = $tenant ? Coverage::query()
+            ->where('tenant_id', $tenant->id)->where('is_active', true)->whereNotNull('provider_id')->with('provider:id,operational_name,legal_name')
+            ->get()->filter(fn (Coverage $coverage): bool => $coverage->provider !== null)
+            ->mapWithKeys(fn (Coverage $coverage): array => [Str::of($coverage->commune_name)->squish()->lower()->ascii()->toString() => $coverage->provider]) : collect();
+        foreach ($movements as $movement) {
+            $provider = $providersByCommune->get(Str::of((string) $movement->destination_commune_name)->squish()->lower()->ascii()->toString());
+            $movement->setAttribute('resolved_operational_name', $provider?->operational_name ?: $provider?->legal_name);
+        }
 
         return view('provider-payments::movements-index', compact(
             'movements', 'periods', 'period', 'process', 'status', 'merchant', 'commune', 'search',

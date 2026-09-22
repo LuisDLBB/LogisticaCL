@@ -452,10 +452,15 @@ class CourierParameterReviewTest extends TestCase
     public function test_dashboard_opens_a_read_only_filtered_movement_sheet_with_decrypted_fields(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $provider = Provider::factory()->create(['tenant_id' => $tenant->id, 'operational_name' => 'Operador Valdivia']);
+        Coverage::create(['tenant_id' => $tenant->id, 'provider_id' => $provider->id, 'commune_name' => 'Valdivia', 'zone' => 'Regiones', 'is_active' => true]);
         CourierMovement::create([
             'tenant_id' => $tenant->id, 'tracking_number' => '4N202612010001', 'merchant_name' => 'Cliente Planilla',
             'service_name' => 'Retornos', 'status' => 'Entregado', 'destination_commune_name' => 'Valdivia',
-            'recipient_name' => 'Persona Legible', 'recipient_address' => 'Calle Legible 123',
+            'recipient_name' => 'Persona Legible', 'recipient_company_name' => 'Empresa Legible', 'recipient_address' => 'Calle Legible 123',
+            'recipient_phone' => '+56911111111', 'recipient_email' => 'persona@example.cl', 'delivery_attempts' => 2,
+            'received_at' => '2026-12-01 09:00:00', 'delivered_at' => '2026-12-01 18:00:00', 'merchant_pickup' => true,
+            'courier_name' => 'Repartidor Uno', 'delivery_user_name' => 'Usuario Entrega',
             'tipo_pago' => 'Retornos', 'nombre_proceso' => '202612-Retornos',
         ]);
 
@@ -464,7 +469,9 @@ class CourierParameterReviewTest extends TestCase
 
         $this->get(route('provider-payments.movements.index', ['period' => '202612', 'process' => 'Retornos', 'status' => 'Entregado']))
             ->assertOk()->assertSee('Planilla de movimientos Courier')->assertSee('solo consulta')
-            ->assertSee('4N202612010001')->assertSee('Persona Legible')->assertSee('Calle Legible 123')->assertSee('Valdivia');
+            ->assertSeeInOrder(['Fecha', 'Nombre Operacional', 'Seguimiento paquete', 'Peso', 'Peso Transformado', 'Estado de entrega', 'Intentos de entrega', 'Comerciante', 'Servicio', 'Nombre del destinatario', 'Empresa del destinatario', 'Dirección', 'Comuna de destino', 'Teléfono del destinatario', 'Email del destinatario', 'Fecha de recepción', 'Fecha de entrega', 'Retiro en comerciante', 'Nombre del repartidor', 'Usuario que realizó la entrega'])
+            ->assertSee('Operador Valdivia')->assertSee('4N202612010001')->assertSee('Persona Legible')->assertSee('Empresa Legible')
+            ->assertSee('Calle Legible 123')->assertSee('+56911111111')->assertSee('persona@example.cl')->assertSee('Repartidor Uno')->assertSee('Usuario Entrega');
 
         $this->get(route('provider-payments.movements.index', ['period' => '202612', 'process' => 'Variable']))
             ->assertOk()->assertDontSee('4N202612010001');
