@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Client;
 use App\Models\CourierMovement;
 use App\Models\CourierPaymentMovement;
+use App\Models\CourierStatus;
 use App\Models\Coverage;
 use App\Models\Provider;
 use App\Models\Tenant;
@@ -14,6 +15,27 @@ use Tests\TestCase;
 class CourierMovementCompileTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_non_payable_statuses_are_removed_only_from_selected_compiled_period(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        CourierStatus::query()->updateOrCreate(['name' => 'Anulado'], ['consider_for_payment' => false]);
+        CourierStatus::query()->updateOrCreate(['name' => 'Entregado'], ['consider_for_payment' => true]);
+        foreach ([['4N202607010001-111', '202607-Variable', 'Anulado'], ['4N202607010002-222', '202607-Variable', 'Entregado'], ['4N202608010003-333', '202608-Variable', 'Anulado']] as [$tracking, $process, $status]) {
+            CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => $tracking, 'nombre_proceso' => $process, 'status' => $status]);
+        }
+        foreach (['202607', '202608'] as $period) {
+            $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => $period, 'processes' => ['Variable']])->assertRedirect();
+        }
+        $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))
+            ->assertOk()->assertSee('Eliminar registros con estados NO PAGAR')->assertSee('Anulado: 1');
+        $this->delete(route('provider-payments.courier-movements.compile.non-payable.destroy'), ['period' => '202607'])->assertRedirect();
+
+        $this->assertDatabaseMissing('Pago_Movimientos_Courier', ['periodo' => '202607', 'estado_envio' => 'Anulado']);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'estado_envio' => 'Entregado']);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202608', 'estado_envio' => 'Anulado']);
+        $this->assertDatabaseCount('movimientos_courier', 3);
+    }
 
     public function test_selected_processes_are_compiled_without_changing_source_weights(): void
     {

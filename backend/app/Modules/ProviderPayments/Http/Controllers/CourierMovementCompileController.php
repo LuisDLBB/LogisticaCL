@@ -4,6 +4,7 @@ namespace App\Modules\ProviderPayments\Http\Controllers;
 
 use App\Models\CourierMovement;
 use App\Models\CourierPaymentMovement;
+use App\Models\CourierStatus;
 use App\Models\Coverage;
 use App\Models\Provider;
 use App\Models\Tenant;
@@ -69,8 +70,25 @@ class CourierMovementCompileController
         $rows = CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
             ->when($period !== '', fn ($query) => $query->where('periodo', $period), fn ($query) => $query->whereRaw('1 = 0'))
             ->orderByDesc('id')->paginate(100)->withQueryString();
+        $nonPayableStatuses = CourierStatus::query()->where('consider_for_payment', false)->orderBy('name')->pluck('name');
+        $nonPayableCounts = $period === '' ? collect() : CourierPaymentMovement::query()
+            ->where('tenant_id', $tenant->id)->where('periodo', $period)
+            ->whereIn('estado_envio', $nonPayableStatuses)
+            ->selectRaw('estado_envio, COUNT(*) AS total')->groupBy('estado_envio')->orderBy('estado_envio')->get();
 
-        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows'));
+        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts'));
+    }
+
+    public function destroyNonPayable(Request $request): RedirectResponse
+    {
+        $validated = $request->validate(['period' => ['required', 'regex:/^\d{6}$/']]);
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $nonPayableStatuses = CourierStatus::query()->where('consider_for_payment', false)->pluck('name');
+        $deleted = CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
+            ->where('periodo', $validated['period'])->whereIn('estado_envio', $nonPayableStatuses)->delete();
+
+        return redirect()->route('provider-payments.courier-movements.compile.work', ['period' => $validated['period']])
+            ->with('status', number_format($deleted, 0, ',', '.').' registros con estados NO PAGAR eliminados de Pago_Movimientos_Courier. Los movimientos originales se conservan.');
     }
 
     public function compile(Request $request): RedirectResponse

@@ -35,6 +35,7 @@ Route::prefix('pago-proveedores')
         Route::get('/compilar-movimientos-courier/trabajar', [CourierMovementCompileController::class, 'work'])->name('courier-movements.compile.work');
         Route::post('/compilar-movimientos-courier/trabajar', [CourierMovementCompileController::class, 'compile'])->name('courier-movements.compile.store');
         Route::delete('/compilar-movimientos-courier/procesos', [CourierMovementCompileController::class, 'destroyProcess'])->name('courier-movements.compile.destroy');
+        Route::delete('/compilar-movimientos-courier/trabajar/estados-no-pagar', [CourierMovementCompileController::class, 'destroyNonPayable'])->name('courier-movements.compile.non-payable.destroy');
 
         Route::get('/mantenedor/coberturas', [CoverageMaintainerController::class, 'create'])->name('maintainers.coberturas');
         Route::post('/mantenedor/coberturas', [CoverageMaintainerController::class, 'store'])->name('maintainers.coberturas.store');
