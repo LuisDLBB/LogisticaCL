@@ -449,6 +449,27 @@ class CourierParameterReviewTest extends TestCase
             ->assertOk()->assertSee('Variable')->assertDontSee('202606-Variable')->assertSee('Cliente Antiguo')->assertDontSee('Cliente Nuevo');
     }
 
+    public function test_dashboard_opens_a_read_only_filtered_movement_sheet_with_decrypted_fields(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        CourierMovement::create([
+            'tenant_id' => $tenant->id, 'tracking_number' => '4N202612010001', 'merchant_name' => 'Cliente Planilla',
+            'service_name' => 'Retornos', 'status' => 'Entregado', 'destination_commune_name' => 'Valdivia',
+            'recipient_name' => 'Persona Legible', 'recipient_address' => 'Calle Legible 123',
+            'tipo_pago' => 'Retornos', 'nombre_proceso' => '202612-Retornos',
+        ]);
+
+        $this->get(route('provider-payments.dashboard'))
+            ->assertOk()->assertSee('Ver planilla')->assertSee(route('provider-payments.movements.index', ['period' => '202612', 'process' => 'Retornos']));
+
+        $this->get(route('provider-payments.movements.index', ['period' => '202612', 'process' => 'Retornos', 'status' => 'Entregado']))
+            ->assertOk()->assertSee('Planilla de movimientos Courier')->assertSee('solo consulta')
+            ->assertSee('4N202612010001')->assertSee('Persona Legible')->assertSee('Calle Legible 123')->assertSee('Valdivia');
+
+        $this->get(route('provider-payments.movements.index', ['period' => '202612', 'process' => 'Variable']))
+            ->assertOk()->assertDontSee('4N202612010001');
+    }
+
     public function test_excluded_coverage_errors_disappear_from_pending_review_but_remain_in_error_database(): void
     {
         $snapshot = [
