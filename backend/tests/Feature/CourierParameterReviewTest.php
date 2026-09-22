@@ -405,13 +405,14 @@ class CourierParameterReviewTest extends TestCase
         CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202606010001', 'merchant_name' => 'Cliente Antiguo', 'status' => 'Entregado', 'nombre_proceso' => '202606-Variable']);
         CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202607010001', 'merchant_name' => 'Cliente Nuevo', 'status' => 'Fallido', 'nombre_proceso' => '202607-Variable']);
         CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202607010002', 'merchant_name' => 'Cliente Nuevo', 'status' => 'Entregado', 'nombre_proceso' => '202607-Variable']);
+        CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202607010003', 'merchant_name' => 'Cliente Nuevo', 'status' => 'Entregado', 'nombre_proceso' => '202607-Lanas']);
 
         $this->get(route('provider-payments.dashboard'))
-            ->assertOk()->assertSee('202607-Variable')->assertSee('Cliente Nuevo')->assertDontSee('Cliente Antiguo')
-            ->assertSee('2')->assertSee('Registros cargados');
+            ->assertOk()->assertSee('Registros por servicio')->assertSee('Variable')->assertSee('Lanas')->assertDontSee('202607-Variable')->assertDontSee('202607-Lanas')
+            ->assertSee('Cliente Nuevo')->assertDontSee('Cliente Antiguo')->assertSee('3')->assertSee('Registros cargados');
 
         $this->get(route('provider-payments.dashboard', ['period' => '202606']))
-            ->assertOk()->assertSee('202606-Variable')->assertSee('Cliente Antiguo')->assertDontSee('Cliente Nuevo');
+            ->assertOk()->assertSee('Variable')->assertDontSee('202606-Variable')->assertSee('Cliente Antiguo')->assertDontSee('Cliente Nuevo');
     }
 
     public function test_excluded_coverage_errors_disappear_from_pending_review_but_remain_in_error_database(): void

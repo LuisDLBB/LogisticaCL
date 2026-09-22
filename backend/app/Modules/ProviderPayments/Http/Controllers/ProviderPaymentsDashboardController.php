@@ -36,9 +36,14 @@ class ProviderPaymentsDashboardController
             ->orderByDesc('total')
             ->get();
 
-        $processNames = (clone $movements)->whereNotNull('nombre_proceso')->distinct()->orderBy('nombre_proceso')->pluck('nombre_proceso');
+        $serviceCounts = (clone $movements)
+            ->whereNotNull('nombre_proceso')
+            ->selectRaw('SUBSTR(nombre_proceso, 8) AS service_name, count(*) AS total')
+            ->groupByRaw('SUBSTR(nombre_proceso, 8)')
+            ->orderByDesc('total')
+            ->get();
         $recordCount = (clone $movements)->count();
 
-        return view('provider-payments::dashboard', compact('merchantCounts', 'statusCounts', 'periods', 'selectedPeriod', 'processNames', 'recordCount'));
+        return view('provider-payments::dashboard', compact('merchantCounts', 'statusCounts', 'serviceCounts', 'periods', 'selectedPeriod', 'recordCount'));
     }
 }
