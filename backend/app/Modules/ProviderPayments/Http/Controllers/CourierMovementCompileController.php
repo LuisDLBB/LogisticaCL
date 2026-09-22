@@ -17,9 +17,38 @@ class CourierMovementCompileController
 {
     private const PROCESS_TYPES = ['Variable', 'Lanas', 'Retornos'];
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        return view('provider-payments::compile', ['title' => 'Compilar Movimientos Courier']);
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $base = CourierPaymentMovement::query()->where('tenant_id', $tenant->id);
+        $periods = (clone $base)->select('periodo')->distinct()->orderByDesc('periodo')->pluck('periodo')->all();
+        $period = (string) $request->query('period', $periods[0] ?? '');
+        if (! in_array($period, $periods, true)) {
+            $period = $periods[0] ?? '';
+        }
+        $loadedProcesses = $period === '' ? collect() : (clone $base)->where('periodo', $period)
+            ->selectRaw('nombre_proceso, COUNT(*) AS total')->groupBy('nombre_proceso')->orderBy('nombre_proceso')->get();
+
+        return view('provider-payments::compile', [
+            'title' => 'Compilar Movimientos Courier',
+            'periods' => $periods,
+            'period' => $period,
+            'loadedProcesses' => $loadedProcesses,
+        ]);
+    }
+
+    public function destroyProcess(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'period' => ['required', 'regex:/^\d{6}$/'],
+            'process' => ['required', 'in:Variable,Lanas,Retornos'],
+        ]);
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $deleted = CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
+            ->where('periodo', $validated['period'])->where('nombre_proceso', $validated['process'])->delete();
+
+        return redirect()->route('provider-payments.courier-movements.compile', ['period' => $validated['period']])
+            ->with('status', sprintf('%s-%s: %s registros trabajados eliminados.', $validated['period'], $validated['process'], number_format($deleted, 0, ',', '.')));
     }
 
     public function work(Request $request): View
