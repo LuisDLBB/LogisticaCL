@@ -10,11 +10,37 @@ use App\Models\Coverage;
 use App\Models\Provider;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class CourierMovementCompileTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_rm_and_temuco_provider_button_updates_only_exact_courier_assignments(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '77346078-7', 'tax_id_number' => '77346078', 'tax_id_check_digit' => '7', 'legal_name' => '4N', 'operational_name' => '4N RM', 'operator_type' => 'Courier']);
+        Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '78350442-1', 'tax_id_number' => '78350442', 'tax_id_check_digit' => '1', 'legal_name' => 'Nuevo proveedor SPA', 'operational_name' => 'Claudio Operacional', 'operator_type' => 'Courier', 'tax_document_type' => 'Factura']);
+        DB::table('Proveedores_usuarios_4N')->insert([
+            ['RutProveedor' => '77346078-7', 'ComunaMatriz' => '4N RM', 'NombreRepartidor' => 'Claudio Gonzalez', 'NuevoRutProveedor' => '78350442-1'],
+            ['RutProveedor' => '77346078-7', 'ComunaMatriz' => '4N Temuco', 'NombreRepartidor' => '4N-Demo', 'NuevoRutProveedor' => 'N/A'],
+        ]);
+        foreach ([['202607', '4N RM', 'Claudio González'], ['202607', '4N Temuco', '4N-Demo'], ['202608', '4N RM', 'Claudio González']] as $index => [$period, $matrix, $courier]) {
+            $movement = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N20260701000'.$index.'-111', 'nombre_proceso' => $period.'-Variable']);
+            CourierPaymentMovement::create(['tenant_id' => $tenant->id, 'courier_movement_id' => $movement->id, 'periodo' => $period, 'nombre_proceso' => 'Variable', 'tipo_pago' => 'Variable', 'peso_final' => 1, 'empresa_mandante' => '4N', 'rut_proveedor' => '77346078-7', 'razon_social_proveedor' => '4N', 'comuna_matriz' => $matrix, 'nombre_repartidor' => $courier]);
+        }
+
+        $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))
+            ->assertOk()->assertSee('Actualizar Proveedores RM y Temuco');
+        $this->post(route('provider-payments.courier-movements.compile.providers-4n.update'), ['period' => '202607'])
+            ->assertRedirect()->assertSessionHas('status', '1 proveedores actualizados. 1 con N/A conservados; 0 sin cruce completo.');
+
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'nombre_repartidor' => 'Claudio González', 'rut_proveedor' => '78350442-1', 'razon_social_proveedor' => 'Nuevo proveedor SPA', 'nombre_operacional' => 'Claudio Operacional', 'tipo_documento' => 'Factura']);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'nombre_repartidor' => '4N-Demo', 'rut_proveedor' => '77346078-7']);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202608', 'nombre_repartidor' => 'Claudio González', 'rut_proveedor' => '77346078-7']);
+        $this->assertDatabaseCount('movimientos_courier', 3);
+    }
 
     public function test_non_payable_statuses_are_removed_only_from_selected_compiled_period(): void
     {

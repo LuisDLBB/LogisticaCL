@@ -75,8 +75,65 @@ class CourierMovementCompileController
             ->where('tenant_id', $tenant->id)->where('periodo', $period)
             ->whereIn('estado_envio', $nonPayableStatuses)
             ->selectRaw('estado_envio, COUNT(*) AS total')->groupBy('estado_envio')->orderBy('estado_envio')->get();
+        $fourNorthCandidates = $period === '' ? 0 : CourierPaymentMovement::query()
+            ->where('tenant_id', $tenant->id)->where('periodo', $period)
+            ->where('rut_proveedor', '77346078-7')->whereIn('comuna_matriz', ['4N RM', '4N Temuco'])->count();
 
-        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts'));
+        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates'));
+    }
+
+    public function updateFourNorthProviders(Request $request): RedirectResponse
+    {
+        $validated = $request->validate(['period' => ['required', 'regex:/^\d{6}$/']]);
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $assignments = DB::table('Proveedores_usuarios_4N')->get()->keyBy(fn ($row): string => $this->assignmentKey(
+            $row->RutProveedor, $row->ComunaMatriz, $row->NombreRepartidor,
+        ));
+        $providers = Provider::query()->where('tenant_id', $tenant->id)->get()
+            ->keyBy(fn (Provider $provider): string => strtoupper(trim($provider->tax_id)));
+        $updated = 0;
+        $withoutAssignment = 0;
+        $notApplicable = 0;
+
+        CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
+            ->where('periodo', $validated['period'])->where('rut_proveedor', '77346078-7')
+            ->whereIn('comuna_matriz', ['4N RM', '4N Temuco'])
+            ->select(['id', 'rut_proveedor', 'comuna_matriz', 'nombre_repartidor'])
+            ->chunkById(1000, function ($rows) use ($assignments, $providers, &$updated, &$withoutAssignment, &$notApplicable): void {
+                $byProvider = [];
+                foreach ($rows as $row) {
+                    $assignment = $assignments->get($this->assignmentKey($row->rut_proveedor, $row->comuna_matriz, $row->nombre_repartidor));
+                    if ($assignment === null) {
+                        $withoutAssignment++;
+                        continue;
+                    }
+                    if (strtoupper(trim($assignment->NuevoRutProveedor)) === 'N/A') {
+                        $notApplicable++;
+                        continue;
+                    }
+                    $provider = $providers->get(strtoupper(trim($assignment->NuevoRutProveedor)));
+                    if ($provider === null) {
+                        $withoutAssignment++;
+                        continue;
+                    }
+                    $byProvider[$provider->id]['provider'] = $provider;
+                    $byProvider[$provider->id]['ids'][] = $row->id;
+                }
+                foreach ($byProvider as $group) {
+                    $provider = $group['provider'];
+                    DB::table('Pago_Movimientos_Courier')->whereIn('id', $group['ids'])->update([
+                        'rut_proveedor' => $provider->tax_id,
+                        'razon_social_proveedor' => $provider->legal_name,
+                        'nombre_operacional' => $provider->operational_name,
+                        'tipo_documento' => $provider->tax_document_type,
+                        'updated_at' => now(),
+                    ]);
+                    $updated += count($group['ids']);
+                }
+            });
+
+        return redirect()->route('provider-payments.courier-movements.compile.work', ['period' => $validated['period']])
+            ->with('status', number_format($updated, 0, ',', '.').' proveedores actualizados. '.number_format($notApplicable, 0, ',', '.').' con N/A conservados; '.number_format($withoutAssignment, 0, ',', '.').' sin cruce completo.');
     }
 
     public function destroyNonPayable(Request $request): RedirectResponse
@@ -161,5 +218,10 @@ class CourierMovementCompileController
     private function communeKey(string $commune): string
     {
         return Str::of($commune)->squish()->lower()->ascii()->toString();
+    }
+
+    private function assignmentKey(?string $rut, ?string $matrix, ?string $courier): string
+    {
+        return strtoupper(trim((string) $rut)).'|'.$this->communeKey((string) $matrix).'|'.$this->communeKey((string) $courier);
     }
 }
