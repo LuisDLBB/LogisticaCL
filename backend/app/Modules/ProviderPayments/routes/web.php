@@ -16,8 +16,8 @@ Route::prefix('pago-proveedores')
     ->name('provider-payments.')
     ->group(function (): void {
         Route::get('/', ProviderPaymentsDashboardController::class)->name('dashboard');
-        Route::view('/carga-movimientos-courier', 'provider-payments::courier-movements-upload')->name('courier-movements.upload');
-        Route::view('/carga-movimientos-courier/lanas', 'provider-payments::placeholder', ['title' => 'Courier Lanas'])->name('courier-movements.lanas');
+        Route::view('/carga-movimientos-courier', 'provider-payments::courier-movements-upload', ['processType' => 'variables', 'processTitle' => 'Courier Variables'])->name('courier-movements.upload');
+        Route::view('/carga-movimientos-courier/lanas', 'provider-payments::courier-movements-upload', ['processType' => 'lanas', 'processTitle' => 'Courier Lanas'])->name('courier-movements.lanas');
         Route::view('/carga-movimientos-courier/retornos', 'provider-payments::placeholder', ['title' => 'Courier Retornos'])->name('courier-movements.retornos');
         Route::view('/carga-movimientos-courier/especiales', 'provider-payments::placeholder', ['title' => 'Courier Especiales'])->name('courier-movements.especiales');
         Route::view('/carga-movimientos-courier/rutas-cv', 'provider-payments::placeholder', ['title' => 'Rutas CV'])->name('courier-movements.rutas-cv');

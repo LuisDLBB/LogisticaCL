@@ -6,7 +6,7 @@
 </style>
 @endpush
 @section('content')
-<a class="back" href="{{ route('provider-payments.courier-movements.upload') }}">← Cargar otro archivo</a>
+<a class="back" href="{{ route(($snapshot['process_type'] ?? 'variables') === 'lanas' ? 'provider-payments.courier-movements.lanas' : 'provider-payments.courier-movements.upload') }}">← Cargar otro archivo</a>
 <p class="eyebrow">Pago a proveedores</p><h1>Revisión de inconsistencias</h1><p class="intro">Comprueba los datos pendientes antes de incorporar los movimientos.</p>
 @if(session('status'))<p class="success">{{ session('status') }}</p>@endif
 @if($errors->any())<p class="warning">{{ $errors->first() }}</p>@endif
@@ -28,7 +28,7 @@
         <div class="tenant-row">
             <label>Año del proceso<select id="process_year" name="process_year">@for($year = now()->year + 1; $year >= 2020; $year--)<option value="{{ $year }}" @selected($year === ($snapshot['suggested_year'] ?? now()->year))>{{ $year }}</option>@endfor</select></label>
             <label>Mes del proceso<select id="process_month" name="process_month">@foreach([1=>'Enero',2=>'Febrero',3=>'Marzo',4=>'Abril',5=>'Mayo',6=>'Junio',7=>'Julio',8=>'Agosto',9=>'Septiembre',10=>'Octubre',11=>'Noviembre',12=>'Diciembre'] as $month => $monthName)<option value="{{ $month }}" @selected($month === ($snapshot['suggested_month'] ?? now()->month))>{{ $monthName }}</option>@endforeach</select></label>
-            <label>Nombre del proceso<input id="process_name" name="process_name" value="{{ sprintf('%04d%02d-Variable', $snapshot['suggested_year'] ?? now()->year, $snapshot['suggested_month'] ?? now()->month) }}" maxlength="100"></label>
+            <label>Nombre del proceso<input id="process_name" name="process_name" value="{{ sprintf('%04d%02d-%s', $snapshot['suggested_year'] ?? now()->year, $snapshot['suggested_month'] ?? now()->month, $snapshot['process_suffix'] ?? 'Variable') }}" maxlength="100" @readonly(($snapshot['process_type'] ?? 'variables') === 'lanas')></label>
         </div>
         <label><input type="checkbox" name="replace_duplicates" value="1"> Reemplazar seguimientos que ya existan</label>
         <p class="note">Si no marcas la opción, los seguimientos existentes se conservarán y serán omitidos.</p>
@@ -53,4 +53,4 @@
 @endforeach
 @endif
 @endsection
-@push('scripts')<script>document.getElementById('review-form')?.addEventListener('submit',function(){document.getElementById('review-progress').hidden=false;this.querySelector('button').disabled=true;});const year=document.getElementById('process_year'),month=document.getElementById('process_month'),processName=document.getElementById('process_name');function defaultProcessName(){if(year&&month&&processName){processName.value=`${year.value}${String(month.value).padStart(2,'0')}-Variable`;}}year?.addEventListener('change',defaultProcessName);month?.addEventListener('change',defaultProcessName);document.getElementById('import-form')?.addEventListener('submit',function(event){if(!confirm(`¿Confirmas la carga del proceso ${processName.value} a movimientos_courier?`)){event.preventDefault();return;}document.getElementById('import-progress').hidden=false;this.querySelector('button').disabled=true;});</script>@endpush
+@push('scripts')<script>document.getElementById('review-form')?.addEventListener('submit',function(){document.getElementById('review-progress').hidden=false;this.querySelector('button').disabled=true;});const year=document.getElementById('process_year'),month=document.getElementById('process_month'),processName=document.getElementById('process_name'),processSuffix=@json($snapshot['process_suffix'] ?? 'Variable');function defaultProcessName(){if(year&&month&&processName){processName.value=`${year.value}${String(month.value).padStart(2,'0')}-${processSuffix}`;}}year?.addEventListener('change',defaultProcessName);month?.addEventListener('change',defaultProcessName);document.getElementById('import-form')?.addEventListener('submit',function(event){if(!confirm(`¿Confirmas la carga del proceso ${processName.value} a movimientos_courier?`)){event.preventDefault();return;}document.getElementById('import-progress').hidden=false;this.querySelector('button').disabled=true;});</script>@endpush

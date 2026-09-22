@@ -59,6 +59,18 @@ class CourierParameterReviewTest extends TestCase
             ->assertSee('1 registros procesados');
     }
 
+    public function test_lanas_uses_the_same_validation_flow_and_keeps_its_process_type(): void
+    {
+        $this->get(route('provider-payments.courier-movements.lanas'))
+            ->assertOk()->assertSee('Courier Lanas')->assertSee('name="process_type" value="lanas"', false);
+
+        $csv = "Seguimiento paquete,Comerciante,Servicio,Comuna,Peso,Estado\n4N20260916A,Cliente,Normal,Temuco,5,Entregado\n";
+        $this->post(route('provider-payments.courier-movements.validate'), [
+            'process_type' => 'lanas',
+            'file' => UploadedFile::fake()->createWithContent('lanas.csv', $csv),
+        ])->assertOk()->assertSee('1 registros procesados')->assertSessionHas('courier_review.process_type', 'lanas')->assertSessionHas('courier_review.process_suffix', 'Lanas');
+    }
+
     public function test_semicolon_delimited_csv_is_detected_automatically(): void
     {
         $csv = "Seguimiento paquete;Comerciante;Servicio;Comuna;Peso;Estado\n4N20260916A;Cliente;Normal;Temuco;5;Entregado\n";
@@ -375,6 +387,16 @@ class CourierParameterReviewTest extends TestCase
         $this->assertSame('Persona Dos', $movement->recipient_name);
         $this->assertSame('202608-Variable', $movement->nombre_proceso);
         $this->assertDatabaseCount('movimientos_courier', 1);
+
+        $lanasTracking = '4N202609013619-527';
+        Storage::disk('local')->put('courier-imports/lanas.csv', $header."{$lanasTracking};1.00 kg;Entregado;Cliente Prueba;Servicio Standar;Comuna Mala;Calle 1;Persona Lanas\n");
+        $lanasSnapshot = [...$snapshot('courier-imports/lanas.csv'), 'process_type' => 'lanas', 'process_suffix' => 'Lanas'];
+        $this->withSession(['courier_review' => $lanasSnapshot, 'courier_review_corrections.coverages' => ['Comuna Mala → Calle 1' => 'Temuco']])
+            ->post(route('provider-payments.courier-movements.store'), ['process_year' => 2026, 'process_month' => 9, 'process_name' => 'nombre-manipulado'])
+            ->assertOk()->assertSee('202609-Lanas');
+
+        $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => $lanasTracking, 'tipo_pago' => 'Lanas', 'nombre_proceso' => '202609-Lanas']);
+        $this->assertDatabaseCount('movimientos_courier', 2);
     }
 
     public function test_dashboard_defaults_to_latest_period_and_filters_process_totals(): void

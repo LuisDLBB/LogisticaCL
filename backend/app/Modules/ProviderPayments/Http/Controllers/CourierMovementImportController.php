@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use OpenSpout\Reader\CSV\Options as CsvOptions;
 use OpenSpout\Reader\CSV\Reader as CsvReader;
@@ -28,7 +29,10 @@ class CourierMovementImportController
     public function validateFile(Request $request): View
     {
         $validated = $request->validate(
-            ['file' => ['required', 'file', 'extensions:xlsx,csv', 'mimetypes:text/plain,text/csv,application/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip', 'max:102400']],
+            [
+                'file' => ['required', 'file', 'extensions:xlsx,csv', 'mimetypes:text/plain,text/csv,application/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip', 'max:102400'],
+                'process_type' => ['nullable', Rule::in(['variables', 'lanas'])],
+            ],
             [
                 'file.required' => 'Archivo con problema: debes seleccionar un archivo. Formato recomendado: CSV UTF-8 con extensión .csv. También se admite Excel .xlsx.',
                 'file.file' => 'Archivo con problema: no se pudo reconocer como archivo válido. Revisa su formato. Recomendamos CSV UTF-8 con extensión .csv.',
@@ -37,6 +41,7 @@ class CourierMovementImportController
             ],
         );
         $file = $validated['file'];
+        $processType = $validated['process_type'] ?? 'variables';
         $batchId = (string) Str::uuid();
         $extension = strtolower($file->getClientOriginalExtension());
         $storedPath = $file->storeAs('courier-imports', $batchId.'.'.$extension, 'local');
@@ -152,10 +157,12 @@ class CourierMovementImportController
                 ])),
                 'suggested_year' => (int) substr($suggestedPeriod, 0, 4),
                 'suggested_month' => (int) substr($suggestedPeriod, 4, 2),
+                'process_type' => $processType,
+                'process_suffix' => $processType === 'lanas' ? 'Lanas' : 'Variable',
             ]);
             $request->session()->forget('courier_review_exclusions');
 
-            return view('provider-payments::courier-movements-summary', ['validation' => ['file_name' => $file->getClientOriginalName(), 'records' => $records, 'has_tracking' => $trackingIndex !== null, 'has_merchant' => $merchantIndex !== null, 'has_weight' => $weightIndex !== null, 'missing_tracking' => $missingTracking, 'invalid_date' => $invalidDate, 'missing_weight' => $missingWeight, 'merchant_counts' => $merchantCounts, 'status_counts' => $statusCounts]]);
+            return view('provider-payments::courier-movements-summary', ['processType' => $processType, 'validation' => ['file_name' => $file->getClientOriginalName(), 'records' => $records, 'has_tracking' => $trackingIndex !== null, 'has_merchant' => $merchantIndex !== null, 'has_weight' => $weightIndex !== null, 'missing_tracking' => $missingTracking, 'invalid_date' => $invalidDate, 'missing_weight' => $missingWeight, 'merchant_counts' => $merchantCounts, 'status_counts' => $statusCounts]]);
         } catch (Throwable $exception) {
             report($exception);
 
@@ -202,14 +209,15 @@ class CourierMovementImportController
             'process_month' => ['required', 'integer', 'between:1,12'],
             'process_name' => ['nullable', 'string', 'max:100'],
         ]);
-        $processName = trim((string) ($validated['process_name'] ?? ''));
-        if ($processName === '') {
-            $processName = sprintf('%04d%02d-Variable', $validated['process_year'], $validated['process_month']);
-        }
         $snapshot = $request->session()->get('courier_review');
+        $processSuffix = ($snapshot['process_type'] ?? 'variables') === 'lanas' ? 'Lanas' : 'Variable';
+        $processName = $processSuffix === 'Lanas' ? '' : trim((string) ($validated['process_name'] ?? ''));
+        if ($processName === '') {
+            $processName = sprintf('%04d%02d-%s', $validated['process_year'], $validated['process_month'], $processSuffix);
+        }
         $tenant = Tenant::query()->where('code', '4N')->where('is_active', true)->firstOrFail();
         if (! $snapshot || empty($snapshot['stored_path']) || ! Storage::disk('local')->exists($snapshot['stored_path'])) {
-            return redirect()->route('provider-payments.courier-movements.upload')
+            return redirect()->route(($snapshot['process_type'] ?? 'variables') === 'lanas' ? 'provider-payments.courier-movements.lanas' : 'provider-payments.courier-movements.upload')
                 ->withErrors(['file' => 'Debes seleccionar y validar nuevamente el archivo para completar la carga.']);
         }
         $groups = $this->hideExcludedCoverages(
@@ -232,6 +240,7 @@ class CourierMovementImportController
             $request->session()->get('courier_review_exclusions.coverages', []),
             $request->session()->get('courier_review_corrections.coverages', []),
             $processName,
+            $processSuffix === 'Lanas' ? 'Lanas' : 'Variables',
         );
         Storage::disk('local')->delete($snapshot['stored_path']);
         $request->session()->forget(['courier_review', 'courier_review_exclusions', 'courier_review_comments', 'courier_review_corrections']);
@@ -361,7 +370,7 @@ class CourierMovementImportController
     }
 
     /** @return array{created:int,replaced:int,duplicates:int,excluded:int,invalid:int,total:int} */
-    private function importStoredFile(string $path, string $extension, int $tenantId, bool $replaceDuplicates, array $excludedCommunes, array $correctedCommunes, string $processName): array
+    private function importStoredFile(string $path, string $extension, int $tenantId, bool $replaceDuplicates, array $excludedCommunes, array $correctedCommunes, string $processName, string $paymentType): array
     {
         $reader = $extension === 'csv' ? new CsvReader(new CsvOptions(FIELD_DELIMITER: $this->detectCsvDelimiter($path))) : new XlsxReader;
         $clients = Client::query()->where('tenant_id', $tenantId)->where('is_active', true)->get()
@@ -425,7 +434,7 @@ class CourierMovementImportController
                     'cost_center' => $this->nullable($this->rowValue($values, $indexes, ['centro de costo'])),
                     'purchase_order' => $this->nullable($this->rowValue($values, $indexes, ['orden de compra'])),
                     'dispatch_guide' => $this->nullable($this->rowValue($values, $indexes, ['guia de despacho'])),
-                    'weight_kg' => $weightNumber, 'peso_real' => null, 'peso_transformado' => $transformedWeight, 'peso_final' => null, 'tipo_pago' => 'Variables', 'nombre_proceso' => $processName,
+                    'weight_kg' => $weightNumber, 'peso_real' => null, 'peso_transformado' => $transformedWeight, 'peso_final' => null, 'tipo_pago' => $paymentType, 'nombre_proceso' => $processName,
                     'length_cm' => $this->number($this->rowValue($values, $indexes, ['largo'])), 'width_cm' => $this->number($this->rowValue($values, $indexes, ['ancho'])), 'height_cm' => $this->number($this->rowValue($values, $indexes, ['alto'])),
                     'status' => $this->nullable($this->rowValue($values, $indexes, ['estado de entrega', 'estado'])), 'delivery_attempts' => (int) ($this->number($this->rowValue($values, $indexes, ['intentos de entrega'])) ?? 0),
                     'merchant_name' => $this->nullable($merchant), 'service_name' => $this->nullable($this->rowValue($values, $indexes, ['servicio'])), 'campaign_name' => $this->nullable($this->rowValue($values, $indexes, ['nombre de campana'])),
