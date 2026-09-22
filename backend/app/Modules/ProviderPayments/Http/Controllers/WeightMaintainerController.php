@@ -43,12 +43,7 @@ class WeightMaintainerController
 
     public function real(): View
     {
-        $tenant = $this->tenant();
-
-        return view('provider-payments::weights-real', [
-            'weights' => WeightTransformation::query()->where('tenant_id', $tenant->id)
-                ->orderByRaw('CAST(comparison_key AS DECIMAL(12, 4))')->orderBy('source_weight')->get(),
-        ]);
+        return view('provider-payments::weights-real');
     }
 
     public function storeReal(Request $request): RedirectResponse
@@ -73,11 +68,7 @@ class WeightMaintainerController
             'is_active' => true,
         ]);
 
-        $route = $request->input('return_to') === 'transformed'
-            ? 'provider-payments.maintainers.pesos.transformados'
-            : 'provider-payments.maintainers.pesos.reales';
-
-        return redirect()->route($route, $route === 'provider-payments.maintainers.pesos.transformados' ? ['discover' => 1] : [])
+        return redirect()->route('provider-payments.maintainers.pesos.transformados', $request->input('return_to') === 'discovery' ? ['discover' => 1] : [])
             ->with('status', "Peso Fuente {$sourceWeight} agregado correctamente.");
     }
 

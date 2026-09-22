@@ -632,9 +632,9 @@ class CourierParameterReviewTest extends TestCase
         $this->get(route('provider-payments.maintainers.pesos.transformados', ['discover' => 1]))
             ->assertOk()->assertSee('Nuevos pesos encontrados')->assertSee('2.75 kg')->assertSee('2');
         $this->get(route('provider-payments.maintainers.pesos.reales'))
-            ->assertOk()->assertSee('1.25 kg')->assertSee('Agregar Peso Real');
+            ->assertOk()->assertSee('Proceso independiente')->assertSee('Módulo de Peso Real en preparación')->assertDontSee('1.25 kg');
 
-        $this->post(route('provider-payments.maintainers.pesos.reales.store'), ['source_weight' => '2.75 kg', 'transformed_weight' => 3, 'return_to' => 'transformed'])
+        $this->post(route('provider-payments.maintainers.pesos.transformados.store'), ['source_weight' => '2.75 kg', 'transformed_weight' => 3, 'return_to' => 'discovery'])
             ->assertRedirect(route('provider-payments.maintainers.pesos.transformados', ['discover' => 1]));
 
         $this->assertDatabaseHas('weight_transformations', ['tenant_id' => $tenant->id, 'source_weight' => '2.75 kg', 'comparison_key' => '2.75', 'transformed_weight' => 3]);
