@@ -659,6 +659,7 @@ class CourierParameterReviewTest extends TestCase
 
         $this->get(route('provider-payments.maintainers.pesos.reales', ['period' => '2026-08', 'merchant' => 'Cliente Peso Real']))
             ->assertOk()->assertSee('4N202608030402-056')->assertSee('11')->assertSee('Cliente Peso Real')->assertSee('Servicio Real')
+            ->assertSee('Actualizando movimientos Courier')
             ->assertDontSee('4N202607030402-999');
     }
 
@@ -671,7 +672,7 @@ class CourierParameterReviewTest extends TestCase
 
         $this->post(route('provider-payments.maintainers.pesos.reales.sync'))
             ->assertRedirect(route('provider-payments.maintainers.pesos.reales'))
-            ->assertSessionHas('status', '1 movimientos Courier actualizados con Peso Real.');
+            ->assertSessionHas('status', '1 movimientos Courier actualizados con Peso Real. 1 sin coincidencia de Seguimiento paquete en Peso_Real; esos registros conservan su valor anterior.');
 
         $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => '4N202608050001-111', 'weight_kg' => 12, 'peso_real' => 8, 'peso_transformado' => 5, 'peso_final' => 3]);
         $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => '4N202608050002-222', 'peso_real' => null]);

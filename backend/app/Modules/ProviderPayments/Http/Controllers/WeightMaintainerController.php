@@ -79,8 +79,9 @@ class WeightMaintainerController
     {
         $tenant = $this->tenant();
         $updated = 0;
+        $withoutMatch = 0;
         CourierMovement::query()->where('tenant_id', $tenant->id)->select(['id', 'tenant_id', 'tracking_number', 'weight_kg', 'peso_transformado'])
-            ->chunkById(1000, function ($movements) use ($tenant, &$updated): void {
+            ->chunkById(1000, function ($movements) use ($tenant, &$updated, &$withoutMatch): void {
                 $realWeights = RealWeight::query()->where('tenant_id', $tenant->id)
                     ->whereIn('seguimiento_paquete', $movements->pluck('tracking_number'))
                     ->pluck('peso_real', 'seguimiento_paquete');
@@ -88,6 +89,7 @@ class WeightMaintainerController
                 foreach ($movements as $movement) {
                     $realWeight = $realWeights->get($movement->tracking_number);
                     if ($realWeight === null) {
+                        $withoutMatch++;
                         continue;
                     }
                     $updates[] = [
@@ -106,7 +108,7 @@ class WeightMaintainerController
             });
 
         return redirect()->route('provider-payments.maintainers.pesos.reales')
-            ->with('status', number_format($updated, 0, ',', '.').' movimientos Courier actualizados con Peso Real.');
+            ->with('status', number_format($updated, 0, ',', '.').' movimientos Courier actualizados con Peso Real. '.number_format($withoutMatch, 0, ',', '.').' sin coincidencia de Seguimiento paquete en Peso_Real; esos registros conservan su valor anterior.');
     }
 
     public function storeReal(Request $request): RedirectResponse
