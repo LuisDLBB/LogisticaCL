@@ -5,6 +5,7 @@ use App\Modules\ProviderPayments\Http\Controllers\ClientMaintainerController;
 use App\Modules\ProviderPayments\Http\Controllers\CostCenterKeyMaintainerController;
 use App\Modules\ProviderPayments\Http\Controllers\CostCenterMaintainerController;
 use App\Modules\ProviderPayments\Http\Controllers\CourierMovementImportController;
+use App\Modules\ProviderPayments\Http\Controllers\CourierMovementCompileController;
 use App\Modules\ProviderPayments\Http\Controllers\CoverageMaintainerController;
 use App\Modules\ProviderPayments\Http\Controllers\OperationalMasterMaintainerController;
 use App\Modules\ProviderPayments\Http\Controllers\ProviderPaymentsDashboardController;
@@ -30,7 +31,9 @@ Route::prefix('pago-proveedores')
         Route::post('/carga-movimientos-courier/no-cargar-servicios', [CourierMovementImportController::class, 'excludeServices'])->name('courier-movements.exclude-services');
         Route::get('/carga-movimientos-courier/errores.csv', [CourierMovementImportController::class, 'downloadErrors'])->name('courier-movements.errors.download');
         Route::post('/carga-movimientos-courier/cargar', [CourierMovementImportController::class, 'storeMovements'])->name('courier-movements.store');
-        Route::view('/compilar-movimientos-courier', 'provider-payments::placeholder', ['title' => 'Compilar Movimientos Courier'])->name('courier-movements.compile');
+        Route::get('/compilar-movimientos-courier', [CourierMovementCompileController::class, 'index'])->name('courier-movements.compile');
+        Route::get('/compilar-movimientos-courier/trabajar', [CourierMovementCompileController::class, 'work'])->name('courier-movements.compile.work');
+        Route::post('/compilar-movimientos-courier/trabajar', [CourierMovementCompileController::class, 'compile'])->name('courier-movements.compile.store');
 
         Route::get('/mantenedor/coberturas', [CoverageMaintainerController::class, 'create'])->name('maintainers.coberturas');
         Route::post('/mantenedor/coberturas', [CoverageMaintainerController::class, 'store'])->name('maintainers.coberturas.store');
