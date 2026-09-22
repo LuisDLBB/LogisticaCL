@@ -409,11 +409,12 @@ class CourierParameterReviewTest extends TestCase
         $this->assertSame('2026-07-01', $movement->fecha->toDateString());
         $this->assertSame(1, $movement->peso_transformado);
         $this->assertSame(7, $movement->peso_real);
-        $this->assertSame(1, $movement->peso_final);
+        $this->assertNull($movement->peso_final);
         $this->assertSame('Variables', $movement->tipo_pago);
         $this->assertSame('202607-Variable', $movement->nombre_proceso);
         $this->assertSame('Persona Uno', $movement->recipient_name);
         $this->assertSame('Temuco', $movement->destination_commune_name);
+        CourierMovement::query()->whereKey($movement->id)->update(['peso_final' => 77]);
 
         Storage::disk('local')->put('courier-imports/reemplazo.csv', $header."{$tracking};1.00 kg;Fallido;Cliente Prueba;Servicio Standar;Comuna Mala;Calle 1;Persona Dos\n");
         $this->withSession(['courier_review' => $snapshot('courier-imports/reemplazo.csv'), 'courier_review_corrections.coverages' => ['Comuna Mala → Calle 1' => 'Temuco']])
@@ -424,6 +425,7 @@ class CourierParameterReviewTest extends TestCase
         $this->assertSame('Fallido', $movement->status);
         $this->assertSame('Persona Dos', $movement->recipient_name);
         $this->assertSame('202608-Variable', $movement->nombre_proceso);
+        $this->assertSame(77, $movement->peso_final);
         $this->assertDatabaseCount('movimientos_courier', 1);
 
         $lanasTracking = '4N202609013619-527';
@@ -434,7 +436,7 @@ class CourierParameterReviewTest extends TestCase
             ->post(route('provider-payments.courier-movements.store'), ['process_year' => 2026, 'process_month' => 9, 'process_name' => 'nombre-manipulado'])
             ->assertOk()->assertSee('202609-Lanas');
 
-        $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => $lanasTracking, 'tipo_pago' => 'Lanas', 'nombre_proceso' => '202609-Lanas', 'peso_real' => 9, 'peso_final' => 1]);
+        $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => $lanasTracking, 'tipo_pago' => 'Lanas', 'nombre_proceso' => '202609-Lanas', 'peso_real' => 9, 'peso_final' => null]);
         $this->assertDatabaseCount('movimientos_courier', 2);
     }
 
@@ -664,14 +666,14 @@ class CourierParameterReviewTest extends TestCase
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         RealWeight::create(['tenant_id' => $tenant->id, 'seguimiento_paquete' => '4N202608050001-111', 'peso_real' => 8, 'codigo_seguimiento' => '4N202608050001', 'fecha_proceso' => '2026-08-05', 'comerciante' => 'Cliente Sincronizado', 'servicio' => 'Servicio Sincronizado']);
-        CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202608050001-111', 'peso_transformado' => 5]);
+        CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202608050001-111', 'weight_kg' => 12, 'peso_real' => 3, 'peso_transformado' => 5]);
         CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202608050002-222', 'peso_transformado' => 4]);
 
         $this->post(route('provider-payments.maintainers.pesos.reales.sync'))
             ->assertRedirect(route('provider-payments.maintainers.pesos.reales'))
             ->assertSessionHas('status', '1 movimientos Courier actualizados con Peso Real.');
 
-        $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => '4N202608050001-111', 'peso_real' => 8, 'peso_final' => 5]);
+        $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => '4N202608050001-111', 'weight_kg' => 12, 'peso_real' => 8, 'peso_transformado' => 5, 'peso_final' => 3]);
         $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => '4N202608050002-222', 'peso_real' => null]);
     }
 

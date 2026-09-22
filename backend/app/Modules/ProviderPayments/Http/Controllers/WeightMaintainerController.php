@@ -96,14 +96,11 @@ class WeightMaintainerController
                         'tracking_number' => $movement->tracking_number,
                         'weight_kg' => $movement->weight_kg,
                         'peso_real' => (int) $realWeight,
-                        'peso_final' => $movement->peso_transformado !== null
-                            ? min((int) $realWeight, (int) $movement->peso_transformado)
-                            : null,
                         'updated_at' => now(),
                     ];
                 }
                 if ($updates !== []) {
-                    DB::table('movimientos_courier')->upsert($updates, ['id'], ['peso_real', 'peso_final', 'updated_at']);
+                    DB::table('movimientos_courier')->upsert($updates, ['id'], ['peso_real', 'updated_at']);
                     $updated += count($updates);
                 }
             });

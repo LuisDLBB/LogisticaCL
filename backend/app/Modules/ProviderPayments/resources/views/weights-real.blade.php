@@ -8,7 +8,7 @@
 @section('content')
 <a class="back" href="{{ route('provider-payments.dashboard') }}">← Pago a Proveedores</a><p class="eyebrow">Mantenedor de pesos</p><h1>Peso Real</h1><p class="intro">Consulta los registros de Peso_Real cargados para cada envío, comerciante y servicio.</p>
 @if(session('status'))<div class="status">{{ session('status') }}</div>@endif
-<div class="real-toolbar"><h2>Registros de Peso Real</h2><form method="post" action="{{ route('provider-payments.maintainers.pesos.reales.sync') }}" onsubmit="return confirm('¿Confirmas actualizar el Peso Real de todos los movimientos Courier que tengan coincidencia de Seguimiento paquete?')">@csrf<button type="submit">Actualizar Peso Real en Movimientos Courier</button></form></div>
+<div class="real-toolbar"><div><h2>Registros de Peso Real</h2><p class="note">La sincronización solo actualiza movimientos_courier.peso_real. Peso original, Peso Transformado y Peso Final no se modifican.</p></div><form method="post" action="{{ route('provider-payments.maintainers.pesos.reales.sync') }}" onsubmit="return confirm('¿Confirmas copiar Peso Real a movimientos_courier? Ningún otro campo de peso será modificado.')">@csrf<button type="submit">Copiar Peso Real a movimientos_courier</button></form></div>
 <form class="card real-filters" method="get">
 <label>Año y mes<select name="period"><option value="">Todos</option>@foreach($periods as $option)<option value="{{ $option }}" @selected($option === $period)>{{ $option }}</option>@endforeach</select></label>
 <label>Comerciante<select name="merchant"><option value="">Todos</option>@foreach($merchants as $option)<option value="{{ $option }}" @selected($option === $merchant)>{{ $option }}</option>@endforeach</select></label>
