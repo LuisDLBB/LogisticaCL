@@ -580,7 +580,13 @@ class CourierMovementImportController
         }
 
         $combinedAddress = implode(' - ', array_filter([$address, $commune], fn (string $value): bool => $value !== ''));
-        $destinationCommune = trim((string) preg_replace('/^\s*Desde\s+/iu', '', trim($recipientName)));
+        $recipientDestination = trim($recipientName);
+        if (str_contains($recipientDestination, ',')) {
+            $recipientDestination = Str::after($recipientDestination, ',');
+        } else {
+            $recipientDestination = (string) preg_replace('/^\s*Desde[\s-]*/iu', '', $recipientDestination);
+        }
+        $destinationCommune = trim($recipientDestination);
 
         return [$combinedAddress, $destinationCommune];
     }

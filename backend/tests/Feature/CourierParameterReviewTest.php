@@ -79,14 +79,14 @@ class CourierParameterReviewTest extends TestCase
         WeightTransformation::create(['tenant_id' => $tenant->id, 'source_weight' => '1.00 kg', 'comparison_key' => '1', 'transformed_weight' => 1, 'is_active' => true]);
 
         $header = "Seguimiento paquete;Peso;Estado de entrega;Comerciante;Servicio;Comuna de destino;Dirección;Nombre del destinatario\n";
-        $csv = $header."4N202610013620-528;1.00 kg;Entregado;Cliente Retornos;Retornos;Santiago;Calle 1;Desde Viña del Mar\n";
+        $csv = $header."4N202610013620-528;1.00 kg;Entregado;Cliente Retornos;Retornos;Santiago;Calle 1;Desde-Arlegui N°852, Viña Del Mar\n";
         $response = $this->post(route('provider-payments.courier-movements.validate'), [
             'process_type' => 'retornos',
             'file' => UploadedFile::fake()->createWithContent('retornos.csv', $csv),
         ]);
 
         $response->assertOk()->assertSee('Revisión agrupada de direcciones y comunas transformadas')
-            ->assertSee('Calle 1 - Santiago')->assertSee('Viña del Mar')
+            ->assertSee('Calle 1 - Santiago')->assertSee('Viña Del Mar')->assertDontSee('Desde-Arlegui N°852, Viña Del Mar')
             ->assertSessionHas('courier_review.process_type', 'retornos')
             ->assertSessionHas('courier_review.process_suffix', 'Retornos');
 
@@ -100,7 +100,7 @@ class CourierParameterReviewTest extends TestCase
         $this->assertSame('Retornos', $movement->tipo_pago);
         $this->assertSame('202610-Retornos', $movement->nombre_proceso);
         $this->assertSame('Calle 1 - Santiago', $movement->recipient_address);
-        $this->assertSame('Viña del Mar', $movement->destination_commune_name);
+        $this->assertSame('Viña Del Mar', $movement->destination_commune_name);
     }
 
     public function test_semicolon_delimited_csv_is_detected_automatically(): void
