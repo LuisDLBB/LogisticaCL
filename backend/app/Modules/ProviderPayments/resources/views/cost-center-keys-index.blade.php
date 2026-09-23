@@ -3,7 +3,7 @@
 @push('styles')
 @include('provider-payments::partials.master-styles')
 <style>
-.view-tabs{display:flex;gap:10px;margin:20px 0}.view-tab{display:inline-flex;padding:11px 18px;border:1px solid var(--turquoise-dark);border-radius:8px;color:var(--turquoise-dark);font-weight:800;text-decoration:none}.view-tab.active{background:var(--turquoise-dark);color:#fff}.group{margin:10px 0;border:1px solid var(--line);border-radius:10px;background:#fff}.group>summary{padding:16px;font-size:17px;font-weight:800;cursor:pointer}.subgroup{margin:0 14px 14px;border:1px solid #d7e5e5;border-radius:8px;background:#fbfdfd}.subgroup>summary{padding:13px;font-weight:750;cursor:pointer}.key-table-wrap{overflow:auto;margin:0 12px 14px}.key-table{width:100%;min-width:880px;border-collapse:collapse}.key-table th,.key-table td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.key-table th{background:#eaf8f8;color:var(--turquoise-dark);font-size:12px;text-transform:uppercase}.key-editor summary{color:var(--turquoise-dark);cursor:pointer;font-weight:700}.key-editor .form-grid{margin-top:10px;min-width:560px}.count{font-size:13px;color:#557078;font-weight:600}.empty-state{padding:22px}.new-key-panel{margin-bottom:22px}.new-key-panel>summary{display:inline-flex;padding:11px 18px;border-radius:8px;background:var(--turquoise-dark);color:#fff;font-weight:800;cursor:pointer}.new-key-panel>.card{margin-top:12px;max-width:760px}
+.key-top{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}.key-top-copy{min-width:300px;flex:1}.key-top-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}.view-tabs{display:flex;gap:10px;margin:0}.view-tab{display:inline-flex;padding:11px 18px;border:1px solid var(--turquoise-dark);border-radius:8px;color:var(--turquoise-dark);font-weight:800;text-decoration:none}.view-tab.active{background:var(--turquoise-dark);color:#fff}.group{margin:10px 0;border:1px solid var(--line);border-radius:10px;background:#fff}.group>summary{padding:16px;font-size:17px;font-weight:800;cursor:pointer}.subgroup{margin:0 14px 14px;border:1px solid #d7e5e5;border-radius:8px;background:#fbfdfd}.subgroup>summary{padding:13px;font-weight:750;cursor:pointer}.key-table-wrap{overflow:auto;margin:0 12px 14px}.key-table{width:100%;min-width:880px;border-collapse:collapse}.key-table th,.key-table td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.key-table th{background:#eaf8f8;color:var(--turquoise-dark);font-size:12px;text-transform:uppercase}.key-editor summary{color:var(--turquoise-dark);cursor:pointer;font-weight:700}.key-editor .form-grid{margin-top:10px;min-width:560px}.count{font-size:13px;color:#557078;font-weight:600}.empty-state{padding:22px}.new-key-panel{position:relative;margin:0}.new-key-panel>summary{display:inline-flex;padding:11px 18px;border-radius:8px;background:var(--turquoise-dark);color:#fff;font-weight:800;cursor:pointer}.new-key-panel>.card{position:absolute;top:100%;right:0;z-index:3;width:min(760px,calc(100vw - 40px));margin-top:12px;box-shadow:0 16px 32px #1233}
 .provider-choice{display:grid;gap:6px;font-weight:700}.provider-choice select{width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;background:#fff}.copy-provider-panel{margin:14px 0 20px;padding:16px;border:1px solid var(--line);border-radius:9px;background:#f5fbfb}.copy-provider-panel h2{margin:0 0 8px}.copy-provider-panel p{margin:0 0 14px}.copy-provider-panel .form-grid{margin:0}.individual-key-heading{border-top:1px solid var(--line);padding-top:16px;margin:18px 0 12px}.individual-key-heading h2{margin:0 0 6px}.individual-key-heading p{margin:0}
 .key-filters{display:grid;grid-template-columns:repeat(4,minmax(170px,1fr));gap:10px;align-items:end;margin:16px 0;padding:16px}.key-filters label{display:grid;gap:6px;font-size:12px;font-weight:800;text-transform:uppercase}.key-filters select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff}.key-filter-actions{display:flex;gap:10px;grid-column:1/-1}.key-filters .button{white-space:nowrap}.key-sheet{overflow:auto;max-height:70vh;padding:10px}.key-sheet table{min-width:1650px}.key-sheet th{position:sticky;top:0;z-index:1}.key-sheet td{vertical-align:middle}.key-sheet input,.key-sheet select{width:100%;min-width:110px;padding:8px;border:1px solid var(--line);border-radius:7px;background:#fff}.key-sheet .center-select{min-width:230px}.key-sheet .condition-input{min-width:100px}.key-sheet .agency-input{min-width:150px}.key-sheet .key-code{white-space:nowrap;font-size:12px;color:var(--muted)}@media(max-width:900px){.key-filters{grid-template-columns:1fr 1fr}}@media(max-width:550px){.key-filters{grid-template-columns:1fr}.key-filter-actions button,.key-filter-actions .button{flex:1;text-align:center}}
 </style>
@@ -11,18 +11,10 @@
 @section('content')
 <a class="back" href="{{ route('provider-payments.dashboard') }}">← Pago a Proveedores</a>
 <p class="eyebrow">Gestión operacional</p>
+<div class="key-top"><div class="key-top-copy">
 <h1>Mantenedor: Llave Centro de Costos</h1>
 <p class="intro">Filtra las llaves por proveedor, cliente, centro de costo y condición de pago, y modifica sus datos directamente en la planilla.</p>
-@if(session('status'))<div class="status">{{ session('status') }}</div>@endif
-
-<form class="card key-filters" method="get" aria-label="Filtrar llaves">
-    <input type="hidden" name="vista" value="{{ $viewMode }}">
-    <label>Cliente<select name="client"><option value="">Todos los clientes</option>@foreach($clientOptions as $option)<option value="{{ $option['value'] }}" @selected($selectedClient === $option['value'])>{{ $option['label'] }}</option>@endforeach</select></label>
-    <label>Proveedor<select name="provider"><option value="">Todos los proveedores</option>@foreach($providerOptions as $option)<option value="{{ $option['value'] }}" @selected($selectedProvider === $option['value'])>{{ $option['label'] }}</option>@endforeach</select></label>
-    <label>Centro de costo<select name="center"><option value="">Todos los centros</option>@foreach($centerOptions as $option)<option value="{{ $option['value'] }}" @selected($selectedCenter === $option['value'])>{{ $option['label'] }}</option>@endforeach</select></label>
-    <label>Condición de pago<select name="payment"><option value="">Todas las condiciones</option>@foreach($paymentOptions as $option)<option value="{{ $option }}" @selected($selectedPayment === $option)>{{ $option }}</option>@endforeach</select></label>
-    <div class="key-filter-actions"><button type="submit">Filtrar</button><a class="button" href="{{ route('provider-payments.maintainers.llave-centro-costos', ['vista' => $viewMode]) }}">Limpiar</a></div>
-</form>
+</div><div class="key-top-actions">
 <nav class="view-tabs" aria-label="Orden de la planilla">
     <a class="view-tab {{ $viewMode === 'cliente' ? 'active' : '' }}" href="{{ route('provider-payments.maintainers.llave-centro-costos', ['vista' => 'cliente', 'client' => $selectedClient, 'provider' => $selectedProvider, 'center' => $selectedCenter, 'payment' => $selectedPayment]) }}">Ver por cliente</a>
     <a class="view-tab {{ $viewMode === 'proveedor' ? 'active' : '' }}" href="{{ route('provider-payments.maintainers.llave-centro-costos', ['vista' => 'proveedor', 'client' => $selectedClient, 'provider' => $selectedProvider, 'center' => $selectedCenter, 'payment' => $selectedPayment]) }}">Ver por proveedor</a>
@@ -54,6 +46,17 @@
         </form>
     </section>
 </details>
+</div></div>
+@if(session('status'))<div class="status">{{ session('status') }}</div>@endif
+
+<form class="card key-filters" method="get" aria-label="Filtrar llaves">
+    <input type="hidden" name="vista" value="{{ $viewMode }}">
+    <label>Cliente<select name="client"><option value="">Todos los clientes</option>@foreach($clientOptions as $option)<option value="{{ $option['value'] }}" @selected($selectedClient === $option['value'])>{{ $option['label'] }}</option>@endforeach</select></label>
+    <label>Proveedor<select name="provider"><option value="">Todos los proveedores</option>@foreach($providerOptions as $option)<option value="{{ $option['value'] }}" @selected($selectedProvider === $option['value'])>{{ $option['label'] }}</option>@endforeach</select></label>
+    <label>Centro de costo<select name="center"><option value="">Todos los centros</option>@foreach($centerOptions as $option)<option value="{{ $option['value'] }}" @selected($selectedCenter === $option['value'])>{{ $option['label'] }}</option>@endforeach</select></label>
+    <label>Condición de pago<select name="payment"><option value="">Todas las condiciones</option>@foreach($paymentOptions as $option)<option value="{{ $option }}" @selected($selectedPayment === $option)>{{ $option }}</option>@endforeach</select></label>
+    <div class="key-filter-actions"><button type="submit">Filtrar</button><a class="button" href="{{ route('provider-payments.maintainers.llave-centro-costos', ['vista' => $viewMode]) }}">Limpiar</a></div>
+</form>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const provider = document.getElementById('new-key-provider');
