@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Client;
 use App\Models\CostCenter;
 use App\Models\CostCenterKey;
+use App\Models\CostCenterWeightRate;
 use App\Models\CourierMovement;
 use App\Models\CourierPaymentMovement;
 use App\Models\CourierStatus;
@@ -19,6 +20,57 @@ use Tests\TestCase;
 class CourierMovementCompileTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_assign_payments_uses_active_keys_weight_rates_and_additional_kilo_without_overwriting_no(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $provider = Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '11111111-1', 'tax_id_number' => '11111111', 'tax_id_check_digit' => '1', 'legal_name' => 'Proveedor Tarifa', 'operator_type' => 'Courier']);
+        $paidClient = Client::create(['tenant_id' => $tenant->id, 'tax_id' => '22222222-2', 'tax_id_number' => '22222222', 'tax_id_check_digit' => '2', 'source_merchant_name' => 'Cliente SI', 'commercial_name' => 'Cliente SI', 'legal_name' => 'Cliente SI']);
+        $unpaidClient = Client::create(['tenant_id' => $tenant->id, 'tax_id' => '33333333-3', 'tax_id_number' => '33333333', 'tax_id_check_digit' => '3', 'source_merchant_name' => 'Cliente NO', 'commercial_name' => 'Cliente NO', 'legal_name' => 'Cliente NO']);
+        $service = ServiceType::factory()->create(['service_code' => 77, 'name' => 'Servicio Tarifa']);
+        CostCenter::updateOrCreate(['cost_center_code' => 98], ['dispatch_guide_detail' => 'Tarifa prueba', 'additional_kilo_value' => 50, 'is_active' => true]);
+        CostCenterWeightRate::updateOrCreate(['cost_center_code' => 98, 'final_weight' => 1], ['value' => 100, 'is_active' => true]);
+        CostCenterWeightRate::updateOrCreate(['cost_center_code' => 98, 'final_weight' => 20], ['value' => 1000, 'is_active' => true]);
+        foreach ([[$paidClient, 'SI'], [$unpaidClient, 'NO']] as [$client, $status]) {
+            CostCenterKey::create(['tenant_id' => $tenant->id, 'provider_id' => $provider->id, 'provider_tax_id' => $provider->tax_id,
+                'client_id' => $client->id, 'client_tax_id' => $client->tax_id, 'merchant_name' => $client->source_merchant_name,
+                'service_type_id' => $service->id, 'service_code' => 77, 'service_name' => $service->name,
+                'payment_status' => $status, 'cost_center_code' => 98, 'is_active' => true]);
+        }
+        CostCenterKey::query()->where('client_id', $paidClient->id)->firstOrFail()->replicate()->save();
+        foreach ([
+            ['uno', $paidClient, 1, null, 'Servicio Tarifa'],
+            ['veinte', $paidClient, 20, null, 'Servicio Tarifa'],
+            ['veintitres', $paidClient, 23, null, 'Servicio Tarifa'],
+            ['sin_tarifa', $paidClient, 2, null, 'Servicio Tarifa'],
+            ['protegido', $paidClient, 20, 'NO', 'Servicio Tarifa'],
+            ['no', $unpaidClient, 1, null, 'Servicio Tarifa'],
+            ['sin_llave', $paidClient, 1, null, 'Servicio Desconocido'],
+        ] as $index => [$tracking, $client, $weight, $condition, $serviceName]) {
+            $movement = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N20260701000'.$index.'-111', 'nombre_proceso' => '202607-Variable', 'service_name' => $serviceName]);
+            CourierPaymentMovement::create(['tenant_id' => $tenant->id, 'courier_movement_id' => $movement->id, 'periodo' => '202607',
+                'nombre_proceso' => 'Variable', 'tipo_pago' => 'Variable', 'seguimiento_paquete' => $tracking,
+                'peso_final' => $weight, 'rut_proveedor' => $provider->tax_id, 'rut_cliente' => $client->tax_id,
+                'condicion_pago' => $condition]);
+        }
+
+        $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))->assertOk()->assertSee('Asignar Pagos');
+        $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])
+            ->assertRedirect()->assertSessionHas('status');
+        foreach (['uno' => 100, 'veinte' => 1000, 'veintitres' => 1150] as $tracking => $value) {
+            $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => $tracking, 'condicion_pago' => 'SI', 'valor' => $value]);
+        }
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'no', 'condicion_pago' => 'NO', 'valor' => null]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'protegido', 'condicion_pago' => 'NO', 'valor' => null]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'sin_llave', 'condicion_pago' => null, 'valor' => null]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'sin_tarifa', 'condicion_pago' => null, 'valor' => null]);
+        CostCenterWeightRate::query()->where('cost_center_code', 98)->where('final_weight', 20)->update(['value' => 2000]);
+        $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])->assertRedirect();
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'veinte', 'condicion_pago' => 'SI', 'valor' => 2000]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'veintitres', 'condicion_pago' => 'SI', 'valor' => 2150]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'protegido', 'condicion_pago' => 'NO', 'valor' => null]);
+        $this->assertDatabaseCount('Pago_Movimientos_Courier', 7);
+    }
 
     public function test_missing_cost_center_key_providers_can_be_reviewed_and_configured_from_work_page(): void
     {

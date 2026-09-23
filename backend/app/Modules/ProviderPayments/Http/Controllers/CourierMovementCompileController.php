@@ -12,6 +12,7 @@ use App\Models\Client;
 use App\Models\Provider;
 use App\Models\ServiceType;
 use App\Models\Tenant;
+use App\Modules\ProviderPayments\Services\CourierPaymentAssigner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -383,7 +384,7 @@ class CourierMovementCompileController
         $updated = CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
             ->where('periodo', $validated['period'])
             ->where(fn ($query) => $query->whereNull('condicion_pago')->orWhere('condicion_pago', '<>', 'NO'))
-            ->whereIn('estado_envio', $nonPayableStatuses)->update(['condicion_pago' => 'NO']);
+            ->whereIn('estado_envio', $nonPayableStatuses)->update(['condicion_pago' => 'NO', 'valor' => null]);
 
         return redirect()->route('provider-payments.courier-movements.compile.work', ['period' => $validated['period']])
             ->with('status', number_format($updated, 0, ',', '.').' registros con estados NO PAGAR marcados con condición de pago NO. Ningún registro fue eliminado.');
@@ -397,10 +398,25 @@ class CourierMovementCompileController
             ->where('periodo', $validated['period'])
             ->where('razon_social_proveedor', self::INTERNAL_PROVIDER_NAME)
             ->where(fn ($query) => $query->whereNull('condicion_pago')->orWhere('condicion_pago', '<>', 'NO'))
-            ->update(['condicion_pago' => 'NO']);
+            ->update(['condicion_pago' => 'NO', 'valor' => null]);
 
         return redirect()->route('provider-payments.courier-movements.compile.work', ['period' => $validated['period']])
             ->with('status', number_format($updated, 0, ',', '.').' registros del proveedor interno marcados con condición de pago NO. Ningún registro fue eliminado.');
+    }
+
+    public function assignPayments(Request $request, CourierPaymentAssigner $assigner): RedirectResponse
+    {
+        $validated = $request->validate(['period' => ['required', 'regex:/^\d{6}$/']]);
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $result = $assigner->assign($tenant->id, $validated['period']);
+
+        return redirect()->route('provider-payments.courier-movements.compile.work', ['period' => $validated['period']])
+            ->with('status', sprintf(
+                'Asignar Pagos: %s con pago SI y tarifa, %s con pago NO. Pendientes: %s sin llave, %s con llaves ambiguas, %s sin tarifa.',
+                number_format($result['paid'], 0, ',', '.'), number_format($result['not_paid'], 0, ',', '.'),
+                number_format($result['missing_key'], 0, ',', '.'), number_format($result['ambiguous_key'], 0, ',', '.'),
+                number_format($result['missing_rate'], 0, ',', '.'),
+            ));
     }
 
     public function compile(Request $request): RedirectResponse
