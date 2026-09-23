@@ -24,6 +24,7 @@ class CostCenterMaintainerController
         $validated = $request->validate([
             'dispatch_guide_detail' => ['required', 'string', 'max:255'],
             'additional_kilo_value' => ['required', 'integer', 'min:0'],
+            'return_to' => ['nullable', 'in:tarifas-cc'],
         ]);
         $detail = trim($validated['dispatch_guide_detail']);
 
@@ -40,7 +41,11 @@ class CostCenterMaintainerController
             ]);
         });
 
-        return redirect()->route('provider-payments.maintainers.centro-de-costos')
+        $destination = ($validated['return_to'] ?? null) === 'tarifas-cc'
+            ? route('provider-payments.maintainers.tarifas-cc', ['center' => $costCenter->cost_center_code])
+            : route('provider-payments.maintainers.centro-de-costos');
+
+        return redirect($destination)
             ->with('status', "Centro de costo {$costCenter->dispatch_guide_detail} creado con ID {$costCenter->cost_center_code}.");
     }
 }

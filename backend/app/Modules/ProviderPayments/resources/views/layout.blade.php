@@ -55,7 +55,7 @@
         </details>
         <a class="nav-link {{ request()->routeIs('provider-payments.courier-movements.compile') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.compile') }}">Compilar Movimientos</a>
         <details {{ request()->routeIs('provider-payments.maintainers.*') ? 'open' : '' }}><summary class="nav-summary">Mantenedores</summary><nav class="subnav">
-            @foreach (['Clientes', 'Sucursales', 'Servicios', 'Centro de Costos'] as $name)
+            @foreach (['Clientes', 'Sucursales', 'Servicios', 'Centro de Costos', 'Tarifas CC'] as $name)
                 <a href="{{ route('provider-payments.maintainers.'.str($name)->slug()) }}">{{ $name }}</a>
             @endforeach
             @foreach (['Proveedores', 'Bancos', 'Vehículos', 'Coberturas', 'Llave centro costos', 'Estados'] as $name)
@@ -65,7 +65,7 @@
         </nav></details>
     </aside>
     <main class="content">
-        @if(request()->routeIs('provider-payments.maintainers.*') && !request()->routeIs('provider-payments.maintainers.pesos.reales'))
+        @if(request()->routeIs('provider-payments.maintainers.*') && !request()->routeIs('provider-payments.maintainers.pesos.reales', 'provider-payments.maintainers.tarifas-cc*'))
             <section class="master-tools" aria-label="Buscar y filtrar registros">
                 <label>Buscar<input id="master_search" type="search" placeholder="Buscar por nombre, RUT, código, patente, comuna…" autocomplete="off"></label>
                 @if(request()->routeIs('provider-payments.maintainers.proveedores'))
@@ -80,7 +80,7 @@
     </main>
 </div>
 @stack('scripts')
-@if(request()->routeIs('provider-payments.maintainers.*') && !request()->routeIs('provider-payments.maintainers.pesos.reales'))
+@if(request()->routeIs('provider-payments.maintainers.*') && !request()->routeIs('provider-payments.maintainers.pesos.reales', 'provider-payments.maintainers.tarifas-cc*'))
 <script>
 (() => {
     const grid = document.querySelector('.master-grid');

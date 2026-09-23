@@ -4,6 +4,7 @@ use App\Modules\ProviderPayments\Http\Controllers\ClientBranchMaintainerControll
 use App\Modules\ProviderPayments\Http\Controllers\ClientMaintainerController;
 use App\Modules\ProviderPayments\Http\Controllers\CostCenterKeyMaintainerController;
 use App\Modules\ProviderPayments\Http\Controllers\CostCenterMaintainerController;
+use App\Modules\ProviderPayments\Http\Controllers\CostCenterWeightRateMaintainerController;
 use App\Modules\ProviderPayments\Http\Controllers\CourierMovementImportController;
 use App\Modules\ProviderPayments\Http\Controllers\CourierMovementCompileController;
 use App\Modules\ProviderPayments\Http\Controllers\CoverageMaintainerController;
@@ -52,6 +53,9 @@ Route::prefix('pago-proveedores')
         Route::post('/mantenedor/servicios', [ServiceTypeMaintainerController::class, 'store'])->name('maintainers.servicios.store');
         Route::get('/mantenedor/centro-de-costos', [CostCenterMaintainerController::class, 'index'])->name('maintainers.centro-de-costos');
         Route::post('/mantenedor/centro-de-costos', [CostCenterMaintainerController::class, 'store'])->name('maintainers.centro-de-costos.store');
+        Route::get('/mantenedor/tarifas-cc', [CostCenterWeightRateMaintainerController::class, 'index'])->name('maintainers.tarifas-cc');
+        Route::post('/mantenedor/tarifas-cc', [CostCenterWeightRateMaintainerController::class, 'store'])->name('maintainers.tarifas-cc.store');
+        Route::put('/mantenedor/tarifas-cc/{rate}', [CostCenterWeightRateMaintainerController::class, 'update'])->name('maintainers.tarifas-cc.update');
         Route::redirect('/mantenedor/pesos', '/pago-proveedores/mantenedor/pesos/transformados')->name('maintainers.pesos');
         Route::get('/mantenedor/pesos/transformados', [WeightMaintainerController::class, 'transformed'])->name('maintainers.pesos.transformados');
         Route::post('/mantenedor/pesos/transformados', [WeightMaintainerController::class, 'storeReal'])->name('maintainers.pesos.transformados.store');
