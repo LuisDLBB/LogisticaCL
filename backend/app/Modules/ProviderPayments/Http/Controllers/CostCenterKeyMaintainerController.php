@@ -35,18 +35,32 @@ class CostCenterKeyMaintainerController
                 })->orderBy('legal_name')->get();
             $selectedClient = trim((string) $request->query('client'));
             $selectedProvider = trim((string) $request->query('provider'));
-            $viewMode = $request->query('vista') === 'proveedor' ? 'proveedor' : 'cliente';
-            $clientOptions = $keys->filter(fn (CostCenterKey $key): bool => $selectedProvider === '' || $this->providerFilterKey($key) === $selectedProvider)
+            $selectedCenter = trim((string) $request->query('center'));
+            $selectedPayment = trim((string) $request->query('payment'));
+            $viewMode = $request->query('vista') === 'cliente' ? 'cliente' : 'proveedor';
+            $matches = fn (CostCenterKey $key, string $except = ''): bool =>
+                ($except === 'client' || $selectedClient === '' || $this->clientFilterKey($key) === $selectedClient)
+                && ($except === 'provider' || $selectedProvider === '' || $this->providerFilterKey($key) === $selectedProvider)
+                && ($except === 'center' || $selectedCenter === '' || ($key->cost_center_code === null ? 'none' : (string) $key->cost_center_code) === $selectedCenter)
+                && ($except === 'payment' || $selectedPayment === '' || mb_strtoupper(trim((string) $key->payment_status)) === $selectedPayment);
+            $clientOptions = $keys->filter(fn (CostCenterKey $key): bool => $matches($key, 'client'))
                 ->groupBy(fn (CostCenterKey $key): string => $this->clientFilterKey($key))
                 ->map(fn ($group, $value): array => ['value' => $value, 'label' => $group->first()->client?->source_merchant_name ?: $group->first()->merchant_name])
                 ->filter(fn (array $option): bool => filled($option['value']))->sortBy('label')->values();
-            $providerOptions = $keys->filter(fn (CostCenterKey $key): bool => $selectedClient === '' || $this->clientFilterKey($key) === $selectedClient)
+            $providerOptions = $keys->filter(fn (CostCenterKey $key): bool => $matches($key, 'provider'))
                 ->groupBy(fn (CostCenterKey $key): string => $this->providerFilterKey($key))
                 ->map(fn ($group, $value): array => ['value' => $value, 'label' => $group->first()->provider?->legal_name ?: ($group->first()->agent_name ?: $group->first()->provider_tax_id)])
                 ->filter(fn (array $option): bool => filled($option['value']))->sortBy('label')->values();
-            $filteredKeys = $keys->filter(fn (CostCenterKey $key): bool =>
-                ($selectedClient === '' || $this->clientFilterKey($key) === $selectedClient)
-                && ($selectedProvider === '' || $this->providerFilterKey($key) === $selectedProvider));
+            $centerOptions = $keys->filter(fn (CostCenterKey $key): bool => $matches($key, 'center'))
+                ->groupBy(fn (CostCenterKey $key): string => $key->cost_center_code === null ? 'none' : (string) $key->cost_center_code)
+                ->map(fn ($group, $value): array => ['value' => (string) $value, 'label' => $value === 'none' ? 'Sin centro de costo' : $value.' · '.($group->first()->costCenter?->dispatch_guide_detail ?? 'Centro de costo')])
+                ->sortBy('label')->values();
+            $paymentOptions = $keys->filter(fn (CostCenterKey $key): bool => $matches($key, 'payment'))
+                ->pluck('payment_status')->map(fn ($value): string => mb_strtoupper(trim((string) $value)))
+                ->filter()->unique()->sort()->values();
+            $paymentStatuses = $keys->pluck('payment_status')->map(fn ($value): string => mb_strtoupper(trim((string) $value)))
+                ->merge(['SI', 'NO', 'REVISAR'])->filter()->unique()->sort()->values();
+            $filteredKeys = $keys->filter(fn (CostCenterKey $key): bool => $matches($key));
             $filteredKeys = $filteredKeys->sortBy(fn (CostCenterKey $key): string => $viewMode === 'proveedor'
                 ? $this->providerFilterKey($key).'|'.$this->clientFilterKey($key).'|'.$key->service_name
                 : $this->clientFilterKey($key).'|'.$this->providerFilterKey($key).'|'.$key->service_name)->values();
@@ -61,8 +75,13 @@ class CostCenterKeyMaintainerController
                 'viewMode' => $viewMode,
                 'selectedClient' => $selectedClient,
                 'selectedProvider' => $selectedProvider,
+                'selectedCenter' => $selectedCenter,
+                'selectedPayment' => $selectedPayment,
                 'clientOptions' => $clientOptions,
                 'providerOptions' => $providerOptions,
+                'centerOptions' => $centerOptions,
+                'paymentOptions' => $paymentOptions,
+                'paymentStatuses' => $paymentStatuses,
                 'total' => $filteredKeys->count(),
                 'allTotal' => $keys->count(),
                 'providers' => Provider::query()->where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('legal_name')->get(),
