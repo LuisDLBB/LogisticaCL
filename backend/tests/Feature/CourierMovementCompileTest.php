@@ -45,7 +45,7 @@ class CourierMovementCompileTest extends TestCase
             ->assertRedirect()->assertSessionHas('status', fn (string $status): bool => str_contains($status, '2 Lanas sin peso ajustadas a 1 kg'));
         $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'lana_pendiente', 'peso_final' => 1, 'condicion_pago' => 'SI', 'valor' => 100]);
         $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'lana_no', 'peso_final' => 1, 'condicion_pago' => 'NO', 'valor' => null]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'variable', 'peso_final' => 0, 'condicion_pago' => null, 'valor' => null]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'variable', 'peso_final' => 1, 'condicion_pago' => 'SI', 'valor' => 100]);
         $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])
             ->assertRedirect()->assertSessionHas('status', fn (string $status): bool => str_contains($status, '0 Lanas sin peso ajustadas a 1 kg'));
     }
@@ -68,7 +68,7 @@ class CourierMovementCompileTest extends TestCase
             ['ambiguo', 'Concón', 1, null],
             ['sin_cobertura', 'La Serena', 1, null],
         ] as $index => [$tracking, $commune, $weight, $condition]) {
-            $movement = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N20260702000'.$index.'-111', 'nombre_proceso' => '202607-Retornos']);
+            $movement = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N20260702000'.$index.'-111', 'nombre_proceso' => '202607-Retornos', 'peso_real' => $weight]);
             CourierPaymentMovement::create(['tenant_id' => $tenant->id, 'courier_movement_id' => $movement->id, 'periodo' => '202607',
                 'nombre_proceso' => 'Retornos', 'tipo_pago' => 'Retornos', 'seguimiento_paquete' => $tracking,
                 'comuna_destino' => $commune, 'fecha' => '2026-07-02', 'peso_final' => $weight,
@@ -119,12 +119,14 @@ class CourierMovementCompileTest extends TestCase
             ['no', $unpaidClient, 1, null, 'Servicio Tarifa'],
             ['sin_llave', $paidClient, 1, null, 'Servicio Desconocido'],
         ] as $index => [$tracking, $client, $weight, $condition, $serviceName]) {
-            $movement = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N20260701000'.$index.'-111', 'nombre_proceso' => '202607-Variable', 'service_name' => $serviceName]);
+            $movement = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N20260701000'.$index.'-111', 'nombre_proceso' => '202607-Variable', 'service_name' => $serviceName, 'peso_real' => $weight]);
             CourierPaymentMovement::create(['tenant_id' => $tenant->id, 'courier_movement_id' => $movement->id, 'periodo' => '202607',
                 'nombre_proceso' => 'Variable', 'tipo_pago' => 'Variable', 'seguimiento_paquete' => $tracking,
                 'peso_final' => $weight, 'rut_proveedor' => $provider->tax_id, 'rut_cliente' => $client->tax_id,
                 'condicion_pago' => $condition]);
         }
+        DB::table('Pago_Movimientos_Courier')->where('seguimiento_paquete', 'veinte')->update(['peso_final' => 1]);
+        DB::table('movimientos_courier')->where('tracking_number', '4N202607010001-111')->update(['peso_final' => 1]);
 
         $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))->assertOk()->assertSee('Asignar Pagos');
         $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])
@@ -133,6 +135,8 @@ class CourierMovementCompileTest extends TestCase
             $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => $tracking, 'condicion_pago' => 'SI', 'valor' => $value]);
         }
         $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'no', 'condicion_pago' => 'NO', 'valor' => null]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'veinte', 'peso_final' => 20, 'condicion_pago' => 'SI', 'valor' => 1000]);
+        $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => '4N202607010001-111', 'peso_final' => 20]);
         $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'protegido', 'condicion_pago' => 'NO', 'valor' => null]);
         $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'sin_llave', 'condicion_pago' => null, 'valor' => null]);
         $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'sin_tarifa', 'condicion_pago' => null, 'valor' => null]);
@@ -325,8 +329,8 @@ class CourierMovementCompileTest extends TestCase
         $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => '202608', 'processes' => ['Variable']])->assertRedirect();
 
         $this->assertDatabaseCount('Pago_Movimientos_Courier', 2);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $matched->id, 'zona' => 'Z1', 'comuna_matriz' => 'Valparaíso', 'periodo' => '202608', 'nombre_proceso' => 'Variable', 'seguimiento_paquete' => '4N202608050001-111', 'peso_final' => 5, 'rut_cliente' => '11111111-1', 'rut_proveedor' => '22222222-2', 'empresa_mandante' => '4N']);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => '4N202608050003-333', 'zona' => 'RM', 'comuna_matriz' => '4N RM', 'rut_proveedor' => '22222222-2', 'peso_final' => 1]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $matched->id, 'zona' => 'Z1', 'comuna_matriz' => 'Valparaíso', 'periodo' => '202608', 'nombre_proceso' => 'Variable', 'seguimiento_paquete' => '4N202608050001-111', 'peso_final' => 8, 'rut_cliente' => '11111111-1', 'rut_proveedor' => '22222222-2', 'empresa_mandante' => '4N']);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => '4N202608050003-333', 'zona' => 'RM', 'comuna_matriz' => '4N RM', 'rut_proveedor' => '22222222-2', 'peso_final' => 7]);
         $this->assertSame('Calle 1', CourierPaymentMovement::query()->where('courier_movement_id', $matched->id)->firstOrFail()->direccion);
         $this->assertSame(8, $matched->fresh()->peso_real);
         $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => '202608', 'processes' => ['Variable']])->assertRedirect();

@@ -511,7 +511,7 @@ class CourierParameterReviewTest extends TestCase
         $this->assertSame('2026-07-01', $movement->fecha->toDateString());
         $this->assertSame(1, $movement->peso_transformado);
         $this->assertSame(7, $movement->peso_real);
-        $this->assertNull($movement->peso_final);
+        $this->assertSame(7, $movement->peso_final);
         $this->assertSame('Variables', $movement->tipo_pago);
         $this->assertSame('202607-Variable', $movement->nombre_proceso);
         $this->assertSame('Persona Uno', $movement->recipient_name);
@@ -527,7 +527,7 @@ class CourierParameterReviewTest extends TestCase
         $this->assertSame('Fallido', $movement->status);
         $this->assertSame('Persona Dos', $movement->recipient_name);
         $this->assertSame('202608-Variable', $movement->nombre_proceso);
-        $this->assertSame(77, $movement->peso_final);
+        $this->assertSame(7, $movement->peso_final);
         $this->assertDatabaseCount('movimientos_courier', 1);
 
         $lanasTracking = '4N202609013619-527';
@@ -538,7 +538,7 @@ class CourierParameterReviewTest extends TestCase
             ->post(route('provider-payments.courier-movements.store'), ['process_year' => 2026, 'process_month' => 9, 'process_name' => 'nombre-manipulado'])
             ->assertOk()->assertSee('202609-Lanas');
 
-        $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => $lanasTracking, 'tipo_pago' => 'Lanas', 'nombre_proceso' => '202609-Lanas', 'peso_real' => 9, 'peso_final' => null]);
+        $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => $lanasTracking, 'tipo_pago' => 'Lanas', 'nombre_proceso' => '202609-Lanas', 'peso_real' => 9, 'peso_final' => 9]);
         $this->assertDatabaseCount('movimientos_courier', 2);
     }
 
@@ -774,10 +774,10 @@ class CourierParameterReviewTest extends TestCase
 
         $this->post(route('provider-payments.maintainers.pesos.reales.sync'))
             ->assertRedirect(route('provider-payments.maintainers.pesos.reales'))
-            ->assertSessionHas('status', '1 movimientos Courier actualizados con Peso Real. 1 sin coincidencia de Seguimiento paquete en Peso_Real; esos registros conservan su valor anterior.');
+            ->assertSessionHas('status', '1 movimientos Courier actualizados con Peso Real y Peso Final. 1 sin coincidencia de Seguimiento paquete en Peso_Real; conservaron su Peso Real y se recalculó Peso Final.');
 
-        $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => '4N202608050001-111', 'weight_kg' => 12, 'peso_real' => 8, 'peso_transformado' => 5, 'peso_final' => 3]);
-        $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => '4N202608050002-222', 'peso_real' => null]);
+        $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => '4N202608050001-111', 'weight_kg' => 12, 'peso_real' => 8, 'peso_transformado' => 5, 'peso_final' => 8]);
+        $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => '4N202608050002-222', 'peso_real' => null, 'peso_final' => 4]);
     }
 
     public function test_provider_rut_remains_immutable_when_operational_data_is_updated(): void

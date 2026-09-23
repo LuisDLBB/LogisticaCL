@@ -423,7 +423,8 @@ class CourierMovementCompileController
 
         return redirect()->route('provider-payments.courier-movements.compile.work', ['period' => $validated['period']])
             ->with('status', sprintf(
-                'Asignar Pagos: %s Lanas sin peso ajustadas a 1 kg, %s con pago SI y valor, %s con pago NO. Pendientes: %s sin llave, %s con llaves ambiguas, %s sin tarifa, %s Retornos sin cobertura, %s con coberturas ambiguas y %s sin valor de retorno.',
+                'Asignar Pagos: %s pesos finales recalculados (%s Lanas sin peso ajustadas a 1 kg), %s con pago SI y valor, %s con pago NO. Pendientes: %s sin llave, %s con llaves ambiguas, %s sin tarifa, %s Retornos sin cobertura, %s con coberturas ambiguas y %s sin valor de retorno.',
+                number_format($result['weights_recalculated'], 0, ',', '.'),
                 number_format($result['weight_defaulted'], 0, ',', '.'),
                 number_format($result['paid'], 0, ',', '.'), number_format($result['not_paid'], 0, ',', '.'),
                 number_format($result['missing_key'], 0, ',', '.'), number_format($result['ambiguous_key'], 0, ',', '.'),
@@ -453,7 +454,12 @@ class CourierMovementCompileController
             ->with('client')->chunkById(500, function ($movements) use ($tenant, $coverages, $providersByRut, &$count, &$pendingProviders): void {
                 $now = now();
                 $rows = [];
+                $sourceWeightUpdates = [];
                 foreach ($movements as $movement) {
+                    $finalWeight = CourierMovement::pesoFinal($movement->peso_real, $movement->peso_transformado);
+                    if ($movement->peso_final !== $finalWeight) {
+                        $sourceWeightUpdates[$finalWeight][] = $movement->id;
+                    }
                     $matches = $coverages->get($this->communeKey((string) $movement->destination_commune_name), collect());
                     $zones = $matches->pluck('zone')->filter()->unique();
                     $matrices = $matches->pluck('matrix_commune_name')->filter()->unique();
@@ -478,8 +484,7 @@ class CourierMovementCompileController
                         'comerciante_pila' => $movement->client?->source_merchant_name ?? $movement->merchant_name,
                         'rut_cliente' => $movement->client?->tax_id,
                         'razon_social_cliente' => $movement->client?->legal_name,
-                        'peso_final' => $movement->peso_real === null || $movement->peso_transformado === null
-                            ? 1 : min($movement->peso_real, $movement->peso_transformado),
+                        'peso_final' => $finalWeight,
                         'estado_envio' => $movement->status,
                         'condicion_pago' => null,
                         'razon_social_proveedor' => $provider?->legal_name,
@@ -492,6 +497,10 @@ class CourierMovementCompileController
                         'created_at' => $now,
                         'updated_at' => $now,
                     ];
+                }
+                foreach ($sourceWeightUpdates as $weight => $ids) {
+                    DB::table('movimientos_courier')->where('tenant_id', $tenant->id)->whereIn('id', $ids)
+                        ->update(['peso_final' => $weight, 'updated_at' => $now]);
                 }
                 DB::table('Pago_Movimientos_Courier')->upsert($rows, ['tenant_id', 'courier_movement_id'], array_keys(array_diff_key($rows[0], array_flip(['tenant_id', 'courier_movement_id', 'created_at', 'condicion_pago']))));
                 $count += count($rows);

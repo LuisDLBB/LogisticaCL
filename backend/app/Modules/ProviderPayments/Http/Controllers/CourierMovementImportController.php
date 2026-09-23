@@ -543,6 +543,7 @@ class CourierMovementImportController
         foreach ($rows as &$row) {
             $realWeight = $realWeights->get($row['tracking_number']);
             $row['peso_real'] = $realWeight !== null ? (int) $realWeight : null;
+            $row['peso_final'] = CourierMovement::pesoFinal($row['peso_real'], $row['peso_transformado']);
         }
         unset($row);
         $existing = DB::table('movimientos_courier')->where('tenant_id', $tenantId)->whereIn('tracking_number', $trackings)->pluck('tracking_number')->flip();
@@ -554,7 +555,7 @@ class CourierMovementImportController
         }
         $result['duplicates'] += count($duplicateRows);
         if ($replace && $duplicateRows !== []) {
-            DB::table('movimientos_courier')->upsert($duplicateRows, ['tenant_id', 'tracking_number'], array_values(array_diff(array_keys($duplicateRows[0]), ['tenant_id', 'tracking_number', 'peso_final', 'created_at'])));
+            DB::table('movimientos_courier')->upsert($duplicateRows, ['tenant_id', 'tracking_number'], array_values(array_diff(array_keys($duplicateRows[0]), ['tenant_id', 'tracking_number', 'created_at'])));
             $result['replaced'] += count($duplicateRows);
         }
     }

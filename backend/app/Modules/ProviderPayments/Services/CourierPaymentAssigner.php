@@ -18,11 +18,9 @@ class CourierPaymentAssigner
     public function assign(int $tenantId, string $period): array
     {
         $result = ['paid' => 0, 'not_paid' => 0, 'missing_key' => 0, 'ambiguous_key' => 0, 'missing_rate' => 0,
-            'missing_coverage' => 0, 'ambiguous_coverage' => 0, 'missing_return_value' => 0, 'weight_defaulted' => 0];
-        $result['weight_defaulted'] = CourierPaymentMovement::query()
-            ->where('tenant_id', $tenantId)->where('periodo', $period)->where('nombre_proceso', 'Lanas')
-            ->where(fn ($query) => $query->whereNull('peso_final')->orWhere('peso_final', '<=', 0))
-            ->update(['peso_final' => 1, 'updated_at' => now()]);
+            'missing_coverage' => 0, 'ambiguous_coverage' => 0, 'missing_return_value' => 0,
+            'weight_defaulted' => 0, 'weights_recalculated' => 0];
+        $this->syncFinalWeights($tenantId, $period, $result);
         $services = ServiceType::query()->get()->keyBy(fn (ServiceType $service): string => mb_strtolower(trim($service->name)));
         $keys = CostCenterKey::query()->where('tenant_id', $tenantId)->where('is_active', true)
             ->with(['provider', 'client'])->get()->groupBy(fn (CostCenterKey $key): string => $this->identity(
@@ -114,6 +112,46 @@ class CourierPaymentAssigner
             });
 
         return $result;
+    }
+
+    private function syncFinalWeights(int $tenantId, string $period, array &$result): void
+    {
+        CourierPaymentMovement::query()->where('tenant_id', $tenantId)->where('periodo', $period)
+            ->select(['id', 'courier_movement_id', 'nombre_proceso', 'peso_final'])
+            ->chunkById(500, function ($payments) use ($tenantId, &$result): void {
+                $movements = CourierMovement::query()->where('tenant_id', $tenantId)
+                    ->whereIn('id', $payments->pluck('courier_movement_id'))
+                    ->get(['id', 'peso_real', 'peso_transformado', 'peso_final'])->keyBy('id');
+                $paymentUpdates = [];
+                $movementUpdates = [];
+                foreach ($payments as $payment) {
+                    $movement = $movements->get($payment->courier_movement_id);
+                    if ($movement === null) {
+                        continue;
+                    }
+                    $weight = CourierMovement::pesoFinal($movement->peso_real, $movement->peso_transformado);
+                    if ($movement->peso_final !== $weight) {
+                        $movementUpdates[$weight][] = $movement->id;
+                    }
+                    if ($payment->peso_final !== $weight) {
+                        $paymentUpdates[$weight][] = $payment->id;
+                        $result['weights_recalculated']++;
+                        if ($payment->nombre_proceso === 'Lanas' && (int) $payment->peso_final <= 0 && $weight === 1) {
+                            $result['weight_defaulted']++;
+                        }
+                    }
+                }
+                DB::transaction(function () use ($tenantId, $paymentUpdates, $movementUpdates): void {
+                    foreach ($movementUpdates as $weight => $ids) {
+                        DB::table('movimientos_courier')->where('tenant_id', $tenantId)->whereIn('id', $ids)
+                            ->update(['peso_final' => $weight, 'updated_at' => now()]);
+                    }
+                    foreach ($paymentUpdates as $weight => $ids) {
+                        DB::table('Pago_Movimientos_Courier')->where('tenant_id', $tenantId)->whereIn('id', $ids)
+                            ->update(['peso_final' => $weight, 'updated_at' => now()]);
+                    }
+                });
+            });
     }
 
     private function identity(?string $providerRut, ?string $clientRut, string $serviceCode): string

@@ -80,16 +80,21 @@ class WeightMaintainerController
         $tenant = $this->tenant();
         $updated = 0;
         $withoutMatch = 0;
-        CourierMovement::query()->where('tenant_id', $tenant->id)->select(['id', 'tenant_id', 'tracking_number', 'weight_kg', 'peso_transformado'])
+        CourierMovement::query()->where('tenant_id', $tenant->id)->select(['id', 'tenant_id', 'tracking_number', 'weight_kg', 'peso_real', 'peso_transformado', 'peso_final'])
             ->chunkById(1000, function ($movements) use ($tenant, &$updated, &$withoutMatch): void {
                 $realWeights = RealWeight::query()->where('tenant_id', $tenant->id)
                     ->whereIn('seguimiento_paquete', $movements->pluck('tracking_number'))
                     ->pluck('peso_real', 'seguimiento_paquete');
                 $updates = [];
+                $weightOnlyUpdates = [];
                 foreach ($movements as $movement) {
                     $realWeight = $realWeights->get($movement->tracking_number);
                     if ($realWeight === null) {
                         $withoutMatch++;
+                        $finalWeight = CourierMovement::pesoFinal($movement->peso_real, $movement->peso_transformado);
+                        if ($movement->peso_final !== $finalWeight) {
+                            $weightOnlyUpdates[$finalWeight][] = $movement->id;
+                        }
                         continue;
                     }
                     $updates[] = [
@@ -98,17 +103,22 @@ class WeightMaintainerController
                         'tracking_number' => $movement->tracking_number,
                         'weight_kg' => $movement->weight_kg,
                         'peso_real' => (int) $realWeight,
+                        'peso_final' => CourierMovement::pesoFinal((int) $realWeight, $movement->peso_transformado),
                         'updated_at' => now(),
                     ];
                 }
                 if ($updates !== []) {
-                    DB::table('movimientos_courier')->upsert($updates, ['id'], ['peso_real', 'updated_at']);
+                    DB::table('movimientos_courier')->upsert($updates, ['id'], ['peso_real', 'peso_final', 'updated_at']);
                     $updated += count($updates);
+                }
+                foreach ($weightOnlyUpdates as $weight => $ids) {
+                    DB::table('movimientos_courier')->where('tenant_id', $tenant->id)->whereIn('id', $ids)
+                        ->update(['peso_final' => $weight, 'updated_at' => now()]);
                 }
             });
 
         return redirect()->route('provider-payments.maintainers.pesos.reales')
-            ->with('status', number_format($updated, 0, ',', '.').' movimientos Courier actualizados con Peso Real. '.number_format($withoutMatch, 0, ',', '.').' sin coincidencia de Seguimiento paquete en Peso_Real; esos registros conservan su valor anterior.');
+            ->with('status', number_format($updated, 0, ',', '.').' movimientos Courier actualizados con Peso Real y Peso Final. '.number_format($withoutMatch, 0, ',', '.').' sin coincidencia de Seguimiento paquete en Peso_Real; conservaron su Peso Real y se recalculó Peso Final.');
     }
 
     public function storeReal(Request $request): RedirectResponse

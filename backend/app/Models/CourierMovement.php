@@ -85,12 +85,8 @@ class CourierMovement extends Model
         return CarbonImmutable::create((int) $year, (int) $month, (int) $day);
     }
 
-    public static function pesoFinal(?int $pesoReal, ?int $pesoTransformado): ?int
+    public static function pesoFinal(?int $pesoReal, ?int $pesoTransformado): int
     {
-        if ($pesoReal === null || $pesoTransformado === null) {
-            return null;
-        }
-
-        return min($pesoReal, $pesoTransformado);
+        return $pesoReal > 0 ? $pesoReal : ($pesoTransformado > 0 ? $pesoTransformado : 1);
     }
 }
