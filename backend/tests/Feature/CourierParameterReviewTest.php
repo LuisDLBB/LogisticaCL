@@ -413,6 +413,12 @@ class CourierParameterReviewTest extends TestCase
         ]))->assertOk()->assertSee('Llaves creadas <span class="note">(1 de 2)', false)
             ->assertSee('key-form-'.$key->id)->assertDontSee('key-form-'.$other->id)
             ->assertSee('Centro Seleccionable')->assertSee('<select class="condition-input"', false);
+        $this->get(route('provider-payments.maintainers.llave-centro-costos', ['service_filter' => '88']))
+            ->assertOk()->assertSee('name="service_filter"', false)
+            ->assertSee('value="88" selected', false)
+            ->assertSee('key-form-'.$key->id)->assertDontSee('key-form-'.$other->id);
+        $this->get(route('provider-payments.maintainers.llave-centro-costos', ['provider' => $provider->tax_id, 'service_filter' => '89']))
+            ->assertRedirect(route('provider-payments.maintainers.llave-centro-costos', ['vista' => 'proveedor']));
         $this->get(route('provider-payments.maintainers.llave-centro-costos', ['center' => 'none']))
             ->assertOk()->assertSee('key-form-'.$other->id)->assertDontSee('key-form-'.$key->id);
         $this->get(route('provider-payments.maintainers.llave-centro-costos', ['provider' => $provider->tax_id, 'center' => 'none']))

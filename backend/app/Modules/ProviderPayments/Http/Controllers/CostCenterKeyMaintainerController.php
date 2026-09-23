@@ -36,12 +36,14 @@ class CostCenterKeyMaintainerController
             $providerCatalog = Provider::query()->where('tenant_id', $tenant->id)->orderBy('legal_name')->get();
             $selectedClient = trim((string) $request->query('client'));
             $selectedProvider = trim((string) $request->query('provider'));
+            $selectedService = trim((string) $request->query('service_filter'));
             $selectedCenter = trim((string) $request->query('center'));
             $selectedPayment = trim((string) $request->query('payment'));
             $viewMode = $request->query('vista') === 'cliente' ? 'cliente' : 'proveedor';
             $matches = fn (CostCenterKey $key, string $except = ''): bool =>
                 ($except === 'client' || $selectedClient === '' || $this->clientFilterKey($key) === $selectedClient)
                 && ($except === 'provider' || $selectedProvider === '' || $this->providerFilterKey($key) === $selectedProvider)
+                && ($except === 'service' || $selectedService === '' || (string) $key->service_code === $selectedService)
                 && ($except === 'center' || $selectedCenter === '' || ($key->cost_center_code === null ? 'none' : (string) $key->cost_center_code) === $selectedCenter)
                 && ($except === 'payment' || $selectedPayment === '' || mb_strtoupper(trim((string) $key->payment_status)) === $selectedPayment);
             $clientOptions = $keys
@@ -53,6 +55,9 @@ class CostCenterKeyMaintainerController
                 ->concat($keys->groupBy(fn (CostCenterKey $key): string => $this->providerFilterKey($key))
                     ->map(fn ($group, $value): array => ['value' => $value, 'label' => $group->first()->provider?->legal_name ?: ($group->first()->agent_name ?: $group->first()->provider_tax_id)])->values())
                 ->filter(fn (array $option): bool => filled($option['value']))->unique('value')->sortBy('label')->values();
+            $serviceOptions = $keys->groupBy(fn (CostCenterKey $key): string => (string) $key->service_code)
+                ->map(fn ($group, $value): array => ['value' => (string) $value, 'label' => $group->first()->serviceType?->name ?: $group->first()->service_name])
+                ->sortBy('label')->values();
             $centerOptions = $keys
                 ->groupBy(fn (CostCenterKey $key): string => $key->cost_center_code === null ? 'none' : (string) $key->cost_center_code)
                 ->map(fn ($group, $value): array => ['value' => (string) $value, 'label' => $value === 'none' ? 'Sin centro de costo' : $value.' · '.($group->first()->costCenter?->dispatch_guide_detail ?? 'Centro de costo')])
@@ -67,7 +72,7 @@ class CostCenterKeyMaintainerController
                 ? $this->providerFilterKey($key).'|'.$this->clientFilterKey($key).'|'.$key->service_name
                 : $this->clientFilterKey($key).'|'.$this->providerFilterKey($key).'|'.$key->service_name)->values();
             if ($keys->isNotEmpty() && $filteredKeys->isEmpty()
-                && ($selectedClient !== '' || $selectedProvider !== '' || $selectedCenter !== '' || $selectedPayment !== '')) {
+                && ($selectedClient !== '' || $selectedProvider !== '' || $selectedService !== '' || $selectedCenter !== '' || $selectedPayment !== '')) {
                 return redirect()->route('provider-payments.maintainers.llave-centro-costos', ['vista' => $viewMode])
                     ->with('status', 'Los filtros no encontraron llaves. Se muestran todos los registros.');
             }
@@ -82,10 +87,12 @@ class CostCenterKeyMaintainerController
                 'viewMode' => $viewMode,
                 'selectedClient' => $selectedClient,
                 'selectedProvider' => $selectedProvider,
+                'selectedService' => $selectedService,
                 'selectedCenter' => $selectedCenter,
                 'selectedPayment' => $selectedPayment,
                 'clientOptions' => $clientOptions,
                 'providerOptions' => $providerOptions,
+                'serviceOptions' => $serviceOptions,
                 'centerOptions' => $centerOptions,
                 'paymentOptions' => $paymentOptions,
                 'paymentStatuses' => $paymentStatuses,
