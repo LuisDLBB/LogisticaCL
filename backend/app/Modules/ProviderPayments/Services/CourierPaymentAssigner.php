@@ -116,42 +116,31 @@ class CourierPaymentAssigner
 
     private function syncFinalWeights(int $tenantId, string $period, array &$result): void
     {
-        CourierPaymentMovement::query()->where('tenant_id', $tenantId)->where('periodo', $period)
-            ->select(['id', 'courier_movement_id', 'nombre_proceso', 'peso_final'])
-            ->chunkById(500, function ($payments) use ($tenantId, &$result): void {
-                $movements = CourierMovement::query()->where('tenant_id', $tenantId)
-                    ->whereIn('id', $payments->pluck('courier_movement_id'))
-                    ->get(['id', 'peso_real', 'peso_transformado', 'peso_final'])->keyBy('id');
-                $paymentUpdates = [];
-                $movementUpdates = [];
-                foreach ($payments as $payment) {
-                    $movement = $movements->get($payment->courier_movement_id);
-                    if ($movement === null) {
-                        continue;
-                    }
-                    $weight = CourierMovement::pesoFinal($movement->peso_real, $movement->peso_transformado);
-                    if ($movement->peso_final !== $weight) {
-                        $movementUpdates[$weight][] = $movement->id;
-                    }
-                    if ($payment->peso_final !== $weight) {
-                        $paymentUpdates[$weight][] = $payment->id;
-                        $result['weights_recalculated']++;
-                        if ($payment->nombre_proceso === 'Lanas' && (int) $payment->peso_final <= 0 && $weight === 1) {
-                            $result['weight_defaulted']++;
-                        }
-                    }
-                }
-                DB::transaction(function () use ($tenantId, $paymentUpdates, $movementUpdates): void {
-                    foreach ($movementUpdates as $weight => $ids) {
-                        DB::table('movimientos_courier')->where('tenant_id', $tenantId)->whereIn('id', $ids)
-                            ->update(['peso_final' => $weight, 'updated_at' => now()]);
-                    }
-                    foreach ($paymentUpdates as $weight => $ids) {
-                        DB::table('Pago_Movimientos_Courier')->where('tenant_id', $tenantId)->whereIn('id', $ids)
-                            ->update(['peso_final' => $weight, 'updated_at' => now()]);
-                    }
-                });
-            });
+        $weight = 'CASE WHEN peso_real > 0 THEN peso_real WHEN peso_transformado > 0 THEN peso_transformado ELSE 1 END';
+        $paymentWeight = '(SELECT peso_final FROM movimientos_courier WHERE movimientos_courier.id = Pago_Movimientos_Courier.courier_movement_id AND movimientos_courier.tenant_id = Pago_Movimientos_Courier.tenant_id)';
+        $payments = fn () => DB::table('Pago_Movimientos_Courier')
+            ->where('Pago_Movimientos_Courier.tenant_id', $tenantId)->where('Pago_Movimientos_Courier.periodo', $period);
+
+        DB::transaction(function () use ($tenantId, $weight, $paymentWeight, $payments, &$result): void {
+            $result['weight_defaulted'] = $payments()
+                ->join('movimientos_courier as movement', function ($join): void {
+                    $join->on('movement.id', '=', 'Pago_Movimientos_Courier.courier_movement_id')
+                        ->on('movement.tenant_id', '=', 'Pago_Movimientos_Courier.tenant_id');
+                })
+                ->where('Pago_Movimientos_Courier.nombre_proceso', 'Lanas')
+                ->whereRaw('COALESCE(Pago_Movimientos_Courier.peso_final, 0) <= 0')
+                ->whereRaw('COALESCE(movement.peso_real, 0) <= 0 AND COALESCE(movement.peso_transformado, 0) <= 0')
+                ->count();
+
+            DB::table('movimientos_courier')->where('tenant_id', $tenantId)
+                ->whereIn('id', $payments()->select('courier_movement_id'))
+                ->whereRaw("COALESCE(peso_final, -1) <> $weight")
+                ->update(['peso_final' => DB::raw($weight), 'updated_at' => now()]);
+
+            $result['weights_recalculated'] = $payments()
+                ->whereRaw("COALESCE(peso_final, -1) <> $paymentWeight")
+                ->update(['peso_final' => DB::raw($paymentWeight), 'updated_at' => now()]);
+        });
     }
 
     private function identity(?string $providerRut, ?string $clientRut, string $serviceCode): string
