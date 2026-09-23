@@ -12,6 +12,6 @@ class CourierPaymentMovement extends Model
 
     protected function casts(): array
     {
-        return ['fecha' => 'date', 'direccion' => 'encrypted', 'peso_final' => 'integer'];
+        return ['fecha' => 'date', 'direccion' => 'encrypted', 'peso_final' => 'integer', 'valor' => 'integer'];
     }
 }

@@ -27,6 +27,7 @@ class CourierMovementCompileTest extends TestCase
             $movement = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => $tracking, 'nombre_proceso' => '202607-Variable']);
             CourierPaymentMovement::create(['tenant_id' => $tenant->id, 'courier_movement_id' => $movement->id, 'periodo' => '202607', 'nombre_proceso' => 'Variable', 'tipo_pago' => 'Variable', 'seguimiento_paquete' => $tracking, 'peso_final' => 1, 'zona' => $zone, 'comuna_matriz' => $matrix, 'comerciante_pila' => $merchant, 'rut_cliente' => $rut, 'razon_social_cliente' => $legal, 'razon_social_proveedor' => 'Proveedor '.$legal, 'nombre_operacional' => $operational, 'tipo_documento' => $document, 'nombre_repartidor' => $courierName, 'empresa_mandante' => $company]);
         }
+        CourierPaymentMovement::query()->where('seguimiento_paquete', '4N202607010001-111')->update(['valor' => 1234567]);
 
         foreach (['zone' => 'RM', 'matrix' => '4N RM', 'client' => 'Cliente Alfa', 'client_legal_name' => 'Alfa SPA', 'provider_legal_name' => 'Proveedor Alfa SPA', 'operational_name' => 'Operador Alfa', 'document_type' => 'Factura', 'courier_name' => 'Repartidor Alfa', 'company' => '4N'] as $filter => $value) {
             $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607', $filter => $value]))
@@ -36,7 +37,7 @@ class CourierMovementCompileTest extends TestCase
         $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607', 'zone' => 'RM', 'client' => 'Cliente Beta']))
             ->assertOk()->assertSee('Registros trabajados (0)');
         $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607', 'zone' => 'RM']))
-            ->assertOk()->assertSee('<option value="Cliente Alfa"', false)
+            ->assertOk()->assertSee('$ 1.234.567')->assertSee('<option value="Cliente Alfa"', false)
             ->assertDontSee('<option value="Cliente Beta"', false)
             ->assertDontSee('<option value="Operador Beta"', false)
             ->assertDontSee('<option value="Repartidor Beta"', false)
