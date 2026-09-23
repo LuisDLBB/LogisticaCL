@@ -21,6 +21,13 @@
         .subnav a { display:block; padding:9px 15px 9px 30px; color:#53696d; font-size:13px; text-decoration:none; }.subnav a:hover,.subnav a.active{color:var(--turquoise-dark);font-weight:800}
         .content { min-width:0; padding:36px clamp(24px,5vw,84px) 60px; }
         .eyebrow { margin:0 0 8px; color:var(--turquoise-dark); font-size:11px; font-weight:900; letter-spacing:1.6px; text-transform:uppercase; }
+        .page-heading{display:flex;align-items:center;gap:10px;max-width:100%;margin:0 0 10px;overflow-x:auto;white-space:nowrap;scrollbar-width:thin}
+        .page-heading .back,.page-heading .eyebrow{flex:none;margin:0;font-size:12px;line-height:1.4;letter-spacing:0;text-transform:none}
+        .page-heading .eyebrow{font-weight:750}
+        .page-heading h1{flex:none;margin:0;font-size:18px;line-height:1.4;font-weight:800}
+        .page-heading .eyebrow::before,.page-heading h1::before{content:'–';padding-right:10px;color:var(--muted);font-weight:400}
+        .page-heading .compile-period{margin-left:auto}
+        @media(max-width:760px){.page-heading h1{font-size:16px}.page-heading{gap:7px}.page-heading .eyebrow::before,.page-heading h1::before{padding-right:7px}}
         h1 { margin:0; color:#071b1d; font-size:30px; line-height:1.15; } h2{color:#071b1d}.intro{margin:8px 0 26px;color:var(--muted)}
         a{color:var(--turquoise-dark)}.back{display:inline-block;margin-bottom:18px;font-size:14px}
         .card,.box,details.review-group { background:#fff; border:1px solid var(--line); border-radius:14px; box-shadow:0 1px 2px rgb(6 31 32 / 3%); }
@@ -77,6 +84,22 @@
     </main>
 </div>
 @stack('scripts')
+<script>
+(() => {
+    const main = document.querySelector('main.content');
+    if (!main || main.querySelector('.page-heading')) return;
+    const title = main.querySelector('h1');
+    const eyebrow = main.querySelector('.eyebrow');
+    if (!title || !eyebrow) return;
+    const back = main.querySelector('.back');
+    const first = back || eyebrow;
+    const heading = document.createElement('div');
+    heading.className = 'page-heading';
+    first.before(heading);
+    if (back) heading.append(back);
+    heading.append(eyebrow, title);
+})();
+</script>
 @if(request()->routeIs('provider-payments.maintainers.*') && !request()->routeIs('provider-payments.maintainers.pesos.reales', 'provider-payments.maintainers.tarifas-cc*', 'provider-payments.maintainers.llave-centro-costos*'))
 <script>
 (() => {
