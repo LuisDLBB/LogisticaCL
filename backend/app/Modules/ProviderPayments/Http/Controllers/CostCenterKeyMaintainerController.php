@@ -11,6 +11,7 @@ use App\Models\ServiceType;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -32,13 +33,38 @@ class CostCenterKeyMaintainerController
                     $query->whereIn('id', $keys->pluck('provider_id')->filter()->unique())
                         ->orWhereIn('tax_id', $keys->pluck('provider_tax_id')->filter()->unique());
                 })->orderBy('legal_name')->get();
+            $selectedClient = trim((string) $request->query('client'));
+            $selectedProvider = trim((string) $request->query('provider'));
+            $viewMode = $request->query('vista') === 'proveedor' ? 'proveedor' : 'cliente';
+            $clientOptions = $keys->filter(fn (CostCenterKey $key): bool => $selectedProvider === '' || $this->providerFilterKey($key) === $selectedProvider)
+                ->groupBy(fn (CostCenterKey $key): string => $this->clientFilterKey($key))
+                ->map(fn ($group, $value): array => ['value' => $value, 'label' => $group->first()->client?->source_merchant_name ?: $group->first()->merchant_name])
+                ->filter(fn (array $option): bool => filled($option['value']))->sortBy('label')->values();
+            $providerOptions = $keys->filter(fn (CostCenterKey $key): bool => $selectedClient === '' || $this->clientFilterKey($key) === $selectedClient)
+                ->groupBy(fn (CostCenterKey $key): string => $this->providerFilterKey($key))
+                ->map(fn ($group, $value): array => ['value' => $value, 'label' => $group->first()->provider?->legal_name ?: ($group->first()->agent_name ?: $group->first()->provider_tax_id)])
+                ->filter(fn (array $option): bool => filled($option['value']))->sortBy('label')->values();
+            $filteredKeys = $keys->filter(fn (CostCenterKey $key): bool =>
+                ($selectedClient === '' || $this->clientFilterKey($key) === $selectedClient)
+                && ($selectedProvider === '' || $this->providerFilterKey($key) === $selectedProvider));
+            $filteredKeys = $filteredKeys->sortBy(fn (CostCenterKey $key): string => $viewMode === 'proveedor'
+                ? $this->providerFilterKey($key).'|'.$this->clientFilterKey($key).'|'.$key->service_name
+                : $this->clientFilterKey($key).'|'.$this->providerFilterKey($key).'|'.$key->service_name)->values();
+            $page = max(1, (int) $request->query('page', 1));
+            $rows = new LengthAwarePaginator($filteredKeys->forPage($page, 100)->values(), $filteredKeys->count(), 100, $page, [
+                'path' => $request->url(), 'query' => $request->query(),
+            ]);
 
             return view('provider-payments::cost-center-keys-index', [
                 'keys' => $keys,
-                'keysByClient' => $keys->groupBy(fn (CostCenterKey $key): string => (string) ($key->client_id ?: 'merchant:'.$key->merchant_name)),
-                'keysByProvider' => $keys->groupBy(fn (CostCenterKey $key): string => (string) ($key->provider_id ?: 'rut:'.$key->provider_tax_id)),
-                'viewMode' => $request->query('vista') === 'proveedor' ? 'proveedor' : 'cliente',
-                'total' => $keys->count(),
+                'rows' => $rows,
+                'viewMode' => $viewMode,
+                'selectedClient' => $selectedClient,
+                'selectedProvider' => $selectedProvider,
+                'clientOptions' => $clientOptions,
+                'providerOptions' => $providerOptions,
+                'total' => $filteredKeys->count(),
+                'allTotal' => $keys->count(),
                 'providers' => Provider::query()->where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('legal_name')->get(),
                 'sourceProviders' => $sourceProviders,
                 'clients' => Client::query()->where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('source_merchant_name')->get(),
@@ -260,6 +286,16 @@ class CostCenterKeyMaintainerController
             (int) $key->service_code,
             $key->cost_center_code === null ? null : (int) $key->cost_center_code,
         ]);
+    }
+
+    private function clientFilterKey(CostCenterKey $key): string
+    {
+        return mb_strtolower(trim((string) ($key->client?->source_merchant_name ?: $key->merchant_name)));
+    }
+
+    private function providerFilterKey(CostCenterKey $key): string
+    {
+        return strtoupper(trim((string) ($key->provider?->tax_id ?: $key->provider_tax_id ?: $key->agent_name)));
     }
 
     public function update(Request $request, CostCenterKey $key): RedirectResponse

@@ -372,7 +372,7 @@ class CourierParameterReviewTest extends TestCase
         $client = Client::create(['tenant_id' => $tenant->id, 'tax_id' => '12345678-5', 'tax_id_number' => '12345678', 'tax_id_check_digit' => '5', 'source_merchant_name' => 'Cliente Navegable', 'commercial_name' => 'Cliente Navegable', 'legal_name' => 'Cliente Navegable SPA']);
         $provider = Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '11111111-1', 'tax_id_number' => '11111111', 'tax_id_check_digit' => '1', 'legal_name' => 'Proveedor Navegable', 'operator_type' => 'Courier']);
         $service = ServiceType::factory()->create(['service_code' => 88, 'name' => 'Servicio Navegable']);
-        CostCenterKey::create([
+        $key = CostCenterKey::create([
             'tenant_id' => $tenant->id, 'provider_id' => $provider->id, 'client_id' => $client->id, 'service_type_id' => $service->id,
             'provider_tax_id' => $provider->tax_id, 'agent_name' => 'Agencia Navegable', 'client_tax_id' => $client->tax_id,
             'merchant_name' => $client->source_merchant_name, 'service_code' => $service->service_code, 'service_name' => $service->name,
@@ -386,6 +386,23 @@ class CourierParameterReviewTest extends TestCase
 
         $this->get(route('provider-payments.maintainers.llave-centro-costos', ['vista' => 'proveedor']))
             ->assertOk()->assertSee('Proveedor Navegable')->assertSee('Cliente Navegable')->assertSee('Servicio Navegable');
+
+        $other = CostCenterKey::create([
+            'tenant_id' => $tenant->id, 'provider_tax_id' => '99999999-9', 'agent_name' => 'Otro Proveedor',
+            'client_tax_id' => '99999999-9', 'merchant_name' => 'Otro Cliente', 'service_code' => 89,
+            'service_name' => 'Otro Servicio', 'key_code' => '99999999-9/99999999-9/89',
+            'payment_status' => 'SI', 'is_active' => true,
+        ]);
+        CostCenter::updateOrCreate(['cost_center_code' => 88], ['dispatch_guide_detail' => 'Centro Seleccionable', 'additional_kilo_value' => 0, 'is_active' => true]);
+        $this->get(route('provider-payments.maintainers.llave-centro-costos', [
+            'vista' => 'proveedor', 'client' => 'cliente navegable', 'provider' => $provider->tax_id,
+        ]))->assertOk()->assertSee('Llaves creadas <span class="note">(1 de 2)', false)
+            ->assertSee('key-form-'.$key->id)->assertDontSee('key-form-'.$other->id)
+            ->assertSee('Centro Seleccionable')->assertSee('name="cost_center_code"', false);
+        $this->put(route('provider-payments.maintainers.llave-centro-costos.update', $key), [
+            'agent_name' => 'Agencia Navegable', 'payment_status' => 'SI', 'cost_center_code' => 88, 'is_active' => true,
+        ])->assertRedirect();
+        $this->assertDatabaseHas('llave_centro_costos', ['id' => $key->id, 'cost_center_code' => 88]);
     }
 
     public function test_new_provider_can_copy_all_source_combinations_without_duplicates(): void

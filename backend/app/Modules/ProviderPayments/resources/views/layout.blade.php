@@ -65,7 +65,7 @@
         </nav></details>
     </aside>
     <main class="content">
-        @if(request()->routeIs('provider-payments.maintainers.*') && !request()->routeIs('provider-payments.maintainers.pesos.reales', 'provider-payments.maintainers.tarifas-cc*'))
+        @if(request()->routeIs('provider-payments.maintainers.*') && !request()->routeIs('provider-payments.maintainers.pesos.reales', 'provider-payments.maintainers.tarifas-cc*', 'provider-payments.maintainers.llave-centro-costos*'))
             <section class="master-tools" aria-label="Buscar y filtrar registros">
                 <label>Buscar<input id="master_search" type="search" placeholder="Buscar por nombre, RUT, código, patente, comuna…" autocomplete="off"></label>
                 @if(request()->routeIs('provider-payments.maintainers.proveedores'))
@@ -80,7 +80,7 @@
     </main>
 </div>
 @stack('scripts')
-@if(request()->routeIs('provider-payments.maintainers.*') && !request()->routeIs('provider-payments.maintainers.pesos.reales', 'provider-payments.maintainers.tarifas-cc*'))
+@if(request()->routeIs('provider-payments.maintainers.*') && !request()->routeIs('provider-payments.maintainers.pesos.reales', 'provider-payments.maintainers.tarifas-cc*', 'provider-payments.maintainers.llave-centro-costos*'))
 <script>
 (() => {
     const grid = document.querySelector('.master-grid');
