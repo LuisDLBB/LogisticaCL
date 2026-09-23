@@ -27,6 +27,11 @@ class CostCenterKeyMaintainerController
             $keys = CostCenterKey::query()->where('tenant_id', $tenant->id)
                 ->with(['provider', 'client', 'serviceType', 'costCenter'])
                 ->orderBy('merchant_name')->orderBy('service_name')->orderBy('provider_tax_id')->get();
+            $sourceProviders = Provider::query()->where('tenant_id', $tenant->id)
+                ->where(function ($query) use ($keys): void {
+                    $query->whereIn('id', $keys->pluck('provider_id')->filter()->unique())
+                        ->orWhereIn('tax_id', $keys->pluck('provider_tax_id')->filter()->unique());
+                })->orderBy('legal_name')->get();
 
             return view('provider-payments::cost-center-keys-index', [
                 'keys' => $keys,
@@ -35,6 +40,7 @@ class CostCenterKeyMaintainerController
                 'viewMode' => $request->query('vista') === 'proveedor' ? 'proveedor' : 'cliente',
                 'total' => $keys->count(),
                 'providers' => Provider::query()->where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('legal_name')->get(),
+                'sourceProviders' => $sourceProviders,
                 'clients' => Client::query()->where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('source_merchant_name')->get(),
                 'services' => ServiceType::query()->where('is_active', true)->orderBy('name')->get(),
                 'costCenters' => CostCenter::query()->where('is_active', true)->orderBy('cost_center_code')->get(),
@@ -196,6 +202,64 @@ class CostCenterKeyMaintainerController
         ]);
 
         return back()->with('status', 'Llave Centro de Costo creada correctamente.');
+    }
+
+    public function replicateProvider(Request $request): RedirectResponse
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $validated = $request->validate([
+            'source_provider_id' => ['required', Rule::exists('providers', 'id')->where('tenant_id', $tenant->id)],
+            'target_provider_id' => ['required', 'different:source_provider_id', Rule::exists('providers', 'id')->where('tenant_id', $tenant->id)->where('is_active', true)],
+        ]);
+        $source = Provider::query()->where('tenant_id', $tenant->id)->findOrFail($validated['source_provider_id']);
+        $target = Provider::query()->where('tenant_id', $tenant->id)->findOrFail($validated['target_provider_id']);
+        $sourceKeys = CostCenterKey::query()->where('tenant_id', $tenant->id)
+            ->where(fn ($query) => $query->where('provider_id', $source->id)->orWhere('provider_tax_id', $source->tax_id))
+            ->orderBy('id')->get();
+        if ($sourceKeys->isEmpty()) {
+            throw ValidationException::withMessages(['source_provider_id' => 'El proveedor de origen no tiene llaves para copiar.']);
+        }
+
+        $created = 0;
+        $skipped = 0;
+        DB::transaction(function () use ($tenant, $target, $sourceKeys, &$created, &$skipped): void {
+            $targetKeys = CostCenterKey::query()->where('tenant_id', $tenant->id)
+                ->where(fn ($query) => $query->where('provider_id', $target->id)->orWhere('provider_tax_id', $target->tax_id))
+                ->get();
+            $existing = $targetKeys->mapWithKeys(fn (CostCenterKey $key): array => [$this->combinationIdentity($key) => true])->all();
+            foreach ($sourceKeys as $sourceKey) {
+                $identity = $this->combinationIdentity($sourceKey);
+                if (isset($existing[$identity])) {
+                    $skipped++;
+                    continue;
+                }
+                $key = $sourceKey->replicate();
+                $key->provider_id = $target->id;
+                $key->provider_tax_id = $target->tax_id;
+                $key->key_code = implode('/', [$target->tax_id, $key->client_tax_id, $key->service_code]);
+                $key->key_text = trim((string) $key->agent_name).$key->merchant_name.$key->service_name;
+                $key->save();
+                $existing[$identity] = true;
+                $created++;
+            }
+        });
+
+        return redirect()->route('provider-payments.maintainers.llave-centro-costos', ['vista' => 'proveedor'])
+            ->with('status', "{$created} llaves copiadas a {$target->legal_name}; {$skipped} combinaciones existentes omitidas.");
+    }
+
+    private function combinationIdentity(CostCenterKey $key): string
+    {
+        $client = strtoupper(trim((string) $key->client_tax_id));
+        if ($client === '' || in_array($client, ['#N/D', 'N/A'], true)) {
+            $client = mb_strtoupper(trim((string) $key->merchant_name));
+        }
+
+        return json_encode([
+            $client,
+            (int) $key->service_code,
+            $key->cost_center_code === null ? null : (int) $key->cost_center_code,
+        ]);
     }
 
     public function update(Request $request, CostCenterKey $key): RedirectResponse

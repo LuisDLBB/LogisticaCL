@@ -75,6 +75,7 @@ Route::prefix('pago-proveedores')
         Route::get('/mantenedor/llave-centro-costos', [CostCenterKeyMaintainerController::class, 'create'])->name('maintainers.llave-centro-costos');
         Route::post('/mantenedor/llave-centro-costos', [CostCenterKeyMaintainerController::class, 'store'])->name('maintainers.llave-centro-costos.store');
         Route::post('/mantenedor/llave-centro-costos/nueva', [CostCenterKeyMaintainerController::class, 'storeManual'])->name('maintainers.llave-centro-costos.manual-store');
+        Route::post('/mantenedor/llave-centro-costos/replicar-proveedor', [CostCenterKeyMaintainerController::class, 'replicateProvider'])->name('maintainers.llave-centro-costos.replicate-provider');
         Route::put('/mantenedor/llave-centro-costos/{key}', [CostCenterKeyMaintainerController::class, 'update'])->name('maintainers.llave-centro-costos.update');
 
     });

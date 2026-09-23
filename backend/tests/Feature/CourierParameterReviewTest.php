@@ -388,6 +388,35 @@ class CourierParameterReviewTest extends TestCase
             ->assertOk()->assertSee('Proveedor Navegable')->assertSee('Cliente Navegable')->assertSee('Servicio Navegable');
     }
 
+    public function test_new_provider_can_copy_all_source_combinations_without_duplicates(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $source = Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '11111111-1', 'tax_id_number' => '11111111', 'tax_id_check_digit' => '1', 'legal_name' => 'Proveedor Origen', 'operator_type' => 'Courier']);
+        $target = Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '22222222-2', 'tax_id_number' => '22222222', 'tax_id_check_digit' => '2', 'legal_name' => 'Proveedor Nuevo', 'operator_type' => 'Courier']);
+        $client = Client::create(['tenant_id' => $tenant->id, 'tax_id' => '33333333-3', 'tax_id_number' => '33333333', 'tax_id_check_digit' => '3', 'source_merchant_name' => 'Cliente Copia', 'commercial_name' => 'Cliente Copia', 'legal_name' => 'Cliente Copia SPA']);
+        $service = ServiceType::factory()->create(['service_code' => 93, 'name' => 'Servicio Copia']);
+        $attributes = ['tenant_id' => $tenant->id, 'client_id' => $client->id, 'service_type_id' => $service->id, 'client_tax_id' => $client->tax_id, 'merchant_name' => $client->source_merchant_name, 'service_code' => $service->service_code, 'service_name' => $service->name];
+        CostCenterKey::create([...$attributes, 'provider_id' => $source->id, 'provider_tax_id' => $source->tax_id, 'cost_center_code' => 2, 'payment_status' => 'SI', 'key_code' => '11111111-1/33333333-3/93', 'is_active' => true]);
+        CostCenterKey::create([...$attributes, 'provider_id' => $source->id, 'provider_tax_id' => $source->tax_id, 'cost_center_code' => 3, 'payment_status' => 'NO', 'agent_name' => 'Agencia Sur', 'key_code' => '11111111-1/33333333-3/93', 'is_active' => false]);
+        foreach (['Cliente Antiguo A', 'Cliente Antiguo B'] as $merchant) {
+            CostCenterKey::create(['tenant_id' => $tenant->id, 'provider_id' => $source->id, 'provider_tax_id' => $source->tax_id, 'client_tax_id' => '#N/D', 'merchant_name' => $merchant, 'service_code' => $service->service_code, 'service_name' => $service->name, 'key_code' => '11111111-1/#N/D/93', 'payment_status' => 'SI', 'is_active' => true]);
+        }
+        CostCenterKey::create([...$attributes, 'provider_id' => $target->id, 'provider_tax_id' => $target->tax_id, 'cost_center_code' => 2, 'payment_status' => 'REVISAR', 'key_code' => '22222222-2/33333333-3/93', 'is_active' => true]);
+
+        $this->get(route('provider-payments.maintainers.llave-centro-costos', ['vista' => 'proveedor']))
+            ->assertOk()->assertSee('Copiar combinaciones de otro proveedor')->assertSee('Proveedor Origen');
+        $route = route('provider-payments.maintainers.llave-centro-costos.replicate-provider');
+        $this->post($route, ['source_provider_id' => $source->id, 'target_provider_id' => $target->id])
+            ->assertRedirect()->assertSessionHas('status', '3 llaves copiadas a Proveedor Nuevo; 1 combinaciones existentes omitidas.');
+        $this->assertDatabaseHas('llave_centro_costos', ['provider_id' => $target->id, 'provider_tax_id' => $target->tax_id, 'client_id' => $client->id, 'service_type_id' => $service->id, 'cost_center_code' => 3, 'payment_status' => 'NO', 'agent_name' => 'Agencia Sur', 'is_active' => false]);
+        $this->assertDatabaseHas('llave_centro_costos', ['provider_id' => $target->id, 'cost_center_code' => 2, 'payment_status' => 'REVISAR']);
+        $this->assertDatabaseHas('llave_centro_costos', ['provider_id' => $target->id, 'merchant_name' => 'Cliente Antiguo A']);
+        $this->assertDatabaseHas('llave_centro_costos', ['provider_id' => $target->id, 'merchant_name' => 'Cliente Antiguo B']);
+        $this->post($route, ['source_provider_id' => $source->id, 'target_provider_id' => $target->id])->assertRedirect();
+        $this->assertSame(4, CostCenterKey::query()->where('provider_id', $target->id)->count());
+        $this->assertSame(4, CostCenterKey::query()->where('provider_id', $source->id)->count());
+    }
+
     public function test_ready_file_loads_movements_and_can_replace_duplicates(): void
     {
         Storage::fake('local');
