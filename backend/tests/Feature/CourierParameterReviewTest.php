@@ -416,8 +416,13 @@ class CourierParameterReviewTest extends TestCase
         $this->get(route('provider-payments.maintainers.llave-centro-costos', ['center' => 'none']))
             ->assertOk()->assertSee('key-form-'.$other->id)->assertDontSee('key-form-'.$key->id);
         $this->get(route('provider-payments.maintainers.llave-centro-costos', ['provider' => $provider->tax_id, 'center' => 'none']))
-            ->assertOk()->assertSee('Llaves creadas <span class="note">(0 de 2)', false)
-            ->assertSee('value="'.$provider->tax_id.'" selected', false);
+            ->assertRedirect(route('provider-payments.maintainers.llave-centro-costos', ['vista' => 'proveedor']))
+            ->assertSessionHas('status', 'Los filtros no encontraron llaves. Se muestran todos los registros.');
+        $this->get(route('provider-payments.maintainers.llave-centro-costos', ['vista' => 'proveedor']))
+            ->assertOk()->assertSee('Llaves creadas <span class="note">(2 de 2)', false)
+            ->assertSee('key-form-'.$key->id)->assertSee('key-form-'.$other->id);
+        $this->get(route('provider-payments.maintainers.llave-centro-costos', ['provider' => $providerWithoutKeys->tax_id]))
+            ->assertRedirect(route('provider-payments.maintainers.llave-centro-costos', ['vista' => 'proveedor']));
         $this->get(route('provider-payments.maintainers.llave-centro-costos'))
             ->assertOk()->assertSee('Proveedor Sin Llaves')
             ->assertSee('value="'.$providerWithoutKeys->tax_id.'"', false);

@@ -19,7 +19,7 @@ use Illuminate\View\View;
 
 class CostCenterKeyMaintainerController
 {
-    public function create(Request $request): View
+    public function create(Request $request): View|RedirectResponse
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $merchantName = trim((string) $request->query('merchant'));
@@ -66,6 +66,11 @@ class CostCenterKeyMaintainerController
             $filteredKeys = $filteredKeys->sortBy(fn (CostCenterKey $key): string => $viewMode === 'proveedor'
                 ? $this->providerFilterKey($key).'|'.$this->clientFilterKey($key).'|'.$key->service_name
                 : $this->clientFilterKey($key).'|'.$this->providerFilterKey($key).'|'.$key->service_name)->values();
+            if ($keys->isNotEmpty() && $filteredKeys->isEmpty()
+                && ($selectedClient !== '' || $selectedProvider !== '' || $selectedCenter !== '' || $selectedPayment !== '')) {
+                return redirect()->route('provider-payments.maintainers.llave-centro-costos', ['vista' => $viewMode])
+                    ->with('status', 'Los filtros no encontraron llaves. Se muestran todos los registros.');
+            }
             $page = max(1, (int) $request->query('page', 1));
             $rows = new LengthAwarePaginator($filteredKeys->forPage($page, 100)->values(), $filteredKeys->count(), 100, $page, [
                 'path' => $request->url(), 'query' => $request->query(),
