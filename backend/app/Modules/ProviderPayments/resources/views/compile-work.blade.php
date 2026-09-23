@@ -6,7 +6,7 @@
 .worked-filters{display:grid;grid-template-columns:repeat(4,minmax(170px,1fr));gap:12px;margin:18px 0}.worked-filters label{display:grid;gap:6px;font-size:12px;font-weight:800;text-transform:uppercase}.worked-filters select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff}.worked-filter-actions{display:flex;align-items:end;gap:8px}@media(max-width:950px){.worked-filters{grid-template-columns:repeat(2,minmax(170px,1fr))}}@media(max-width:600px){.worked-filters{grid-template-columns:1fr}}
 .compile-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.compile-period{margin:0}.compile-period label{font-size:12px;gap:3px}.compile-period select{padding:8px;min-width:125px}.compile-period button{padding:9px 12px}.compile-menu{position:relative}.compile-menu>summary{list-style:none;cursor:pointer;padding:10px 13px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--turquoise-dark);font-weight:700}.compile-menu>summary::-webkit-details-marker{display:none}.compile-menu>summary::after{content:' ▾'}.compile-menu[open]>summary{background:#e8fbfa}.compile-menu .menu-panel{position:absolute;top:calc(100% + 5px);left:0;z-index:10;width:min(440px,calc(100vw - 40px));max-height:65vh;overflow:auto;padding:16px;box-shadow:0 12px 28px #071f2430}.compile-menu .menu-panel h2{font-size:18px;margin:0 0 10px}.compile-menu .menu-panel p{margin:6px 0 10px}.compile-processes{gap:6px;margin:10px 0}.compile-process{padding:8px;gap:8px;flex-wrap:wrap}.compile-process strong{min-width:75px}.compile-menu .non-payable{margin:0}.compile-menu .non-payable ul{margin:5px 0 10px}.worked-filters{grid-template-columns:repeat(5,minmax(130px,1fr));gap:7px 10px;margin:8px 0 12px;padding:14px}.worked-filters label{gap:3px;font-size:11px}.worked-filters select{padding:7px;font-size:13px}.worked-filter-actions button,.worked-filter-actions .button{padding:8px 10px}.compile-table{padding:10px}.compile-table+nav{margin-top:8px}@media(max-width:1100px){.worked-filters{grid-template-columns:repeat(3,minmax(150px,1fr))}}@media(max-width:650px){.compile-toolbar{align-items:stretch}.compile-menu .menu-panel{position:static;width:100%;box-shadow:none}.worked-filters{grid-template-columns:repeat(2,minmax(130px,1fr))}}@media(max-width:420px){.worked-filters{grid-template-columns:1fr}}
 .compile-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}.compile-heading h1{margin-bottom:0}.compile-heading .compile-period{flex-shrink:0}.compile-heading+.intro{margin-top:6px}@media(max-width:650px){.compile-heading{align-items:flex-start}.compile-heading .compile-period{width:100%}}
-.key-review-menu .menu-panel{left:auto;right:0;width:min(850px,calc(100vw - 40px))}.missing-key-provider{padding:12px 0;border-top:1px solid var(--line)}.missing-key-provider>p{margin:4px 0 10px}.missing-key-form{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:8px}.missing-key-form label{display:grid;gap:4px;font-size:12px;font-weight:700}.missing-key-form select{width:100%;min-width:0;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff}.missing-key-actions{display:flex;align-items:center;gap:12px;grid-column:1/-1}.missing-key-actions a{font-size:13px}@media(max-width:750px){.missing-key-form{grid-template-columns:repeat(2,minmax(120px,1fr))}}@media(max-width:440px){.missing-key-form{grid-template-columns:1fr}}
+.key-review-menu .menu-panel{left:auto;right:0;width:min(850px,calc(100vw - 40px))}.missing-key-provider{padding:12px 0;border-top:1px solid var(--line)}.missing-key-provider>p{margin:4px 0 10px}.missing-key-form{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:8px}.missing-key-form label{display:grid;gap:4px;font-size:12px;font-weight:700}.missing-key-form select{width:100%;min-width:0;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff}.missing-key-actions{display:flex;align-items:center;gap:12px;grid-column:1/-1}.missing-key-actions a{font-size:13px}.key-review-generate{margin:8px 0 14px}@media(max-width:750px){.missing-key-form{grid-template-columns:repeat(2,minmax(120px,1fr))}}@media(max-width:440px){.missing-key-form{grid-template-columns:1fr}}
 </style>
 @endpush
 @section('content')
@@ -23,27 +23,37 @@
 <details class="compile-menu"><summary>Proveedores RM y Temuco ({{ number_format($fourNorthCandidates, 0, ',', '.') }})</summary><section class="card menu-panel non-payable"><h2>Proveedores RM y Temuco</h2><p>Período {{ $period }}: <strong>{{ number_format($fourNorthCandidates, 0, ',', '.') }}</strong> registros del proveedor 4N con comuna matriz RM o Temuco pendientes de revisar.</p><p class="note">El cruce usa RUT del proveedor, comuna matriz y nombre del repartidor. Las asignaciones N/A conservan el proveedor 4N.</p>@if($fourNorthCandidates > 0)<form method="post" action="{{ route('provider-payments.courier-movements.compile.providers-4n.update') }}" onsubmit="if (!confirm('¿Actualizar los proveedores RM y Temuco del período {{ $period }} con las asignaciones disponibles?')) return false; this.querySelector('button').disabled=true; this.querySelector('.compile-loading').hidden=false;">@csrf<input type="hidden" name="period" value="{{ $period }}"><button type="submit" style="background:var(--turquoise-dark)">Actualizar Proveedores RM y Temuco</button><div class="compile-loading" hidden><div class="progress-track"><div class="progress-bar"></div></div><p>Actualizando proveedores…</p></div></form>@endif</section></details>
 <details class="compile-menu"><summary>Limpiar Proveedor interno y Sin usuario ({{ number_format($internalProviderCount, 0, ',', '.') }})</summary><section class="card menu-panel non-payable"><h2>Limpiar Proveedor interno y Sin usuario</h2><p>Período {{ $period }}: <strong>{{ number_format($internalProviderCount, 0, ',', '.') }}</strong> registros trabajados con razón social del proveedor «4 Nortes Logistica SPA».</p>@if($internalProviderCount > 0)<form method="post" action="{{ route('provider-payments.courier-movements.compile.internal-provider.destroy') }}" onsubmit="return confirm('¿Eliminar los {{ number_format($internalProviderCount, 0, ',', '.') }} registros de 4 Nortes Logistica SPA del período {{ $period }}? Los movimientos originales se conservarán.')">@csrf @method('DELETE')<input type="hidden" name="period" value="{{ $period }}"><button type="submit">Limpiar Proveedor interno y Sin usuario</button></form>@else<p class="note">No hay registros de este proveedor para eliminar en el período.</p>@endif</section></details>
 <details class="compile-menu key-review-menu" @if(request()->boolean('review_keys') || $errors->any()) open @endif>
-    <summary>Revisar Inconsistencias Llave CC ({{ number_format($missingKeyProviders->count(), 0, ',', '.') }})</summary>
+    <summary>Revisar Inconsistencias Llave CC ({{ number_format($missingKeyProviders, 0, ',', '.') }})</summary>
     <section class="card menu-panel">
-        <h2>Proveedores sin Llave CC configurada</h2>
-        <p class="note">Período {{ $period }}: {{ number_format($missingKeyProviders->count(), 0, ',', '.') }} proveedores con registros trabajados sin una llave activa con centro de costo.</p>
-        @forelse($missingKeyProviders as $provider)
+        <h2>Llaves CC por configurar</h2>
+        <p class="note">Período {{ $period }}: {{ number_format($missingKeyProviders, 0, ',', '.') }} proveedores con combinaciones de cliente y servicio sin llave activa con centro de costo.</p>
+        @if($missingKeyCombinations > 0)
+            <form class="key-review-generate" method="post" action="{{ route('provider-payments.courier-movements.compile.keys.generate') }}" onsubmit="this.querySelector('button').disabled=true">
+                @csrf<input type="hidden" name="period" value="{{ $period }}">
+                <button type="submit">Generar {{ number_format($missingKeyCombinations, 0, ',', '.') }} {{ $missingKeyCombinations === 1 ? 'llave faltante' : 'llaves faltantes' }}</button>
+                <p class="note">Se crean con centro de costo 0, condición NO y estado Inactiva.</p>
+            </form>
+        @endif
+        @forelse($keyReviewGroups as $group)
             <div class="missing-key-provider">
-                <strong>{{ $provider->legal_name }}</strong> · {{ $provider->tax_id }}
-                <p class="note">{{ number_format($provider->movements, 0, ',', '.') }} registros trabajados · {{ $provider->operational_name ?: 'Sin nombre operacional' }}</p>
-                <form class="missing-key-form" method="post" action="{{ route('provider-payments.maintainers.llave-centro-costos.manual-store') }}">
-                    @csrf
-                    <input type="hidden" name="provider_id" value="{{ $provider->id }}">
-                    <input type="hidden" name="return_period" value="{{ $period }}">
-                    <label>Cliente<select name="client_id" required><option value="">Selecciona</option>@foreach($keyReviewClients as $client)<option value="{{ $client->id }}">{{ $client->source_merchant_name }} · {{ $client->tax_id }}</option>@endforeach</select></label>
-                    <label>Servicio<select name="service_type_id" required><option value="">Selecciona</option>@foreach($keyReviewServices as $service)<option value="{{ $service->id }}">{{ $service->name }}</option>@endforeach</select></label>
-                    <label>Centro de costo<select name="cost_center_code" required><option value="">Selecciona</option>@foreach($keyReviewCenters as $center)<option value="{{ $center->cost_center_code }}">{{ $center->cost_center_code }} · {{ $center->dispatch_guide_detail }}</option>@endforeach</select></label>
-                    <label>Condición de pago<select name="payment_status" required><option value="SI">SI</option><option value="NO">NO</option><option value="REVISAR">REVISAR</option></select></label>
-                    <div class="missing-key-actions"><button type="submit">Crear llave</button><a href="{{ route('provider-payments.maintainers.llave-centro-costos', ['create' => 1, 'new_provider' => $provider->id]) }}" target="_blank" rel="noopener">Configurar o replicar más llaves ↗</a></div>
-                </form>
+                <strong>{{ $group->provider_name }}</strong> · {{ $group->provider_tax_id }}
+                <p class="note">{{ $group->client_name }} · {{ $group->service_name }} · {{ number_format($group->movements, 0, ',', '.') }} registros trabajados</p>
+                @if($group->key)
+                    <form class="missing-key-form" method="post" action="{{ route('provider-payments.maintainers.llave-centro-costos.update', $group->key) }}">
+                        @csrf @method('PUT')
+                        <input type="hidden" name="return_period" value="{{ $period }}">
+                        <input type="hidden" name="agent_name" value="{{ $group->key->agent_name }}">
+                        <label>Centro de costo<select name="cost_center_code" required>@foreach($keyReviewCenters as $center)<option value="{{ $center->cost_center_code }}" @selected((string) $group->key->cost_center_code === (string) $center->cost_center_code)>{{ $center->cost_center_code }} · {{ $center->dispatch_guide_detail }}</option>@endforeach</select></label>
+                        <label>Condición de pago<select name="payment_status"><option value="NO" @selected($group->key->payment_status === 'NO')>NO</option><option value="SI" @selected($group->key->payment_status === 'SI')>SI</option><option value="REVISAR" @selected($group->key->payment_status === 'REVISAR')>REVISAR</option></select></label>
+                        <label>Estado<select name="is_active"><option value="0" @selected(! $group->key->is_active)>Inactiva</option><option value="1" @selected($group->key->is_active)>Activa</option></select></label>
+                        <div class="missing-key-actions"><button type="submit">Guardar llave</button><a href="{{ route('provider-payments.maintainers.llave-centro-costos', ['provider' => $group->provider_tax_id]) }}" target="_blank" rel="noopener">Ver en Llave CC ↗</a></div>
+                    </form>
+                @else
+                    <p class="note">Llave pendiente de generar. Quedará con centro 0, pago NO e Inactiva.</p>
+                @endif
             </div>
         @empty
-            <p>No hay proveedores sin Llave CC configurada en este período.</p>
+            <p>No hay combinaciones de proveedor, cliente y servicio pendientes de configurar en este período.</p>
         @endforelse
     </section>
 </details>

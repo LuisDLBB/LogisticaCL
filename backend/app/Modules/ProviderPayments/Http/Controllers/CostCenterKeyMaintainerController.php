@@ -345,10 +345,19 @@ class CostCenterKeyMaintainerController
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         abort_unless($key->tenant_id === $tenant->id, 404);
         $data = $request->validate([
+            'return_period' => ['nullable', 'regex:/^\d{6}$/'],
             'agent_name' => ['nullable', 'string', 'max:160'], 'payment_status' => ['required', 'string', 'max:20'],
             'cost_center_code' => ['nullable', 'integer', Rule::exists('cost_centers', 'cost_center_code')], 'is_active' => ['required', 'boolean'],
         ]);
+        $returnPeriod = $data['return_period'] ?? null;
+        unset($data['return_period']);
         $key->update([...$data, 'payment_status' => strtoupper($data['payment_status'])]);
+
+        if ($returnPeriod !== null) {
+            return redirect()->route('provider-payments.courier-movements.compile.work', [
+                'period' => $returnPeriod, 'review_keys' => 1,
+            ])->with('status', 'Llave CC actualizada para '.$key->provider_tax_id.'.');
+        }
 
         return back()->with('status', 'Llave actualizada; proveedor, cliente y servicio permanecieron protegidos.');
     }

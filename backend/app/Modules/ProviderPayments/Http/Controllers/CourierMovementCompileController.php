@@ -6,8 +6,9 @@ use App\Models\CourierMovement;
 use App\Models\CourierPaymentMovement;
 use App\Models\CourierStatus;
 use App\Models\Coverage;
-use App\Models\Client;
 use App\Models\CostCenter;
+use App\Models\CostCenterKey;
+use App\Models\Client;
 use App\Models\Provider;
 use App\Models\ServiceType;
 use App\Models\Tenant;
@@ -124,30 +125,102 @@ class CourierMovementCompileController
         $internalProviderCount = $period === '' ? 0 : CourierPaymentMovement::query()
             ->where('tenant_id', $tenant->id)->where('periodo', $period)
             ->where('razon_social_proveedor', self::INTERNAL_PROVIDER_NAME)->count();
-        $missingKeyProviders = $period === '' ? collect() : DB::table('Pago_Movimientos_Courier as payments')
-            ->join('providers as providers', function ($join) use ($tenant): void {
-                $join->on('providers.tax_id', '=', 'payments.rut_proveedor')->where('providers.tenant_id', '=', $tenant->id);
-            })
-            ->where('payments.tenant_id', $tenant->id)->where('payments.periodo', $period)
-            ->whereNotExists(function ($query) use ($tenant): void {
-                $query->selectRaw('1')->from('llave_centro_costos as keys')
-                    ->where('keys.tenant_id', $tenant->id)
-                    ->where(fn ($match) => $match->whereColumn('keys.provider_id', 'providers.id')
-                        ->orWhereColumn('keys.provider_tax_id', 'payments.rut_proveedor'))
-                    ->where('keys.is_active', true)->whereNotNull('keys.cost_center_code');
-            })
-            ->select('providers.id', 'providers.tax_id', 'providers.legal_name', 'providers.operational_name')
-            ->selectRaw('COUNT(*) AS movements')
-            ->groupBy('providers.id', 'providers.tax_id', 'providers.legal_name', 'providers.operational_name')
-            ->orderByDesc('movements')->orderBy('providers.legal_name')->get();
-        $keyReviewClients = $missingKeyProviders->isEmpty() ? collect() : Client::query()->where('tenant_id', $tenant->id)
-            ->where('is_active', true)->orderBy('source_merchant_name')->get(['id', 'source_merchant_name', 'tax_id']);
-        $keyReviewServices = $missingKeyProviders->isEmpty() ? collect() : ServiceType::query()
-            ->where('is_active', true)->orderBy('name')->get(['id', 'name']);
-        $keyReviewCenters = $missingKeyProviders->isEmpty() ? collect() : CostCenter::query()
+        $keyReviewGroups = $period === '' ? collect() : $this->keyReviewGroups($tenant->id, $period);
+        $missingKeyProviders = $keyReviewGroups->pluck('provider_tax_id')->unique()->count();
+        $missingKeyCombinations = $keyReviewGroups->whereNull('key')->count();
+        $keyReviewCenters = $keyReviewGroups->isEmpty() ? collect() : CostCenter::query()
             ->where('is_active', true)->orderBy('cost_center_code')->get(['cost_center_code', 'dispatch_guide_detail']);
 
-        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates', 'internalProviderCount', 'missingKeyProviders', 'keyReviewClients', 'keyReviewServices', 'keyReviewCenters', 'filters', 'filterOptions'));
+        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates', 'internalProviderCount', 'missingKeyProviders', 'missingKeyCombinations', 'keyReviewGroups', 'keyReviewCenters', 'filters', 'filterOptions'));
+    }
+
+    public function generateMissingKeys(Request $request): RedirectResponse
+    {
+        $validated = $request->validate(['period' => ['required', 'regex:/^\d{6}$/']]);
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        CostCenter::query()->firstOrCreate(['cost_center_code' => 0], [
+            'dispatch_guide_detail' => 'Sin Costo', 'additional_kilo_value' => 0, 'is_active' => true,
+        ]);
+        $created = DB::transaction(function () use ($tenant, $validated): int {
+            $created = 0;
+            foreach ($this->keyReviewGroups($tenant->id, $validated['period']) as $group) {
+                if ($group->key !== null) {
+                    continue;
+                }
+                $agent = $group->operational_name ?: $group->provider_name;
+                CostCenterKey::create([
+                    'tenant_id' => $tenant->id,
+                    'provider_id' => $group->provider_id,
+                    'provider_tax_id' => $group->provider_tax_id,
+                    'agent_name' => $agent,
+                    'client_id' => $group->client_id,
+                    'client_tax_id' => $group->client_tax_id,
+                    'merchant_name' => $group->client_name,
+                    'service_type_id' => $group->service_type_id,
+                    'service_code' => $group->service_code,
+                    'service_name' => $group->service_name,
+                    'key_code' => implode('/', [$group->provider_tax_id, $group->client_tax_id, $group->service_code]),
+                    'key_text' => $agent.$group->client_name.$group->service_name,
+                    'cost_center_code' => 0,
+                    'payment_status' => 'NO',
+                    'is_active' => false,
+                ]);
+                $created++;
+            }
+
+            return $created;
+        });
+
+        return redirect()->route('provider-payments.courier-movements.compile.work', [
+            'period' => $validated['period'], 'review_keys' => 1,
+        ])->with('status', number_format($created, 0, ',', '.').' llaves CC generadas con centro 0, pago NO y estado Inactiva.');
+    }
+
+    private function keyReviewGroups(int $tenantId, string $period)
+    {
+        $groups = DB::table('Pago_Movimientos_Courier as payments')
+            ->join('movimientos_courier as movements', 'movements.id', '=', 'payments.courier_movement_id')
+            ->where('payments.tenant_id', $tenantId)->where('payments.periodo', $period)
+            ->whereNotNull('payments.rut_proveedor')->whereNotNull('payments.rut_cliente')->whereNotNull('movements.service_name')
+            ->select('payments.rut_proveedor', 'payments.rut_cliente', 'movements.service_name')
+            ->selectRaw('COUNT(*) AS movements')
+            ->groupBy('payments.rut_proveedor', 'payments.rut_cliente', 'movements.service_name')->get();
+        $providers = Provider::query()->where('tenant_id', $tenantId)->get()->keyBy(fn (Provider $provider): string => strtoupper(trim($provider->tax_id)));
+        $clients = Client::query()->where('tenant_id', $tenantId)->get()->keyBy(fn (Client $client): string => strtoupper(trim($client->tax_id)));
+        $services = ServiceType::query()->get()->keyBy(fn (ServiceType $service): string => mb_strtolower(trim($service->name)));
+        $keys = CostCenterKey::query()->where('tenant_id', $tenantId)->with(['provider', 'client'])->get()
+            ->groupBy(fn (CostCenterKey $key): string => implode('|', [
+                strtoupper(trim((string) ($key->provider?->tax_id ?: $key->provider_tax_id))),
+                strtoupper(trim((string) ($key->client?->tax_id ?: $key->client_tax_id))),
+                (string) $key->service_code,
+            ]));
+
+        return $groups->map(function ($group) use ($keys, $providers, $clients, $services) {
+            $provider = $providers->get(strtoupper(trim($group->rut_proveedor)));
+            $client = $clients->get(strtoupper(trim($group->rut_cliente)));
+            $service = $services->get(mb_strtolower(trim($group->service_name)));
+            if ($provider === null || $client === null || $service === null) {
+                return null;
+            }
+            $group->provider_id = $provider->id;
+            $group->provider_tax_id = $provider->tax_id;
+            $group->provider_name = $provider->legal_name;
+            $group->operational_name = $provider->operational_name;
+            $group->client_id = $client->id;
+            $group->client_tax_id = $client->tax_id;
+            $group->client_name = $client->source_merchant_name;
+            $group->service_type_id = $service->id;
+            $group->service_code = $service->service_code;
+            $group->service_name = $service->name;
+            $identity = implode('|', [strtoupper(trim($provider->tax_id)), strtoupper(trim($client->tax_id)), (string) $service->service_code]);
+            $matches = $keys->get($identity, collect());
+            if ($matches->contains(fn (CostCenterKey $key): bool => $key->is_active && $key->cost_center_code !== null)) {
+                return null;
+            }
+            $group->key = $matches->sortByDesc('id')->first();
+
+            return $group;
+        })->filter()->sortBy(fn ($group): string => $group->provider_name.'|'.$group->client_name.'|'.$group->service_name)->values();
     }
 
     public function updateFourNorthProviders(Request $request): RedirectResponse

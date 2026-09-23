@@ -35,6 +35,7 @@ Route::prefix('pago-proveedores')
         Route::get('/compilar-movimientos-courier', [CourierMovementCompileController::class, 'index'])->name('courier-movements.compile');
         Route::get('/compilar-movimientos-courier/trabajar', [CourierMovementCompileController::class, 'work'])->name('courier-movements.compile.work');
         Route::post('/compilar-movimientos-courier/trabajar', [CourierMovementCompileController::class, 'compile'])->name('courier-movements.compile.store');
+        Route::post('/compilar-movimientos-courier/trabajar/generar-llaves-cc', [CourierMovementCompileController::class, 'generateMissingKeys'])->name('courier-movements.compile.keys.generate');
         Route::delete('/compilar-movimientos-courier/procesos', [CourierMovementCompileController::class, 'destroyProcess'])->name('courier-movements.compile.destroy');
         Route::delete('/compilar-movimientos-courier/trabajar/estados-no-pagar', [CourierMovementCompileController::class, 'destroyNonPayable'])->name('courier-movements.compile.non-payable.destroy');
         Route::delete('/compilar-movimientos-courier/trabajar/proveedor-interno', [CourierMovementCompileController::class, 'destroyInternalProvider'])->name('courier-movements.compile.internal-provider.destroy');
