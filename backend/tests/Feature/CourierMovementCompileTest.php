@@ -21,6 +21,35 @@ class CourierMovementCompileTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_assign_payments_defaults_missing_lanas_weight_to_one_before_looking_up_minimum_rate(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $provider = Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '11111111-1', 'tax_id_number' => '11111111', 'tax_id_check_digit' => '1', 'legal_name' => 'Proveedor Lanas', 'operator_type' => 'Courier']);
+        $client = Client::create(['tenant_id' => $tenant->id, 'tax_id' => '22222222-2', 'tax_id_number' => '22222222', 'tax_id_check_digit' => '2', 'source_merchant_name' => 'Cliente Lanas', 'commercial_name' => 'Cliente Lanas', 'legal_name' => 'Cliente Lanas']);
+        $service = ServiceType::factory()->create(['service_code' => 77, 'name' => 'Servicio Lanas']);
+        CostCenter::updateOrCreate(['cost_center_code' => 98], ['dispatch_guide_detail' => 'Tarifa Lanas', 'additional_kilo_value' => 50, 'is_active' => true]);
+        CostCenterWeightRate::updateOrCreate(['cost_center_code' => 98, 'final_weight' => 1], ['value' => 100, 'is_active' => true]);
+        CostCenterKey::create(['tenant_id' => $tenant->id, 'provider_id' => $provider->id, 'provider_tax_id' => $provider->tax_id,
+            'client_id' => $client->id, 'client_tax_id' => $client->tax_id, 'merchant_name' => $client->source_merchant_name,
+            'service_type_id' => $service->id, 'service_code' => 77, 'service_name' => $service->name,
+            'payment_status' => 'SI', 'cost_center_code' => 98, 'is_active' => true]);
+        foreach ([['lana_pendiente', 'Lanas', null], ['lana_no', 'Lanas', 'NO'], ['variable', 'Variable', null]] as $index => [$tracking, $process, $condition]) {
+            $movement = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N20260703000'.$index.'-111', 'nombre_proceso' => '202607-'.$process, 'service_name' => $service->name]);
+            CourierPaymentMovement::create(['tenant_id' => $tenant->id, 'courier_movement_id' => $movement->id, 'periodo' => '202607',
+                'nombre_proceso' => $process, 'tipo_pago' => $process, 'seguimiento_paquete' => $tracking,
+                'peso_final' => 0, 'rut_proveedor' => $provider->tax_id, 'rut_cliente' => $client->tax_id,
+                'condicion_pago' => $condition]);
+        }
+
+        $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])
+            ->assertRedirect()->assertSessionHas('status', fn (string $status): bool => str_contains($status, '2 Lanas sin peso ajustadas a 1 kg'));
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'lana_pendiente', 'peso_final' => 1, 'condicion_pago' => 'SI', 'valor' => 100]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'lana_no', 'peso_final' => 1, 'condicion_pago' => 'NO', 'valor' => null]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'variable', 'peso_final' => 0, 'condicion_pago' => null, 'valor' => null]);
+        $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])
+            ->assertRedirect()->assertSessionHas('status', fn (string $status): bool => str_contains($status, '0 Lanas sin peso ajustadas a 1 kg'));
+    }
+
     public function test_assign_payments_uses_coverage_fixed_return_value_and_payment_condition(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();

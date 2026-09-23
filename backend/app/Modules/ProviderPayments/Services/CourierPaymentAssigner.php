@@ -18,7 +18,11 @@ class CourierPaymentAssigner
     public function assign(int $tenantId, string $period): array
     {
         $result = ['paid' => 0, 'not_paid' => 0, 'missing_key' => 0, 'ambiguous_key' => 0, 'missing_rate' => 0,
-            'missing_coverage' => 0, 'ambiguous_coverage' => 0, 'missing_return_value' => 0];
+            'missing_coverage' => 0, 'ambiguous_coverage' => 0, 'missing_return_value' => 0, 'weight_defaulted' => 0];
+        $result['weight_defaulted'] = CourierPaymentMovement::query()
+            ->where('tenant_id', $tenantId)->where('periodo', $period)->where('nombre_proceso', 'Lanas')
+            ->where(fn ($query) => $query->whereNull('peso_final')->orWhere('peso_final', '<=', 0))
+            ->update(['peso_final' => 1, 'updated_at' => now()]);
         $services = ServiceType::query()->get()->keyBy(fn (ServiceType $service): string => mb_strtolower(trim($service->name)));
         $keys = CostCenterKey::query()->where('tenant_id', $tenantId)->where('is_active', true)
             ->with(['provider', 'client'])->get()->groupBy(fn (CostCenterKey $key): string => $this->identity(
