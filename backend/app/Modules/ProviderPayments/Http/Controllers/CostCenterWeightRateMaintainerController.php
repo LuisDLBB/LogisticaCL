@@ -6,6 +6,7 @@ use App\Models\CostCenter;
 use App\Models\CostCenterWeightRate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -19,27 +20,40 @@ class CostCenterWeightRateMaintainerController
             $selectedCenterCode = '';
         }
 
+        $rates = CostCenterWeightRate::query()->with('costCenter')
+            ->when($selectedCenterCode !== '', fn ($query) => $query->where('cost_center_code', $selectedCenterCode))
+            ->orderBy('cost_center_code')->orderBy('final_weight')->get();
+
         return view('provider-payments::cost-center-weight-rates', [
             'centers' => $centers,
             'selectedCenterCode' => $selectedCenterCode,
             'nextCode' => ((int) $centers->max('cost_center_code')) + 1,
-            'rates' => CostCenterWeightRate::query()->with('costCenter')
-                ->when($selectedCenterCode !== '', fn ($query) => $query->where('cost_center_code', $selectedCenterCode))
-                ->orderBy('cost_center_code')->orderBy('final_weight')->get(),
+            'rates' => $rates,
+            'rateValues' => $selectedCenterCode === '' ? collect() : $rates->pluck('value', 'final_weight'),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $rules = [
             'cost_center_code' => ['required', 'integer', Rule::exists('cost_centers', 'cost_center_code')->where('is_active', true)],
-            'final_weight' => ['required', 'integer', 'between:1,255', Rule::unique('cost_center_weight_rates', 'final_weight')->where('cost_center_code', $request->input('cost_center_code'))],
-            'value' => ['required', 'integer', 'between:0,4294967295'],
-        ]);
-        CostCenterWeightRate::create([...$validated, 'is_active' => true]);
+            'values' => ['required', 'array', 'size:20'],
+        ];
+        foreach (range(1, 20) as $weight) {
+            $rules["values.{$weight}"] = ['required', 'integer', 'between:0,4294967295'];
+        }
+        $validated = $request->validate($rules);
+        DB::transaction(function () use ($validated): void {
+            foreach (range(1, 20) as $weight) {
+                CostCenterWeightRate::updateOrCreate(
+                    ['cost_center_code' => $validated['cost_center_code'], 'final_weight' => $weight],
+                    ['value' => $validated['values'][$weight]],
+                );
+            }
+        });
 
         return redirect()->route('provider-payments.maintainers.tarifas-cc', ['center' => $validated['cost_center_code']])
-            ->with('status', 'Tarifa por kilo creada correctamente.');
+            ->with('status', 'Tarifas de 1 a 20 kg guardadas correctamente.');
     }
 
     public function update(Request $request, CostCenterWeightRate $rate): RedirectResponse

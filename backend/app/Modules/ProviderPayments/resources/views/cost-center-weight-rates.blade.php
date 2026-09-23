@@ -3,6 +3,7 @@
 @push('styles')
 <style>
 .rate-filter{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:18px 0}.rate-filter label,.rate-form label{display:grid;gap:6px;font-weight:750}.rate-filter select,.rate-form input,.rate-form select,.rate-table input,.rate-table select{padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff}.rate-filter select{min-width:min(420px,80vw)}.rate-actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.rate-actions details>summary{list-style:none;cursor:pointer}.rate-actions details>summary::-webkit-details-marker{display:none}.rate-actions details[open]{width:100%}.rate-actions .card{max-width:680px;margin-top:12px}.rate-form{display:grid;grid-template-columns:repeat(2,minmax(160px,1fr));gap:14px}.rate-form .wide{grid-column:1/-1}.rate-table{overflow:auto;max-height:65vh}.rate-table table{min-width:740px}.rate-table th{position:sticky;top:0}.rate-table form{display:flex;align-items:center;gap:8px;justify-content:flex-end}.rate-table input{width:120px}.rate-table button{white-space:nowrap}.rate-status{padding:14px;margin:12px 0;background:#e8fbfa;border-left:4px solid var(--turquoise-dark)}@media(max-width:640px){.rate-form{grid-template-columns:1fr}.rate-form .wide{grid-column:auto}.rate-filter select{min-width:0;width:100%}.rate-filter label{width:100%}}
+.rate-values{display:grid;grid-template-columns:repeat(4,minmax(110px,1fr));gap:12px}.rate-values label{font-size:14px}.rate-values input{width:100%}@media(max-width:640px){.rate-values{grid-template-columns:repeat(2,minmax(110px,1fr))}}
 </style>
 @endpush
 @section('content')
@@ -39,15 +40,19 @@
             </form>
         </section>
     </details>
-    <details @if($errors->has('final_weight') || $errors->has('value')) open @endif>
-        <summary class="button">Agregar tarifa por kilo</summary>
+    <details @if(old('values') !== null || $errors->has('cost_center_code')) open @endif>
+        <summary class="button">Agregar tarifas de 1 a 20 kg</summary>
         <section class="card">
             <form class="rate-form" method="post" action="{{ route('provider-payments.maintainers.tarifas-cc.store') }}">
                 @csrf
-                <label class="wide">Centro de costo<select name="cost_center_code" required><option value="">Selecciona</option>@foreach($centers->where('is_active', true) as $center)<option value="{{ $center->cost_center_code }}" @selected((string) old('cost_center_code', $selectedCenterCode) === (string) $center->cost_center_code)>{{ $center->cost_center_code }} · {{ $center->dispatch_guide_detail }}</option>@endforeach</select></label>
-                <label>Peso final (kg)<input type="number" name="final_weight" value="{{ old('final_weight') }}" min="1" max="255" step="1" required></label>
-                <label>Valor ($)<input type="number" name="value" value="{{ old('value') }}" min="0" step="1" required></label>
-                <button class="wide" type="submit">Agregar tarifa</button>
+                <label class="wide">Centro de costo<select name="cost_center_code" required onchange="window.location.href='{{ route('provider-payments.maintainers.tarifas-cc') }}?center='+encodeURIComponent(this.value)"><option value="">Selecciona</option>@foreach($centers->where('is_active', true) as $center)<option value="{{ $center->cost_center_code }}" @selected((string) old('cost_center_code', $selectedCenterCode) === (string) $center->cost_center_code)>{{ $center->cost_center_code }} · {{ $center->dispatch_guide_detail }}</option>@endforeach</select></label>
+                <p class="note wide">Ingresa el monto en pesos chilenos para cada peso final. Las tarifas existentes aparecen precargadas y se actualizan al guardar.</p>
+                <div class="rate-values wide">
+                    @foreach(range(1, 20) as $weight)
+                        <label>{{ $weight }} kg<input type="number" name="values[{{ $weight }}]" value="{{ old('values.'.$weight, $rateValues->get($weight)) }}" min="0" step="1" required></label>
+                    @endforeach
+                </div>
+                <button class="wide" type="submit">Guardar tarifas de 1 a 20 kg</button>
             </form>
         </section>
     </details>
