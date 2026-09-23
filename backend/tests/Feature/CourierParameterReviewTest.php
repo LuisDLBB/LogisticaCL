@@ -397,6 +397,7 @@ class CourierParameterReviewTest extends TestCase
             'service_name' => 'Otro Servicio', 'key_code' => '99999999-9/99999999-9/89',
             'payment_status' => 'SI', 'is_active' => true,
         ]);
+        $providerWithoutKeys = Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '33333333-3', 'tax_id_number' => '33333333', 'tax_id_check_digit' => '3', 'legal_name' => 'Proveedor Sin Llaves', 'operator_type' => 'Courier']);
         CostCenter::updateOrCreate(['cost_center_code' => 88], ['dispatch_guide_detail' => 'Centro Seleccionable', 'additional_kilo_value' => 0, 'is_active' => true]);
         $this->get(route('provider-payments.maintainers.llave-centro-costos', [
             'vista' => 'proveedor', 'client' => 'cliente navegable', 'provider' => $provider->tax_id,
@@ -414,6 +415,12 @@ class CourierParameterReviewTest extends TestCase
             ->assertSee('Centro Seleccionable')->assertSee('<select class="condition-input"', false);
         $this->get(route('provider-payments.maintainers.llave-centro-costos', ['center' => 'none']))
             ->assertOk()->assertSee('key-form-'.$other->id)->assertDontSee('key-form-'.$key->id);
+        $this->get(route('provider-payments.maintainers.llave-centro-costos', ['provider' => $provider->tax_id, 'center' => 'none']))
+            ->assertOk()->assertSee('Llaves creadas <span class="note">(0 de 2)', false)
+            ->assertSee('value="'.$provider->tax_id.'" selected', false);
+        $this->get(route('provider-payments.maintainers.llave-centro-costos'))
+            ->assertOk()->assertSee('Proveedor Sin Llaves')
+            ->assertSee('value="'.$providerWithoutKeys->tax_id.'"', false);
     }
 
     public function test_cost_center_keys_can_save_multiple_modified_rows_at_once(): void
