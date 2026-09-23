@@ -29,7 +29,7 @@ class CourierMovementCompileController
         'zone' => 'zona',
         'matrix' => 'comuna_matriz',
         'client' => 'comerciante_pila',
-        'client_legal_name' => 'razon_social_cliente',
+        'payment_condition' => 'condicion_pago',
         'provider_legal_name' => 'razon_social_proveedor',
         'operational_name' => 'nombre_operacional',
         'document_type' => 'tipo_documento',
@@ -77,7 +77,7 @@ class CourierMovementCompileController
             'zone' => ['nullable', 'string', 'max:150'],
             'matrix' => ['nullable', 'string', 'max:150'],
             'client' => ['nullable', 'string', 'max:255'],
-            'client_legal_name' => ['nullable', 'string', 'max:255'],
+            'payment_condition' => ['nullable', 'in:SI,NO,__unset__'],
             'provider_legal_name' => ['nullable', 'string', 'max:255'],
             'operational_name' => ['nullable', 'string', 'max:255'],
             'document_type' => ['nullable', 'string', 'max:100'],
@@ -105,15 +105,26 @@ class CourierMovementCompileController
             $optionsQuery = clone $rowsQuery;
             foreach (self::WORK_FILTER_COLUMNS as $activeFilter => $activeColumn) {
                 if ($activeFilter !== $filter && ($filters[$activeFilter] ?? '') !== '') {
-                    $optionsQuery->where($activeColumn, $filters[$activeFilter]);
+                    if ($activeFilter === 'payment_condition' && $filters[$activeFilter] === '__unset__') {
+                        $optionsQuery->whereNull($activeColumn);
+                    } else {
+                        $optionsQuery->where($activeColumn, $filters[$activeFilter]);
+                    }
                 }
             }
-            $filterOptions[$filter] = $optionsQuery->whereNotNull($column)->where($column, '<>', '')
-                ->select($column)->distinct()->orderBy($column)->pluck($column);
+            $filterOptions[$filter] = $filter === 'payment_condition'
+                ? $optionsQuery->select($column)->distinct()->orderBy($column)->pluck($column)
+                    ->map(fn ($value): string => $value === null ? '__unset__' : $value)
+                : $optionsQuery->whereNotNull($column)->where($column, '<>', '')
+                    ->select($column)->distinct()->orderBy($column)->pluck($column);
         }
         foreach (self::WORK_FILTER_COLUMNS as $filter => $column) {
             if (($filters[$filter] ?? '') !== '') {
-                $rowsQuery->where($column, $filters[$filter]);
+                if ($filter === 'payment_condition' && $filters[$filter] === '__unset__') {
+                    $rowsQuery->whereNull($column);
+                } else {
+                    $rowsQuery->where($column, $filters[$filter]);
+                }
             }
         }
         $rows = $rowsQuery->orderByDesc('id')->paginate(100)->withQueryString();

@@ -122,11 +122,11 @@ class CourierMovementCompileTest extends TestCase
             ['4N202607010002-222', 'Regiones', 'Temuco', 'Cliente Beta', '22222222-2', 'Beta SPA', 'Operador Beta', 'Boleta', 'Repartidor Beta', 'Otra'],
         ] as [$tracking, $zone, $matrix, $merchant, $rut, $legal, $operational, $document, $courierName, $company]) {
             $movement = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => $tracking, 'nombre_proceso' => '202607-Variable']);
-            CourierPaymentMovement::create(['tenant_id' => $tenant->id, 'courier_movement_id' => $movement->id, 'periodo' => '202607', 'nombre_proceso' => 'Variable', 'tipo_pago' => 'Variable', 'seguimiento_paquete' => $tracking, 'peso_final' => 1, 'zona' => $zone, 'comuna_matriz' => $matrix, 'comerciante_pila' => $merchant, 'rut_cliente' => $rut, 'razon_social_cliente' => $legal, 'razon_social_proveedor' => 'Proveedor '.$legal, 'nombre_operacional' => $operational, 'tipo_documento' => $document, 'nombre_repartidor' => $courierName, 'empresa_mandante' => $company]);
+            CourierPaymentMovement::create(['tenant_id' => $tenant->id, 'courier_movement_id' => $movement->id, 'periodo' => '202607', 'nombre_proceso' => 'Variable', 'tipo_pago' => 'Variable', 'seguimiento_paquete' => $tracking, 'peso_final' => 1, 'zona' => $zone, 'comuna_matriz' => $matrix, 'comerciante_pila' => $merchant, 'rut_cliente' => $rut, 'razon_social_cliente' => $legal, 'razon_social_proveedor' => 'Proveedor '.$legal, 'nombre_operacional' => $operational, 'tipo_documento' => $document, 'nombre_repartidor' => $courierName, 'empresa_mandante' => $company, 'condicion_pago' => $zone === 'RM' ? 'NO' : null]);
         }
         CourierPaymentMovement::query()->where('seguimiento_paquete', '4N202607010001-111')->update(['valor' => 1234567]);
 
-        foreach (['zone' => 'RM', 'matrix' => '4N RM', 'client' => 'Cliente Alfa', 'client_legal_name' => 'Alfa SPA', 'provider_legal_name' => 'Proveedor Alfa SPA', 'operational_name' => 'Operador Alfa', 'document_type' => 'Factura', 'courier_name' => 'Repartidor Alfa', 'company' => '4N'] as $filter => $value) {
+        foreach (['zone' => 'RM', 'matrix' => '4N RM', 'client' => 'Cliente Alfa', 'payment_condition' => 'NO', 'provider_legal_name' => 'Proveedor Alfa SPA', 'operational_name' => 'Operador Alfa', 'document_type' => 'Factura', 'courier_name' => 'Repartidor Alfa', 'company' => '4N'] as $filter => $value) {
             $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607', $filter => $value]))
                 ->assertOk()->assertSee('Registros trabajados (1)')->assertSee('4N202607010001-111')->assertDontSee('4N202607010002-222')
                 ->assertSee('<select name="'.$filter.'">', false);
@@ -140,9 +140,12 @@ class CourierMovementCompileTest extends TestCase
             ->assertDontSee('<option value="Repartidor Beta"', false)
             ->assertSee('<option value="Regiones"', false);
         $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607', 'zone' => 'RM', 'client' => 'Cliente Alfa']))
-            ->assertOk()->assertSee('<option value="Alfa SPA"', false)
-            ->assertDontSee('<option value="Beta SPA"', false)
+            ->assertOk()->assertSee('<option value="NO"', false)
+            ->assertDontSee('<option value="__unset__"', false)
             ->assertDontSee('<option value="Boleta"', false);
+        $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607', 'payment_condition' => '__unset__']))
+            ->assertOk()->assertSee('Registros trabajados (1)')->assertSee('4N202607010002-222')->assertDontSee('4N202607010001-111')
+            ->assertSee('Sin definir')->assertDontSee('<select name="client_legal_name">', false);
     }
 
     public function test_rm_and_temuco_provider_button_updates_only_exact_courier_assignments(): void
