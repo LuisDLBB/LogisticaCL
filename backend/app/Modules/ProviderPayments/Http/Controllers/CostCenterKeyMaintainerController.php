@@ -329,4 +329,30 @@ class CostCenterKeyMaintainerController
 
         return back()->with('status', 'Llave actualizada; proveedor, cliente y servicio permanecieron protegidos.');
     }
+
+    public function updateMany(Request $request): RedirectResponse
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $validated = $request->validate([
+            'rows' => ['required', 'array', 'min:1', 'max:100'],
+            'rows.*.id' => ['required', 'integer', 'distinct', Rule::exists('llave_centro_costos', 'id')->where('tenant_id', $tenant->id)],
+            'rows.*.agent_name' => ['nullable', 'string', 'max:160'],
+            'rows.*.payment_status' => ['required', 'string', 'max:20'],
+            'rows.*.cost_center_code' => ['nullable', 'integer', Rule::exists('cost_centers', 'cost_center_code')],
+            'rows.*.is_active' => ['required', 'boolean'],
+        ]);
+
+        DB::transaction(function () use ($tenant, $validated): void {
+            foreach ($validated['rows'] as $row) {
+                CostCenterKey::query()->where('tenant_id', $tenant->id)->findOrFail($row['id'])->update([
+                    'agent_name' => $row['agent_name'] ?? null,
+                    'payment_status' => strtoupper(trim($row['payment_status'])),
+                    'cost_center_code' => $row['cost_center_code'] ?? null,
+                    'is_active' => $row['is_active'],
+                ]);
+            }
+        });
+
+        return back()->with('status', count($validated['rows']).' llaves modificadas y guardadas.');
+    }
 }

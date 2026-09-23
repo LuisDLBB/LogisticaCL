@@ -416,6 +416,28 @@ class CourierParameterReviewTest extends TestCase
             ->assertOk()->assertSee('key-form-'.$other->id)->assertDontSee('key-form-'.$key->id);
     }
 
+    public function test_cost_center_keys_can_save_multiple_modified_rows_at_once(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        CostCenter::updateOrCreate(['cost_center_code' => 88], ['dispatch_guide_detail' => 'Centro Masivo', 'additional_kilo_value' => 0, 'is_active' => true]);
+        $keys = collect([1, 2, 3])->map(fn (int $number): CostCenterKey => CostCenterKey::create([
+            'tenant_id' => $tenant->id, 'provider_tax_id' => "1111111{$number}-1", 'client_tax_id' => "2222222{$number}-2",
+            'merchant_name' => "Cliente {$number}", 'service_code' => $number, 'service_name' => "Servicio {$number}",
+            'key_code' => "llave-{$number}", 'agent_name' => "Agencia {$number}", 'payment_status' => 'SI', 'is_active' => true,
+        ]));
+
+        $this->get(route('provider-payments.maintainers.llave-centro-costos'))
+            ->assertOk()->assertSee('Guardar cambios de la página')->assertSee('data-key-id="'.$keys[0]->id.'"', false);
+        $this->post(route('provider-payments.maintainers.llave-centro-costos.update-many'), ['rows' => [
+            ['id' => $keys[0]->id, 'agent_name' => 'Agencia nueva', 'payment_status' => 'NO', 'cost_center_code' => 88, 'is_active' => 0],
+            ['id' => $keys[1]->id, 'agent_name' => 'Otra agencia', 'payment_status' => 'REVISAR', 'cost_center_code' => '', 'is_active' => 1],
+        ]])->assertRedirect()->assertSessionHas('status', '2 llaves modificadas y guardadas.');
+
+        $this->assertDatabaseHas('llave_centro_costos', ['id' => $keys[0]->id, 'agent_name' => 'Agencia nueva', 'payment_status' => 'NO', 'cost_center_code' => 88, 'is_active' => false]);
+        $this->assertDatabaseHas('llave_centro_costos', ['id' => $keys[1]->id, 'agent_name' => 'Otra agencia', 'payment_status' => 'REVISAR', 'cost_center_code' => null, 'is_active' => true]);
+        $this->assertDatabaseHas('llave_centro_costos', ['id' => $keys[2]->id, 'agent_name' => 'Agencia 3', 'payment_status' => 'SI']);
+    }
+
     public function test_new_provider_can_copy_all_source_combinations_without_duplicates(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();

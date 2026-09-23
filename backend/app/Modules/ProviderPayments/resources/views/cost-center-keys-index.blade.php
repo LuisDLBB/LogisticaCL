@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="card key-sheet"><table><thead><tr><th>Cliente</th><th>Proveedor</th><th>RUT proveedor</th><th>Servicio</th><th>Agencia</th><th>Centro de costo</th><th>Condición de pago</th><th>Estado</th><th>Llave</th><th>Guardar</th></tr></thead><tbody>
 @forelse($rows as $key)
     @php($filterState = ! $key->is_active || in_array(mb_strtoupper(trim((string) $key->payment_status)), ['NO', 'NO PAGAR', 'INACTIVO'], true) ? 'inactive' : 'active')
-    <tr data-master-record data-state="{{ $filterState }}">
+    <tr data-master-record data-key-id="{{ $key->id }}" data-state="{{ $filterState }}">
         <td>{{ $key->client?->source_merchant_name ?: $key->merchant_name }}</td>
         <td>{{ $key->provider?->legal_name ?: ($key->agent_name ?: 'Proveedor sin nombre') }}</td>
         <td>{{ $key->provider?->tax_id ?: $key->provider_tax_id }}</td>
@@ -92,5 +92,45 @@ document.addEventListener('DOMContentLoaded', () => {
     <tr><td colspan="10">No hay llaves para los filtros seleccionados.</td></tr>
 @endforelse
 </tbody></table></div>
+<form id="save-key-changes" method="post" action="{{ route('provider-payments.maintainers.llave-centro-costos.update-many') }}">
+    @csrf
+    <button type="submit" disabled>Guardar cambios de la página</button>
+    <span id="key-change-count" class="note" aria-live="polite">No hay filas modificadas.</span>
+</form>
 {{ $rows->links() }}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('save-key-changes');
+    const button = form.querySelector('button');
+    const count = document.getElementById('key-change-count');
+    const fields = ['agent_name', 'cost_center_code', 'payment_status', 'is_active'];
+    const rows = [...document.querySelectorAll('tr[data-key-id]')].map(row => {
+        const controls = Object.fromEntries(fields.map(name => [name, row.querySelector(`[name="${name}"]`)]));
+        return { id: row.dataset.keyId, controls, original: Object.fromEntries(fields.map(name => [name, controls[name].value])) };
+    });
+    const changedRows = () => rows.filter(row => fields.some(name => row.controls[name].value !== row.original[name]));
+    const refresh = () => {
+        const total = changedRows().length;
+        button.disabled = total === 0;
+        count.textContent = total === 0 ? 'No hay filas modificadas.' : `${total} ${total === 1 ? 'fila modificada' : 'filas modificadas'} para guardar.`;
+    };
+    rows.forEach(row => fields.forEach(name => row.controls[name].addEventListener('change', refresh)));
+    rows.forEach(row => row.controls.agent_name.addEventListener('input', refresh));
+    form.addEventListener('submit', event => {
+        form.querySelectorAll('[data-bulk-field]').forEach(field => field.remove());
+        changedRows().forEach((row, index) => {
+            const values = { id: row.id, ...Object.fromEntries(fields.map(name => [name, row.controls[name].value])) };
+            Object.entries(values).forEach(([name, value]) => {
+                const field = document.createElement('input');
+                field.type = 'hidden';
+                field.name = `rows[${index}][${name}]`;
+                field.value = value;
+                field.dataset.bulkField = '';
+                form.appendChild(field);
+            });
+        });
+        if (!form.querySelector('[data-bulk-field]')) event.preventDefault();
+    });
+});
+</script>
 @endsection
