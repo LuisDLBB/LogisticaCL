@@ -119,6 +119,7 @@ class CourierMovementCompileController
         $nonPayableStatuses = CourierStatus::query()->where('consider_for_payment', false)->orderBy('name')->pluck('name');
         $nonPayableCounts = $period === '' ? collect() : CourierPaymentMovement::query()
             ->where('tenant_id', $tenant->id)->where('periodo', $period)
+            ->where(fn ($query) => $query->whereNull('condicion_pago')->orWhere('condicion_pago', '<>', 'NO'))
             ->whereIn('estado_envio', $nonPayableStatuses)
             ->selectRaw('estado_envio, COUNT(*) AS total')->groupBy('estado_envio')->orderBy('estado_envio')->get();
         $fourNorthCandidates = $period === '' ? 0 : CourierPaymentMovement::query()
@@ -126,11 +127,17 @@ class CourierMovementCompileController
             ->where('rut_proveedor', '77346078-7')->whereIn('comuna_matriz', ['4N RM', '4N Temuco'])->count();
         $internalProviderCount = $period === '' ? 0 : CourierPaymentMovement::query()
             ->where('tenant_id', $tenant->id)->where('periodo', $period)
-            ->where('razon_social_proveedor', self::INTERNAL_PROVIDER_NAME)->count();
+            ->where('razon_social_proveedor', self::INTERNAL_PROVIDER_NAME)
+            ->where(fn ($query) => $query->whereNull('condicion_pago')->orWhere('condicion_pago', '<>', 'NO'))->count();
+        $paymentDashboard = $period === '' ? collect() : CourierPaymentMovement::query()
+            ->where('tenant_id', $tenant->id)->where('periodo', $period)
+            ->selectRaw("CASE WHEN UPPER(TRIM(zona)) = 'RM' THEN 'RM' WHEN zona IS NULL OR TRIM(zona) = '' THEN 'Sin zona' ELSE 'Regiones' END AS grupo_zona, condicion_pago, COUNT(*) AS total")
+            ->groupBy('grupo_zona', 'condicion_pago')->get()
+            ->groupBy('grupo_zona');
         $keyReviewGroups = $period === '' ? collect() : $this->keyReviewGroups($tenant->id, $period);
         $missingKeyProviders = $keyReviewGroups->pluck('provider_tax_id')->unique()->count();
         $missingKeyCombinations = $keyReviewGroups->whereNull('key')->count();
-        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates', 'internalProviderCount', 'missingKeyProviders', 'filters', 'filterOptions'));
+        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates', 'internalProviderCount', 'paymentDashboard', 'missingKeyProviders', 'filters', 'filterOptions'));
     }
 
     public function reviewKeys(Request $request): View
@@ -332,28 +339,32 @@ class CourierMovementCompileController
             ->with('status', number_format($updated, 0, ',', '.').' proveedores actualizados. '.number_format($notApplicable, 0, ',', '.').' con N/A conservados; '.number_format($withoutAssignment, 0, ',', '.').' sin cruce completo.');
     }
 
-    public function destroyNonPayable(Request $request): RedirectResponse
+    public function markNonPayable(Request $request): RedirectResponse
     {
         $validated = $request->validate(['period' => ['required', 'regex:/^\d{6}$/']]);
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $nonPayableStatuses = CourierStatus::query()->where('consider_for_payment', false)->pluck('name');
-        $deleted = CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
-            ->where('periodo', $validated['period'])->whereIn('estado_envio', $nonPayableStatuses)->delete();
+        $updated = CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
+            ->where('periodo', $validated['period'])
+            ->where(fn ($query) => $query->whereNull('condicion_pago')->orWhere('condicion_pago', '<>', 'NO'))
+            ->whereIn('estado_envio', $nonPayableStatuses)->update(['condicion_pago' => 'NO']);
 
         return redirect()->route('provider-payments.courier-movements.compile.work', ['period' => $validated['period']])
-            ->with('status', number_format($deleted, 0, ',', '.').' registros con estados NO PAGAR eliminados de Pago_Movimientos_Courier. Los movimientos originales se conservan.');
+            ->with('status', number_format($updated, 0, ',', '.').' registros con estados NO PAGAR marcados con condición de pago NO. Ningún registro fue eliminado.');
     }
 
-    public function destroyInternalProvider(Request $request): RedirectResponse
+    public function markInternalProvider(Request $request): RedirectResponse
     {
         $validated = $request->validate(['period' => ['required', 'regex:/^\d{6}$/']]);
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
-        $deleted = CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
+        $updated = CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
             ->where('periodo', $validated['period'])
-            ->where('razon_social_proveedor', self::INTERNAL_PROVIDER_NAME)->delete();
+            ->where('razon_social_proveedor', self::INTERNAL_PROVIDER_NAME)
+            ->where(fn ($query) => $query->whereNull('condicion_pago')->orWhere('condicion_pago', '<>', 'NO'))
+            ->update(['condicion_pago' => 'NO']);
 
         return redirect()->route('provider-payments.courier-movements.compile.work', ['period' => $validated['period']])
-            ->with('status', number_format($deleted, 0, ',', '.').' registros del proveedor interno eliminados de Pago_Movimientos_Courier. Los movimientos originales se conservan.');
+            ->with('status', number_format($updated, 0, ',', '.').' registros del proveedor interno marcados con condición de pago NO. Ningún registro fue eliminado.');
     }
 
     public function compile(Request $request): RedirectResponse
@@ -404,6 +415,7 @@ class CourierMovementCompileController
                         'peso_final' => $movement->peso_real === null || $movement->peso_transformado === null
                             ? 1 : min($movement->peso_real, $movement->peso_transformado),
                         'estado_envio' => $movement->status,
+                        'condicion_pago' => null,
                         'razon_social_proveedor' => $provider?->legal_name,
                         'rut_proveedor' => $provider?->tax_id,
                         'nombre_operacional' => $provider?->operational_name,
@@ -415,7 +427,7 @@ class CourierMovementCompileController
                         'updated_at' => $now,
                     ];
                 }
-                DB::table('Pago_Movimientos_Courier')->upsert($rows, ['tenant_id', 'courier_movement_id'], array_keys(array_diff_key($rows[0], array_flip(['tenant_id', 'courier_movement_id', 'created_at']))));
+                DB::table('Pago_Movimientos_Courier')->upsert($rows, ['tenant_id', 'courier_movement_id'], array_keys(array_diff_key($rows[0], array_flip(['tenant_id', 'courier_movement_id', 'created_at', 'condicion_pago']))));
                 $count += count($rows);
             });
 

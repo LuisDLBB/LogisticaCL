@@ -39,8 +39,8 @@ Route::prefix('pago-proveedores')
         Route::post('/compilar-movimientos-courier/trabajar', [CourierMovementCompileController::class, 'compile'])->name('courier-movements.compile.store');
         Route::post('/compilar-movimientos-courier/trabajar/generar-llaves-cc', [CourierMovementCompileController::class, 'generateMissingKeys'])->name('courier-movements.compile.keys.generate');
         Route::delete('/compilar-movimientos-courier/procesos', [CourierMovementCompileController::class, 'destroyProcess'])->name('courier-movements.compile.destroy');
-        Route::delete('/compilar-movimientos-courier/trabajar/estados-no-pagar', [CourierMovementCompileController::class, 'destroyNonPayable'])->name('courier-movements.compile.non-payable.destroy');
-        Route::delete('/compilar-movimientos-courier/trabajar/proveedor-interno', [CourierMovementCompileController::class, 'destroyInternalProvider'])->name('courier-movements.compile.internal-provider.destroy');
+        Route::post('/compilar-movimientos-courier/trabajar/estados-no-pagar', [CourierMovementCompileController::class, 'markNonPayable'])->name('courier-movements.compile.non-payable.mark');
+        Route::post('/compilar-movimientos-courier/trabajar/proveedor-interno', [CourierMovementCompileController::class, 'markInternalProvider'])->name('courier-movements.compile.internal-provider.mark');
         Route::post('/compilar-movimientos-courier/trabajar/actualizar-proveedores-4n', [CourierMovementCompileController::class, 'updateFourNorthProviders'])->name('courier-movements.compile.providers-4n.update');
 
         Route::get('/mantenedor/coberturas', [CoverageMaintainerController::class, 'create'])->name('maintainers.coberturas');

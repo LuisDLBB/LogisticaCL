@@ -118,7 +118,7 @@ class CourierMovementCompileTest extends TestCase
         $this->assertDatabaseCount('movimientos_courier', 3);
     }
 
-    public function test_non_payable_statuses_are_removed_only_from_selected_compiled_period(): void
+    public function test_non_payable_statuses_are_marked_no_without_removing_records(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         CourierStatus::query()->updateOrCreate(['name' => 'Anulado'], ['consider_for_payment' => false]);
@@ -130,16 +130,19 @@ class CourierMovementCompileTest extends TestCase
             $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => $period, 'processes' => ['Variable']])->assertRedirect();
         }
         $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))
-            ->assertOk()->assertSee('Eliminar registros con estados NO PAGAR')->assertSee('Anulado: 1');
-        $this->delete(route('provider-payments.courier-movements.compile.non-payable.destroy'), ['period' => '202607'])->assertRedirect();
+            ->assertOk()->assertSee('Marcar condición de pago NO')->assertSee('Anulado: 1')->assertSee('Sin definir');
+        $this->post(route('provider-payments.courier-movements.compile.non-payable.mark'), ['period' => '202607'])->assertRedirect();
 
-        $this->assertDatabaseMissing('Pago_Movimientos_Courier', ['periodo' => '202607', 'estado_envio' => 'Anulado']);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'estado_envio' => 'Entregado']);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202608', 'estado_envio' => 'Anulado']);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'estado_envio' => 'Anulado', 'condicion_pago' => 'NO']);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'estado_envio' => 'Entregado', 'condicion_pago' => null]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202608', 'estado_envio' => 'Anulado', 'condicion_pago' => null]);
+        $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => '202607', 'processes' => ['Variable']])->assertRedirect();
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'estado_envio' => 'Anulado', 'condicion_pago' => 'NO']);
+        $this->assertDatabaseCount('Pago_Movimientos_Courier', 3);
         $this->assertDatabaseCount('movimientos_courier', 3);
     }
 
-    public function test_internal_provider_cleanup_only_removes_matching_payment_rows_in_selected_period(): void
+    public function test_internal_provider_is_marked_no_only_in_selected_period(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         foreach ([
@@ -165,13 +168,14 @@ class CourierMovementCompileTest extends TestCase
         }
 
         $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))
-            ->assertOk()->assertSee('Limpiar Proveedor interno y Sin usuario (1)');
-        $this->delete(route('provider-payments.courier-movements.compile.internal-provider.destroy'), ['period' => '202607'])
+            ->assertOk()->assertSee('NO PAGAR Sin Usuario/Interno (1)');
+        $this->post(route('provider-payments.courier-movements.compile.internal-provider.mark'), ['period' => '202607'])
             ->assertRedirect()->assertSessionHas('status');
 
-        $this->assertDatabaseMissing('Pago_Movimientos_Courier', ['periodo' => '202607', 'razon_social_proveedor' => '4 Nortes Logistica SPA']);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'razon_social_proveedor' => 'Otro proveedor SPA']);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202608', 'razon_social_proveedor' => '4 Nortes Logistica SPA']);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'razon_social_proveedor' => '4 Nortes Logistica SPA', 'condicion_pago' => 'NO']);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'razon_social_proveedor' => 'Otro proveedor SPA', 'condicion_pago' => null]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202608', 'razon_social_proveedor' => '4 Nortes Logistica SPA', 'condicion_pago' => null]);
+        $this->assertDatabaseCount('Pago_Movimientos_Courier', 3);
         $this->assertDatabaseCount('movimientos_courier', 3);
     }
 
