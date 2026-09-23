@@ -25,7 +25,7 @@ class CourierMovementCompileController
         'provider_legal_name' => 'razon_social_proveedor',
         'operational_name' => 'nombre_operacional',
         'document_type' => 'tipo_documento',
-        'delivery_user' => 'usuario_entrega',
+        'courier_name' => 'nombre_repartidor',
         'company' => 'empresa_mandante',
     ];
 
@@ -73,7 +73,7 @@ class CourierMovementCompileController
             'provider_legal_name' => ['nullable', 'string', 'max:255'],
             'operational_name' => ['nullable', 'string', 'max:255'],
             'document_type' => ['nullable', 'string', 'max:100'],
-            'delivery_user' => ['nullable', 'string', 'max:160'],
+            'courier_name' => ['nullable', 'string', 'max:160'],
             'company' => ['nullable', 'string', 'max:20'],
         ]);
         $filters = array_map(fn ($value): string => trim((string) $value), $filters);
