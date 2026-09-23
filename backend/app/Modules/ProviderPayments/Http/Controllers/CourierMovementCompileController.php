@@ -92,11 +92,18 @@ class CourierMovementCompileController
             ->where('periodo', $period)->selectRaw('nombre_proceso, COUNT(*) AS total')->groupBy('nombre_proceso')->pluck('total', 'nombre_proceso');
         $rowsQuery = CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
             ->when($period !== '', fn ($query) => $query->where('periodo', $period), fn ($query) => $query->whereRaw('1 = 0'));
-        $optionBase = clone $rowsQuery;
         $filterOptions = [];
         foreach (self::WORK_FILTER_COLUMNS as $filter => $column) {
-            $filterOptions[$filter] = (clone $optionBase)->whereNotNull($column)->where($column, '<>', '')
+            $optionsQuery = clone $rowsQuery;
+            foreach (self::WORK_FILTER_COLUMNS as $activeFilter => $activeColumn) {
+                if ($activeFilter !== $filter && ($filters[$activeFilter] ?? '') !== '') {
+                    $optionsQuery->where($activeColumn, $filters[$activeFilter]);
+                }
+            }
+            $filterOptions[$filter] = $optionsQuery->whereNotNull($column)->where($column, '<>', '')
                 ->select($column)->distinct()->orderBy($column)->pluck($column);
+        }
+        foreach (self::WORK_FILTER_COLUMNS as $filter => $column) {
             if (($filters[$filter] ?? '') !== '') {
                 $rowsQuery->where($column, $filters[$filter]);
             }

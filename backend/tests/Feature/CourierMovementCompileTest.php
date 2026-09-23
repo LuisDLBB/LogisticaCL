@@ -36,7 +36,14 @@ class CourierMovementCompileTest extends TestCase
         $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607', 'zone' => 'RM', 'client' => 'Cliente Beta']))
             ->assertOk()->assertSee('Registros trabajados (0)');
         $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607', 'zone' => 'RM']))
-            ->assertOk()->assertSee('<option value="Cliente Beta"', false);
+            ->assertOk()->assertSee('<option value="Cliente Alfa"', false)
+            ->assertDontSee('<option value="Cliente Beta"', false)
+            ->assertDontSee('<option value="Operador Beta"', false)
+            ->assertSee('<option value="Regiones"', false);
+        $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607', 'zone' => 'RM', 'client' => 'Cliente Alfa']))
+            ->assertOk()->assertSee('<option value="Alfa SPA"', false)
+            ->assertDontSee('<option value="Beta SPA"', false)
+            ->assertDontSee('<option value="Boleta"', false);
     }
 
     public function test_rm_and_temuco_provider_button_updates_only_exact_courier_assignments(): void
