@@ -93,6 +93,42 @@ class CourierMovementCompileTest extends TestCase
         $this->assertDatabaseCount('movimientos_courier', 3);
     }
 
+    public function test_internal_provider_cleanup_only_removes_matching_payment_rows_in_selected_period(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        foreach ([
+            ['202607', '4 Nortes Logistica SPA'],
+            ['202607', 'Otro proveedor SPA'],
+            ['202608', '4 Nortes Logistica SPA'],
+        ] as $index => [$period, $providerName]) {
+            $movement = CourierMovement::create([
+                'tenant_id' => $tenant->id,
+                'tracking_number' => '4N20260701000'.$index.'-111',
+                'nombre_proceso' => $period.'-Variable',
+            ]);
+            CourierPaymentMovement::create([
+                'tenant_id' => $tenant->id,
+                'courier_movement_id' => $movement->id,
+                'periodo' => $period,
+                'nombre_proceso' => 'Variable',
+                'tipo_pago' => 'Variable',
+                'seguimiento_paquete' => $movement->tracking_number,
+                'peso_final' => 1,
+                'razon_social_proveedor' => $providerName,
+            ]);
+        }
+
+        $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))
+            ->assertOk()->assertSee('Limpiar Proveedor interno y Sin usuario (1)');
+        $this->delete(route('provider-payments.courier-movements.compile.internal-provider.destroy'), ['period' => '202607'])
+            ->assertRedirect()->assertSessionHas('status');
+
+        $this->assertDatabaseMissing('Pago_Movimientos_Courier', ['periodo' => '202607', 'razon_social_proveedor' => '4 Nortes Logistica SPA']);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'razon_social_proveedor' => 'Otro proveedor SPA']);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202608', 'razon_social_proveedor' => '4 Nortes Logistica SPA']);
+        $this->assertDatabaseCount('movimientos_courier', 3);
+    }
+
     public function test_selected_processes_are_compiled_without_changing_source_weights(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();

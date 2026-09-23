@@ -17,6 +17,7 @@ use Illuminate\View\View;
 class CourierMovementCompileController
 {
     private const PROCESS_TYPES = ['Variable', 'Lanas', 'Retornos'];
+    private const INTERNAL_PROVIDER_NAME = '4 Nortes Logistica SPA';
     private const WORK_FILTER_COLUMNS = [
         'zone' => 'zona',
         'matrix' => 'comuna_matriz',
@@ -117,8 +118,11 @@ class CourierMovementCompileController
         $fourNorthCandidates = $period === '' ? 0 : CourierPaymentMovement::query()
             ->where('tenant_id', $tenant->id)->where('periodo', $period)
             ->where('rut_proveedor', '77346078-7')->whereIn('comuna_matriz', ['4N RM', '4N Temuco'])->count();
+        $internalProviderCount = $period === '' ? 0 : CourierPaymentMovement::query()
+            ->where('tenant_id', $tenant->id)->where('periodo', $period)
+            ->where('razon_social_proveedor', self::INTERNAL_PROVIDER_NAME)->count();
 
-        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates', 'filters', 'filterOptions'));
+        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates', 'internalProviderCount', 'filters', 'filterOptions'));
     }
 
     public function updateFourNorthProviders(Request $request): RedirectResponse
@@ -185,6 +189,18 @@ class CourierMovementCompileController
 
         return redirect()->route('provider-payments.courier-movements.compile.work', ['period' => $validated['period']])
             ->with('status', number_format($deleted, 0, ',', '.').' registros con estados NO PAGAR eliminados de Pago_Movimientos_Courier. Los movimientos originales se conservan.');
+    }
+
+    public function destroyInternalProvider(Request $request): RedirectResponse
+    {
+        $validated = $request->validate(['period' => ['required', 'regex:/^\d{6}$/']]);
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $deleted = CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
+            ->where('periodo', $validated['period'])
+            ->where('razon_social_proveedor', self::INTERNAL_PROVIDER_NAME)->delete();
+
+        return redirect()->route('provider-payments.courier-movements.compile.work', ['period' => $validated['period']])
+            ->with('status', number_format($deleted, 0, ',', '.').' registros del proveedor interno eliminados de Pago_Movimientos_Courier. Los movimientos originales se conservan.');
     }
 
     public function compile(Request $request): RedirectResponse
