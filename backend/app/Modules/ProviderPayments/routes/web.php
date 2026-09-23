@@ -34,6 +34,8 @@ Route::prefix('pago-proveedores')
         Route::post('/carga-movimientos-courier/cargar', [CourierMovementImportController::class, 'storeMovements'])->name('courier-movements.store');
         Route::get('/compilar-movimientos-courier', [CourierMovementCompileController::class, 'index'])->name('courier-movements.compile');
         Route::get('/compilar-movimientos-courier/trabajar', [CourierMovementCompileController::class, 'work'])->name('courier-movements.compile.work');
+        Route::get('/compilar-movimientos-courier/trabajar/revisar-llaves-cc', [CourierMovementCompileController::class, 'reviewKeys'])->name('courier-movements.compile.keys.review');
+        Route::post('/compilar-movimientos-courier/trabajar/guardar-llaves-cc', [CourierMovementCompileController::class, 'saveReviewedKeys'])->name('courier-movements.compile.keys.save');
         Route::post('/compilar-movimientos-courier/trabajar', [CourierMovementCompileController::class, 'compile'])->name('courier-movements.compile.store');
         Route::post('/compilar-movimientos-courier/trabajar/generar-llaves-cc', [CourierMovementCompileController::class, 'generateMissingKeys'])->name('courier-movements.compile.keys.generate');
         Route::delete('/compilar-movimientos-courier/procesos', [CourierMovementCompileController::class, 'destroyProcess'])->name('courier-movements.compile.destroy');

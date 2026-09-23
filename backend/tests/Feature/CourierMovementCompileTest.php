@@ -36,20 +36,24 @@ class CourierMovementCompileTest extends TestCase
 
         $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))
             ->assertOk()->assertSee('Revisar Inconsistencias Llave CC (1)')
-            ->assertSee('Proveedor Sin Llave')->assertSee('2 registros trabajados')
+            ->assertSee('target="_blank"', false);
+        $this->get(route('provider-payments.courier-movements.compile.keys.review', ['period' => '202607']))
+            ->assertOk()
+            ->assertSee('Proveedor Sin Llave')
             ->assertSee('Cliente Llave')->assertSee('Servicio Llave')
-            ->assertSee('Generar 1 llave faltante');
+            ->assertSee('Generar 1 llave faltante del período');
         $this->post(route('provider-payments.courier-movements.compile.keys.generate'), ['period' => '202607'])
-            ->assertRedirect(route('provider-payments.courier-movements.compile.work', ['period' => '202607', 'review_keys' => 1]));
+            ->assertRedirect(route('provider-payments.courier-movements.compile.keys.review', ['period' => '202607']));
         $this->assertDatabaseHas('llave_centro_costos', ['provider_id' => $missing->id, 'client_id' => $client->id, 'service_type_id' => $service->id, 'agent_name' => 'Operador Sin Llave', 'cost_center_code' => 0, 'payment_status' => 'NO', 'is_active' => false]);
         $this->post(route('provider-payments.courier-movements.compile.keys.generate'), ['period' => '202607'])->assertRedirect();
         $this->assertSame(1, CostCenterKey::query()->where('provider_id', $missing->id)->count());
         $draft = CostCenterKey::query()->where('provider_id', $missing->id)->firstOrFail();
-        $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))
-            ->assertOk()->assertSee('Guardar llave')->assertSee('Revisar Inconsistencias Llave CC (1)');
-        $this->put(route('provider-payments.maintainers.llave-centro-costos.update', $draft), [
-            'agent_name' => 'Operador Sin Llave', 'cost_center_code' => 88, 'payment_status' => 'SI', 'is_active' => 1, 'return_period' => '202607',
-        ])->assertRedirect(route('provider-payments.courier-movements.compile.work', ['period' => '202607', 'review_keys' => 1]));
+        $this->get(route('provider-payments.courier-movements.compile.keys.review', ['period' => '202607']))
+            ->assertOk()->assertSee('Guardar cambios de esta página')->assertSee('Inactiva');
+        $this->post(route('provider-payments.courier-movements.compile.keys.save'), [
+            'period' => '202607', 'rows' => [['id' => $draft->id, 'cost_center_code' => 88, 'payment_status' => 'SI', 'is_active' => 1]],
+        ])->assertRedirect(route('provider-payments.courier-movements.compile.keys.review', ['period' => '202607', 'provider' => '', 'page' => 1]));
+        $this->assertDatabaseHas('llave_centro_costos', ['id' => $draft->id, 'cost_center_code' => 88, 'payment_status' => 'SI', 'is_active' => true]);
         $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))
             ->assertOk()->assertSee('Revisar Inconsistencias Llave CC (0)');
     }

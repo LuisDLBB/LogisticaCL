@@ -14,8 +14,10 @@ use App\Models\ServiceType;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class CourierMovementCompileController
@@ -128,10 +130,66 @@ class CourierMovementCompileController
         $keyReviewGroups = $period === '' ? collect() : $this->keyReviewGroups($tenant->id, $period);
         $missingKeyProviders = $keyReviewGroups->pluck('provider_tax_id')->unique()->count();
         $missingKeyCombinations = $keyReviewGroups->whereNull('key')->count();
-        $keyReviewCenters = $keyReviewGroups->isEmpty() ? collect() : CostCenter::query()
-            ->where('is_active', true)->orderBy('cost_center_code')->get(['cost_center_code', 'dispatch_guide_detail']);
+        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates', 'internalProviderCount', 'missingKeyProviders', 'filters', 'filterOptions'));
+    }
 
-        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates', 'internalProviderCount', 'missingKeyProviders', 'missingKeyCombinations', 'keyReviewGroups', 'keyReviewCenters', 'filters', 'filterOptions'));
+    public function reviewKeys(Request $request): View
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $period = $request->validate(['period' => ['required', 'regex:/^\d{6}$/']])['period'];
+        $groups = $this->keyReviewGroups($tenant->id, $period);
+        $missingTotal = $groups->whereNull('key')->count();
+        $providerOptions = $groups->groupBy('provider_tax_id')->map(fn ($rows) => $rows->first()->provider_name)->sort();
+        $provider = trim((string) $request->query('provider', ''));
+        if ($provider !== '') {
+            $groups = $groups->where('provider_tax_id', $provider)->values();
+        }
+        $page = max(1, (int) $request->query('page', 1));
+        $rows = new LengthAwarePaginator($groups->forPage($page, 100)->values(), $groups->count(), 100, $page, [
+            'path' => $request->url(), 'query' => $request->query(),
+        ]);
+        $centers = CostCenter::query()->where('is_active', true)->orderBy('cost_center_code')->get(['cost_center_code', 'dispatch_guide_detail']);
+
+        return view('provider-payments::compile-key-review', compact('period', 'rows', 'groups', 'providerOptions', 'provider', 'centers', 'missingTotal'));
+    }
+
+    public function saveReviewedKeys(Request $request): RedirectResponse
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $validated = $request->validate([
+            'period' => ['required', 'regex:/^\d{6}$/'],
+            'provider' => ['nullable', 'string', 'max:15'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'rows' => ['required', 'array', 'min:1', 'max:100'],
+            'rows.*.id' => ['required', 'integer', 'distinct', Rule::exists('llave_centro_costos', 'id')->where('tenant_id', $tenant->id)],
+            'rows.*.cost_center_code' => ['required', 'integer', Rule::exists('cost_centers', 'cost_center_code')],
+            'rows.*.payment_status' => ['required', 'in:SI,NO,REVISAR'],
+            'rows.*.is_active' => ['required', 'boolean'],
+        ]);
+        $allowedIds = $this->keyReviewGroups($tenant->id, $validated['period'])
+            ->pluck('key')->filter()->pluck('id')->all();
+        $saved = DB::transaction(function () use ($tenant, $validated, $allowedIds): int {
+            $saved = 0;
+            foreach ($validated['rows'] as $row) {
+                abort_unless(in_array((int) $row['id'], $allowedIds, true), 422);
+                $key = CostCenterKey::query()->where('tenant_id', $tenant->id)->findOrFail($row['id']);
+                $key->fill([
+                    'cost_center_code' => $row['cost_center_code'],
+                    'payment_status' => $row['payment_status'],
+                    'is_active' => $row['is_active'],
+                ]);
+                if ($key->isDirty()) {
+                    $key->save();
+                    $saved++;
+                }
+            }
+
+            return $saved;
+        });
+
+        return redirect()->route('provider-payments.courier-movements.compile.keys.review', [
+            'period' => $validated['period'], 'provider' => $validated['provider'] ?? '', 'page' => $validated['page'] ?? 1,
+        ])->with('status', $saved.' llaves modificadas y guardadas.');
     }
 
     public function generateMissingKeys(Request $request): RedirectResponse
@@ -171,8 +229,8 @@ class CourierMovementCompileController
             return $created;
         });
 
-        return redirect()->route('provider-payments.courier-movements.compile.work', [
-            'period' => $validated['period'], 'review_keys' => 1,
+        return redirect()->route('provider-payments.courier-movements.compile.keys.review', [
+            'period' => $validated['period'],
         ])->with('status', number_format($created, 0, ',', '.').' llaves CC generadas con centro 0, pago NO y estado Inactiva.');
     }
 
