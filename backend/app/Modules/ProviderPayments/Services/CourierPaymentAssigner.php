@@ -5,16 +5,20 @@ namespace App\Modules\ProviderPayments\Services;
 use App\Models\CostCenter;
 use App\Models\CostCenterKey;
 use App\Models\CostCenterWeightRate;
+use App\Models\Coverage;
 use App\Models\CourierMovement;
 use App\Models\CourierPaymentMovement;
 use App\Models\ServiceType;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class CourierPaymentAssigner
 {
     public function assign(int $tenantId, string $period): array
     {
-        $result = ['paid' => 0, 'not_paid' => 0, 'missing_key' => 0, 'ambiguous_key' => 0, 'missing_rate' => 0];
+        $result = ['paid' => 0, 'not_paid' => 0, 'missing_key' => 0, 'ambiguous_key' => 0, 'missing_rate' => 0,
+            'missing_coverage' => 0, 'ambiguous_coverage' => 0, 'missing_return_value' => 0];
         $services = ServiceType::query()->get()->keyBy(fn (ServiceType $service): string => mb_strtolower(trim($service->name)));
         $keys = CostCenterKey::query()->where('tenant_id', $tenantId)->where('is_active', true)
             ->with(['provider', 'client'])->get()->groupBy(fn (CostCenterKey $key): string => $this->identity(
@@ -25,15 +29,29 @@ class CourierPaymentAssigner
         $centers = CostCenter::query()->where('is_active', true)->get()->keyBy('cost_center_code');
         $rates = CostCenterWeightRate::query()->where('is_active', true)->get()
             ->keyBy(fn (CostCenterWeightRate $rate): string => $rate->cost_center_code.'|'.$rate->final_weight);
+        $coverages = Coverage::query()->where('tenant_id', $tenantId)->where('is_active', true)
+            ->with('provider')->get()->groupBy(fn (Coverage $coverage): string => $this->communeKey($coverage->commune_name));
 
         CourierPaymentMovement::query()->where('tenant_id', $tenantId)->where('periodo', $period)
             ->where(fn ($query) => $query->whereNull('condicion_pago')->orWhere('condicion_pago', 'SI'))
-            ->select(['id', 'courier_movement_id', 'rut_proveedor', 'rut_cliente', 'peso_final', 'condicion_pago', 'valor'])
-            ->chunkById(500, function ($payments) use ($services, $keys, $centers, $rates, &$result): void {
+            ->select(['id', 'courier_movement_id', 'rut_proveedor', 'rut_cliente', 'peso_final', 'condicion_pago', 'valor', 'nombre_proceso', 'comuna_destino', 'fecha'])
+            ->chunkById(500, function ($payments) use ($services, $keys, $centers, $rates, $coverages, &$result): void {
                 $movements = CourierMovement::query()->whereIn('id', $payments->pluck('courier_movement_id'))
                     ->pluck('service_name', 'id');
                 $updates = [];
                 foreach ($payments as $payment) {
+                    if (strcasecmp(trim((string) $payment->nombre_proceso), 'Retornos') === 0) {
+                        $return = $this->returnPayment($payment, $coverages);
+                        if (isset($return['error'])) {
+                            $result[$return['error']]++;
+                            continue;
+                        }
+                        if ($payment->condicion_pago === $return['status'] && $payment->valor === $return['value']) {
+                            continue;
+                        }
+                        $updates[$return['status'].'|'.($return['value'] ?? 'null')][] = $payment->id;
+                        continue;
+                    }
                     $serviceName = $movements->get($payment->courier_movement_id);
                     $service = $serviceName ? $services->get(mb_strtolower(trim($serviceName))) : null;
                     if ($service === null || ! filled($payment->rut_proveedor) || ! filled($payment->rut_cliente)) {
@@ -97,5 +115,45 @@ class CourierPaymentAssigner
     private function identity(?string $providerRut, ?string $clientRut, string $serviceCode): string
     {
         return strtoupper(trim((string) $providerRut)).'|'.strtoupper(trim((string) $clientRut)).'|'.$serviceCode;
+    }
+
+    private function returnPayment(CourierPaymentMovement $payment, Collection $coverages): array
+    {
+        $matches = $coverages->get($this->communeKey((string) $payment->comuna_destino), collect());
+        $date = $payment->fecha?->toDateString();
+        $matches = $matches->filter(fn (Coverage $coverage): bool =>
+            ($coverage->effective_from === null || ($date !== null && $coverage->effective_from->toDateString() <= $date))
+            && ($coverage->effective_to === null || ($date !== null && $coverage->effective_to->toDateString() >= $date))
+        );
+        if ($matches->isEmpty()) {
+            return ['error' => 'missing_coverage'];
+        }
+        $providerRut = strtoupper(trim((string) $payment->rut_proveedor));
+        $providerMatches = $matches->filter(fn (Coverage $coverage): bool => strtoupper(trim((string) (
+            $coverage->provider?->tax_id ?: $coverage->provider_tax_id
+        ))) === $providerRut);
+        if ($providerMatches->isNotEmpty()) {
+            $matches = $providerMatches;
+        }
+        $configurations = $matches->unique(fn (Coverage $coverage): string => $coverage->return_payment_applies
+            ? 'SI|'.$coverage->return_value : 'NO');
+        if ($configurations->count() !== 1) {
+            return ['error' => 'ambiguous_coverage'];
+        }
+        $coverage = $configurations->first();
+        if (! $coverage->return_payment_applies) {
+            return ['status' => 'NO', 'value' => null];
+        }
+        $value = $coverage->return_value;
+        if ($value === null || (float) $value < 0 || floor((float) $value) !== (float) $value) {
+            return ['error' => 'missing_return_value'];
+        }
+
+        return ['status' => 'SI', 'value' => (int) $value];
+    }
+
+    private function communeKey(string $commune): string
+    {
+        return Str::of($commune)->squish()->lower()->ascii()->toString();
     }
 }

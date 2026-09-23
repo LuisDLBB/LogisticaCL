@@ -21,6 +21,49 @@ class CourierMovementCompileTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_assign_payments_uses_coverage_fixed_return_value_and_payment_condition(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $provider = Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '11111111-1', 'tax_id_number' => '11111111', 'tax_id_check_digit' => '1', 'legal_name' => 'Proveedor Retornos', 'operator_type' => 'Courier']);
+        Coverage::create(['tenant_id' => $tenant->id, 'provider_id' => $provider->id, 'commune_name' => 'Viña del Mar', 'zone' => 'Regiones', 'return_payment_applies' => true, 'return_value' => 1294]);
+        Coverage::create(['tenant_id' => $tenant->id, 'provider_id' => $provider->id, 'commune_name' => 'Quilpué', 'zone' => 'Regiones', 'return_payment_applies' => false, 'return_value' => 1000]);
+        Coverage::create(['tenant_id' => $tenant->id, 'commune_name' => 'Valparaíso', 'zone' => 'Regiones', 'return_payment_applies' => true, 'return_value' => 800]);
+        Coverage::create(['tenant_id' => $tenant->id, 'commune_name' => 'Concón', 'zone' => 'Regiones', 'return_payment_applies' => true, 'return_value' => 500]);
+        Coverage::create(['tenant_id' => $tenant->id, 'commune_name' => 'Concón', 'zone' => 'Regiones', 'return_payment_applies' => true, 'return_value' => 700]);
+        foreach ([
+            ['liviano', 'Vina del Mar', 1, null],
+            ['pesado', 'Viña del Mar', 30, null],
+            ['no', 'Quilpué', 1, null],
+            ['protegido', 'Viña del Mar', 1, 'NO'],
+            ['sin_proveedor', 'Valparaíso', 1, null],
+            ['ambiguo', 'Concón', 1, null],
+            ['sin_cobertura', 'La Serena', 1, null],
+        ] as $index => [$tracking, $commune, $weight, $condition]) {
+            $movement = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N20260702000'.$index.'-111', 'nombre_proceso' => '202607-Retornos']);
+            CourierPaymentMovement::create(['tenant_id' => $tenant->id, 'courier_movement_id' => $movement->id, 'periodo' => '202607',
+                'nombre_proceso' => 'Retornos', 'tipo_pago' => 'Retornos', 'seguimiento_paquete' => $tracking,
+                'comuna_destino' => $commune, 'fecha' => '2026-07-02', 'peso_final' => $weight,
+                'rut_proveedor' => $provider->tax_id, 'condicion_pago' => $condition]);
+        }
+
+        $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])
+            ->assertRedirect()->assertSessionHas('status');
+        foreach (['liviano', 'pesado'] as $tracking) {
+            $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => $tracking, 'condicion_pago' => 'SI', 'valor' => 1294]);
+        }
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'no', 'condicion_pago' => 'NO', 'valor' => null]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'protegido', 'condicion_pago' => 'NO', 'valor' => null]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'sin_proveedor', 'condicion_pago' => 'SI', 'valor' => 800]);
+        foreach (['ambiguo', 'sin_cobertura'] as $tracking) {
+            $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => $tracking, 'condicion_pago' => null, 'valor' => null]);
+        }
+        Coverage::query()->where('commune_name', 'Viña del Mar')->update(['return_value' => 1500]);
+        $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])->assertRedirect();
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'pesado', 'condicion_pago' => 'SI', 'valor' => 1500]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'protegido', 'condicion_pago' => 'NO', 'valor' => null]);
+        $this->assertDatabaseCount('Pago_Movimientos_Courier', 7);
+    }
+
     public function test_assign_payments_uses_active_keys_weight_rates_and_additional_kilo_without_overwriting_no(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();

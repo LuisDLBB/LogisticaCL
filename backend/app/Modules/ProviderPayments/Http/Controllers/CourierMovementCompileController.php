@@ -423,10 +423,12 @@ class CourierMovementCompileController
 
         return redirect()->route('provider-payments.courier-movements.compile.work', ['period' => $validated['period']])
             ->with('status', sprintf(
-                'Asignar Pagos: %s con pago SI y tarifa, %s con pago NO. Pendientes: %s sin llave, %s con llaves ambiguas, %s sin tarifa.',
+                'Asignar Pagos: %s con pago SI y valor, %s con pago NO. Pendientes: %s sin llave, %s con llaves ambiguas, %s sin tarifa, %s Retornos sin cobertura, %s con coberturas ambiguas y %s sin valor de retorno.',
                 number_format($result['paid'], 0, ',', '.'), number_format($result['not_paid'], 0, ',', '.'),
                 number_format($result['missing_key'], 0, ',', '.'), number_format($result['ambiguous_key'], 0, ',', '.'),
                 number_format($result['missing_rate'], 0, ',', '.'),
+                number_format($result['missing_coverage'], 0, ',', '.'), number_format($result['ambiguous_coverage'], 0, ',', '.'),
+                number_format($result['missing_return_value'], 0, ',', '.'),
             ));
     }
 
