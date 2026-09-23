@@ -404,8 +404,9 @@ class CourierParameterReviewTest extends TestCase
         CostCenterKey::create([...$attributes, 'provider_id' => $target->id, 'provider_tax_id' => $target->tax_id, 'cost_center_code' => 2, 'payment_status' => 'REVISAR', 'key_code' => '22222222-2/33333333-3/93', 'is_active' => true]);
 
         $this->get(route('provider-payments.maintainers.llave-centro-costos', ['vista' => 'proveedor']))
-            ->assertOk()->assertSee('Replicar llaves de un proveedor existente')->assertSee('Buscar proveedor con llaves')
-            ->assertSee('id="new-key-provider"', false)->assertSee('Proveedor Origen');
+            ->assertOk()->assertSee('Replicar llaves de un proveedor existente')->assertSee('Crear llave individual')
+            ->assertSee('id="new-key-provider"', false)->assertSee('Proveedor Origen (4 llaves)')
+            ->assertDontSee('source-provider-search');
         $route = route('provider-payments.maintainers.llave-centro-costos.replicate-provider');
         $this->post($route, ['source_provider_id' => $source->id, 'target_provider_id' => $target->id])
             ->assertRedirect()->assertSessionHas('status', '3 llaves copiadas a Proveedor Nuevo; 1 combinaciones existentes omitidas.');
