@@ -122,9 +122,9 @@ class CourierMovementCompileController
             ->where(fn ($query) => $query->whereNull('condicion_pago')->orWhere('condicion_pago', '<>', 'NO'))
             ->whereIn('estado_envio', $nonPayableStatuses)
             ->selectRaw('estado_envio, COUNT(*) AS total')->groupBy('estado_envio')->orderBy('estado_envio')->get();
-        $fourNorthCandidates = $period === '' ? 0 : CourierPaymentMovement::query()
-            ->where('tenant_id', $tenant->id)->where('periodo', $period)
-            ->where('rut_proveedor', '77346078-7')->whereIn('comuna_matriz', ['4N RM', '4N Temuco'])->count();
+        $fourNorthSummary = $period === '' ? ['actionable' => 0, 'not_applicable' => 0, 'without_user' => 0, 'without_match' => 0]
+            : $this->fourNorthSummary($tenant->id, $period);
+        $fourNorthCandidates = $fourNorthSummary['actionable'];
         $internalProviderCount = $period === '' ? 0 : CourierPaymentMovement::query()
             ->where('tenant_id', $tenant->id)->where('periodo', $period)
             ->where('razon_social_proveedor', self::INTERNAL_PROVIDER_NAME)
@@ -137,7 +137,7 @@ class CourierMovementCompileController
         $keyReviewGroups = $period === '' ? collect() : $this->keyReviewGroups($tenant->id, $period);
         $missingKeyProviders = $keyReviewGroups->pluck('provider_tax_id')->unique()->count();
         $missingKeyCombinations = $keyReviewGroups->whereNull('key')->count();
-        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates', 'internalProviderCount', 'paymentDashboard', 'missingKeyProviders', 'filters', 'filterOptions'));
+        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates', 'fourNorthSummary', 'internalProviderCount', 'paymentDashboard', 'missingKeyProviders', 'filters', 'filterOptions'));
     }
 
     public function reviewKeys(Request $request): View
@@ -337,6 +337,42 @@ class CourierMovementCompileController
 
         return redirect()->route('provider-payments.courier-movements.compile.work', ['period' => $validated['period']])
             ->with('status', number_format($updated, 0, ',', '.').' proveedores actualizados. '.number_format($notApplicable, 0, ',', '.').' con N/A conservados; '.number_format($withoutAssignment, 0, ',', '.').' sin cruce completo.');
+    }
+
+    private function fourNorthSummary(int $tenantId, string $period): array
+    {
+        $summary = ['actionable' => 0, 'not_applicable' => 0, 'without_user' => 0, 'without_match' => 0];
+        $assignments = DB::table('Proveedores_usuarios_4N')->get()->keyBy(fn ($row): string => $this->assignmentKey(
+            $row->RutProveedor, $row->ComunaMatriz, $row->NombreRepartidor,
+        ));
+        $providerRuts = Provider::query()->where('tenant_id', $tenantId)->pluck('tax_id')
+            ->map(fn (string $rut): string => strtoupper(trim($rut)))->flip();
+        $groups = CourierPaymentMovement::query()->where('tenant_id', $tenantId)->where('periodo', $period)
+            ->where('rut_proveedor', '77346078-7')->whereIn('comuna_matriz', ['4N RM', '4N Temuco'])
+            ->select('comuna_matriz', 'nombre_repartidor')->selectRaw('COUNT(*) AS total')
+            ->groupBy('comuna_matriz', 'nombre_repartidor')->get();
+        foreach ($groups as $group) {
+            $total = (int) $group->total;
+            if (trim((string) $group->nombre_repartidor) === '') {
+                $summary['without_user'] += $total;
+                continue;
+            }
+            $assignment = $assignments->get($this->assignmentKey('77346078-7', $group->comuna_matriz, $group->nombre_repartidor));
+            if ($assignment === null) {
+                $summary['without_match'] += $total;
+                continue;
+            }
+            $rut = strtoupper(trim($assignment->NuevoRutProveedor));
+            if ($rut === 'N/A') {
+                $summary['not_applicable'] += $total;
+            } elseif ($providerRuts->has($rut)) {
+                $summary['actionable'] += $total;
+            } else {
+                $summary['without_match'] += $total;
+            }
+        }
+
+        return $summary;
     }
 
     public function markNonPayable(Request $request): RedirectResponse

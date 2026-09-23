@@ -108,13 +108,16 @@ class CourierMovementCompileTest extends TestCase
         }
 
         $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))
-            ->assertOk()->assertSee('Actualizar Proveedores RM y Temuco');
+            ->assertOk()->assertSee('Proveedores RM y Temuco (1)')->assertSee('Actualizar Proveedores RM y Temuco');
         $this->post(route('provider-payments.courier-movements.compile.providers-4n.update'), ['period' => '202607'])
             ->assertRedirect()->assertSessionHas('status', '1 proveedores actualizados. 1 con N/A conservados; 0 sin cruce completo.');
 
         $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'nombre_repartidor' => 'Claudio González', 'rut_proveedor' => '78350442-1', 'razon_social_proveedor' => 'Nuevo proveedor SPA', 'nombre_operacional' => 'Claudio Operacional', 'tipo_documento' => 'Factura']);
         $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'nombre_repartidor' => '4N-Demo', 'rut_proveedor' => '77346078-7']);
         $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202608', 'nombre_repartidor' => 'Claudio González', 'rut_proveedor' => '77346078-7']);
+        $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))
+            ->assertOk()->assertSee('Proveedores RM y Temuco (0)')->assertSee('1 con N/A')
+            ->assertSee('No quedan registros con asignación válida para actualizar.');
         $this->assertDatabaseCount('movimientos_courier', 3);
     }
 
