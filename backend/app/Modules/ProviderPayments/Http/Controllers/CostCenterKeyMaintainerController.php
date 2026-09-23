@@ -239,8 +239,9 @@ class CostCenterKeyMaintainerController
             'provider_id' => ['required', Rule::exists('providers', 'id')->where('tenant_id', $tenant->id)],
             'client_id' => ['required', Rule::exists('clients', 'id')->where('tenant_id', $tenant->id)],
             'service_type_id' => ['required', Rule::exists('service_types', 'id')],
+            'return_period' => ['nullable', 'regex:/^\d{6}$/'],
             'agent_name' => ['nullable', 'string', 'max:160'], 'payment_status' => ['required', 'string', 'max:20'],
-            'cost_center_code' => ['nullable', 'integer', Rule::exists('cost_centers', 'cost_center_code')],
+            'cost_center_code' => [$request->filled('return_period') ? 'required' : 'nullable', 'integer', Rule::exists('cost_centers', 'cost_center_code')],
         ]);
         $provider = Provider::findOrFail($validated['provider_id']);
         $client = Client::findOrFail($validated['client_id']);
@@ -251,14 +252,21 @@ class CostCenterKeyMaintainerController
         if ($duplicate) {
             throw ValidationException::withMessages(['provider_id' => 'Esta combinación de proveedor, cliente, servicio y centro de costo ya existe.']);
         }
+        $agentName = filled($validated['agent_name'] ?? null) ? trim($validated['agent_name']) : ($provider->operational_name ?: $provider->legal_name);
         CostCenterKey::create([
             'tenant_id' => $tenant->id, 'provider_id' => $provider->id, 'client_id' => $client->id, 'service_type_id' => $service->id,
-            'provider_tax_id' => $provider->tax_id, 'agent_name' => $validated['agent_name'] ?? null, 'client_tax_id' => $client->tax_id,
+            'provider_tax_id' => $provider->tax_id, 'agent_name' => $agentName, 'client_tax_id' => $client->tax_id,
             'merchant_name' => $client->source_merchant_name, 'service_code' => $service->service_code, 'service_name' => $service->name,
             'key_code' => implode('/', [$provider->tax_id, $client->tax_id, $service->service_code]),
-            'key_text' => trim((string) ($validated['agent_name'] ?? '')).$client->source_merchant_name.$service->name,
+            'key_text' => $agentName.$client->source_merchant_name.$service->name,
             'payment_status' => strtoupper($validated['payment_status']), 'cost_center_code' => $validated['cost_center_code'] ?? null, 'is_active' => true,
         ]);
+
+        if (filled($validated['return_period'] ?? null)) {
+            return redirect()->route('provider-payments.courier-movements.compile.work', [
+                'period' => $validated['return_period'], 'review_keys' => 1,
+            ])->with('status', 'Llave CC creada para '.$provider->legal_name.'.');
+        }
 
         return back()->with('status', 'Llave Centro de Costo creada correctamente.');
     }

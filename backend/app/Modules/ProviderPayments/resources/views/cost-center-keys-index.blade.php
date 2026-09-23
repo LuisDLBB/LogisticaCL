@@ -20,10 +20,10 @@
     <a class="view-tab {{ $viewMode === 'proveedor' ? 'active' : '' }}" href="{{ route('provider-payments.maintainers.llave-centro-costos', ['vista' => 'proveedor', 'client' => $selectedClient, 'provider' => $selectedProvider, 'service_filter' => $selectedService, 'center' => $selectedCenter, 'payment' => $selectedPayment]) }}">Ver por proveedor</a>
 </nav>
 
-<details class="new-key-panel" @if($errors->any()) open @endif>
+<details class="new-key-panel" @if($errors->any() || request()->boolean('create')) open @endif>
     <summary>Crear nueva llave</summary>
     <section class="card">
-        <label class="provider-choice">Proveedor nuevo<select id="new-key-provider" name="provider_id" form="manual-key-form" required><option value="">Selecciona</option>@foreach($providers as $provider)<option value="{{ $provider->id }}" @selected(old('provider_id', old('target_provider_id')) == $provider->id)>{{ $provider->legal_name }} · {{ $provider->tax_id }}</option>@endforeach</select></label>
+        <label class="provider-choice">Proveedor nuevo<select id="new-key-provider" name="provider_id" form="manual-key-form" required><option value="">Selecciona</option>@foreach($providers as $provider)<option value="{{ $provider->id }}" @selected(old('provider_id', old('target_provider_id', request()->query('new_provider'))) == $provider->id)>{{ $provider->legal_name }} · {{ $provider->tax_id }}</option>@endforeach</select></label>
         @if($errors->any())<p class="warning">{{ $errors->first() }}</p>@endif
         <div class="copy-provider-panel" id="copy-provider-panel" hidden>
             <h2>Replicar llaves de un proveedor existente</h2>

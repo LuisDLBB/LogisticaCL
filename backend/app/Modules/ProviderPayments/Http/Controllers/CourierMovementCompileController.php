@@ -6,7 +6,10 @@ use App\Models\CourierMovement;
 use App\Models\CourierPaymentMovement;
 use App\Models\CourierStatus;
 use App\Models\Coverage;
+use App\Models\Client;
+use App\Models\CostCenter;
 use App\Models\Provider;
+use App\Models\ServiceType;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -121,8 +124,30 @@ class CourierMovementCompileController
         $internalProviderCount = $period === '' ? 0 : CourierPaymentMovement::query()
             ->where('tenant_id', $tenant->id)->where('periodo', $period)
             ->where('razon_social_proveedor', self::INTERNAL_PROVIDER_NAME)->count();
+        $missingKeyProviders = $period === '' ? collect() : DB::table('Pago_Movimientos_Courier as payments')
+            ->join('providers as providers', function ($join) use ($tenant): void {
+                $join->on('providers.tax_id', '=', 'payments.rut_proveedor')->where('providers.tenant_id', '=', $tenant->id);
+            })
+            ->where('payments.tenant_id', $tenant->id)->where('payments.periodo', $period)
+            ->whereNotExists(function ($query) use ($tenant): void {
+                $query->selectRaw('1')->from('llave_centro_costos as keys')
+                    ->where('keys.tenant_id', $tenant->id)
+                    ->where(fn ($match) => $match->whereColumn('keys.provider_id', 'providers.id')
+                        ->orWhereColumn('keys.provider_tax_id', 'payments.rut_proveedor'))
+                    ->where('keys.is_active', true)->whereNotNull('keys.cost_center_code');
+            })
+            ->select('providers.id', 'providers.tax_id', 'providers.legal_name', 'providers.operational_name')
+            ->selectRaw('COUNT(*) AS movements')
+            ->groupBy('providers.id', 'providers.tax_id', 'providers.legal_name', 'providers.operational_name')
+            ->orderByDesc('movements')->orderBy('providers.legal_name')->get();
+        $keyReviewClients = $missingKeyProviders->isEmpty() ? collect() : Client::query()->where('tenant_id', $tenant->id)
+            ->where('is_active', true)->orderBy('source_merchant_name')->get(['id', 'source_merchant_name', 'tax_id']);
+        $keyReviewServices = $missingKeyProviders->isEmpty() ? collect() : ServiceType::query()
+            ->where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $keyReviewCenters = $missingKeyProviders->isEmpty() ? collect() : CostCenter::query()
+            ->where('is_active', true)->orderBy('cost_center_code')->get(['cost_center_code', 'dispatch_guide_detail']);
 
-        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates', 'internalProviderCount', 'filters', 'filterOptions'));
+        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates', 'internalProviderCount', 'missingKeyProviders', 'keyReviewClients', 'keyReviewServices', 'keyReviewCenters', 'filters', 'filterOptions'));
     }
 
     public function updateFourNorthProviders(Request $request): RedirectResponse

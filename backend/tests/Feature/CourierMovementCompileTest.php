@@ -3,11 +3,14 @@
 namespace Tests\Feature;
 
 use App\Models\Client;
+use App\Models\CostCenter;
+use App\Models\CostCenterKey;
 use App\Models\CourierMovement;
 use App\Models\CourierPaymentMovement;
 use App\Models\CourierStatus;
 use App\Models\Coverage;
 use App\Models\Provider;
+use App\Models\ServiceType;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +19,37 @@ use Tests\TestCase;
 class CourierMovementCompileTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_missing_cost_center_key_providers_can_be_reviewed_and_configured_from_work_page(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $missing = Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '11111111-1', 'tax_id_number' => '11111111', 'tax_id_check_digit' => '1', 'legal_name' => 'Proveedor Sin Llave', 'operational_name' => 'Operador Sin Llave', 'operator_type' => 'Courier']);
+        $configured = Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '22222222-2', 'tax_id_number' => '22222222', 'tax_id_check_digit' => '2', 'legal_name' => 'Proveedor Configurado', 'operator_type' => 'Courier']);
+        $client = Client::create(['tenant_id' => $tenant->id, 'tax_id' => '33333333-3', 'tax_id_number' => '33333333', 'tax_id_check_digit' => '3', 'source_merchant_name' => 'Cliente Llave', 'commercial_name' => 'Cliente Llave', 'legal_name' => 'Cliente Llave SPA']);
+        $service = ServiceType::factory()->create(['service_code' => 88, 'name' => 'Servicio Llave']);
+        CostCenter::updateOrCreate(['cost_center_code' => 88], ['dispatch_guide_detail' => 'Centro Llave', 'additional_kilo_value' => 0, 'is_active' => true]);
+        CostCenterKey::create(['tenant_id' => $tenant->id, 'provider_id' => $configured->id, 'provider_tax_id' => $configured->tax_id, 'client_id' => $client->id, 'client_tax_id' => $client->tax_id, 'merchant_name' => $client->source_merchant_name, 'service_type_id' => $service->id, 'service_code' => 88, 'service_name' => $service->name, 'key_code' => 'configured', 'payment_status' => 'SI', 'cost_center_code' => 88, 'is_active' => true]);
+        CostCenterKey::create(['tenant_id' => $tenant->id, 'provider_id' => $missing->id, 'provider_tax_id' => $missing->tax_id, 'client_id' => $client->id, 'client_tax_id' => $client->tax_id, 'merchant_name' => $client->source_merchant_name, 'service_type_id' => $service->id, 'service_code' => 88, 'service_name' => $service->name, 'key_code' => 'without-center', 'payment_status' => 'SI', 'cost_center_code' => null, 'is_active' => true]);
+        foreach ([[$missing, '202607'], [$missing, '202607'], [$configured, '202607'], [$missing, '202608']] as $index => [$provider, $period]) {
+            $movement = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N20260701000'.$index.'-111', 'nombre_proceso' => $period.'-Variable']);
+            CourierPaymentMovement::create(['tenant_id' => $tenant->id, 'courier_movement_id' => $movement->id, 'periodo' => $period, 'nombre_proceso' => 'Variable', 'tipo_pago' => 'Variable', 'peso_final' => 1, 'rut_proveedor' => $provider->tax_id, 'razon_social_proveedor' => $provider->legal_name]);
+        }
+
+        $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))
+            ->assertOk()->assertSee('Revisar Inconsistencias Llave CC (1)')
+            ->assertSee('Proveedor Sin Llave')->assertSee('2 registros trabajados')
+            ->assertSee('Crear llave')->assertSee('Configurar o replicar más llaves');
+        $this->get(route('provider-payments.maintainers.llave-centro-costos', ['create' => 1, 'new_provider' => $missing->id]))
+            ->assertOk()->assertSee('Crear nueva llave')
+            ->assertSee('value="'.$missing->id.'" selected', false);
+        $this->post(route('provider-payments.maintainers.llave-centro-costos.manual-store'), [
+            'provider_id' => $missing->id, 'client_id' => $client->id, 'service_type_id' => $service->id,
+            'cost_center_code' => 88, 'payment_status' => 'SI', 'return_period' => '202607',
+        ])->assertRedirect(route('provider-payments.courier-movements.compile.work', ['period' => '202607', 'review_keys' => 1]));
+        $this->assertDatabaseHas('llave_centro_costos', ['provider_id' => $missing->id, 'agent_name' => 'Operador Sin Llave', 'cost_center_code' => 88]);
+        $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))
+            ->assertOk()->assertSee('Revisar Inconsistencias Llave CC (0)');
+    }
 
     public function test_worked_records_can_be_searched_by_each_requested_field(): void
     {
