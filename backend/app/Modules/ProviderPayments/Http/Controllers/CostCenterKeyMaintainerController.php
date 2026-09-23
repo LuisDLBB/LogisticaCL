@@ -281,6 +281,7 @@ class CostCenterKeyMaintainerController
                 $key = $sourceKey->replicate();
                 $key->provider_id = $target->id;
                 $key->provider_tax_id = $target->tax_id;
+                $key->agent_name = $target->operational_name ?: $target->legal_name;
                 $key->key_code = implode('/', [$target->tax_id, $key->client_tax_id, $key->service_code]);
                 $key->key_text = trim((string) $key->agent_name).$key->merchant_name.$key->service_name;
                 $key->save();

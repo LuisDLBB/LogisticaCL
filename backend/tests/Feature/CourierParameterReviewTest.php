@@ -442,7 +442,7 @@ class CourierParameterReviewTest extends TestCase
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $source = Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '11111111-1', 'tax_id_number' => '11111111', 'tax_id_check_digit' => '1', 'legal_name' => 'Proveedor Origen', 'operator_type' => 'Courier']);
-        $target = Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '22222222-2', 'tax_id_number' => '22222222', 'tax_id_check_digit' => '2', 'legal_name' => 'Proveedor Nuevo', 'operator_type' => 'Courier']);
+        $target = Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '22222222-2', 'tax_id_number' => '22222222', 'tax_id_check_digit' => '2', 'legal_name' => 'Proveedor Nuevo', 'operational_name' => 'Nombre operacional nuevo', 'operator_type' => 'Courier']);
         $client = Client::create(['tenant_id' => $tenant->id, 'tax_id' => '33333333-3', 'tax_id_number' => '33333333', 'tax_id_check_digit' => '3', 'source_merchant_name' => 'Cliente Copia', 'commercial_name' => 'Cliente Copia', 'legal_name' => 'Cliente Copia SPA']);
         $service = ServiceType::factory()->create(['service_code' => 93, 'name' => 'Servicio Copia']);
         $attributes = ['tenant_id' => $tenant->id, 'client_id' => $client->id, 'service_type_id' => $service->id, 'client_tax_id' => $client->tax_id, 'merchant_name' => $client->source_merchant_name, 'service_code' => $service->service_code, 'service_name' => $service->name];
@@ -460,10 +460,13 @@ class CourierParameterReviewTest extends TestCase
         $route = route('provider-payments.maintainers.llave-centro-costos.replicate-provider');
         $this->post($route, ['source_provider_id' => $source->id, 'target_provider_id' => $target->id])
             ->assertRedirect()->assertSessionHas('status', '3 llaves copiadas a Proveedor Nuevo; 1 combinaciones existentes omitidas.');
-        $this->assertDatabaseHas('llave_centro_costos', ['provider_id' => $target->id, 'provider_tax_id' => $target->tax_id, 'client_id' => $client->id, 'service_type_id' => $service->id, 'cost_center_code' => 3, 'payment_status' => 'NO', 'agent_name' => 'Agencia Sur', 'is_active' => false]);
+        $this->assertDatabaseHas('llave_centro_costos', ['provider_id' => $target->id, 'provider_tax_id' => $target->tax_id, 'client_id' => $client->id, 'service_type_id' => $service->id, 'cost_center_code' => 3, 'payment_status' => 'NO', 'agent_name' => 'Nombre operacional nuevo', 'is_active' => false]);
         $this->assertDatabaseHas('llave_centro_costos', ['provider_id' => $target->id, 'cost_center_code' => 2, 'payment_status' => 'REVISAR']);
         $this->assertDatabaseHas('llave_centro_costos', ['provider_id' => $target->id, 'merchant_name' => 'Cliente Antiguo A']);
         $this->assertDatabaseHas('llave_centro_costos', ['provider_id' => $target->id, 'merchant_name' => 'Cliente Antiguo B']);
+        $this->get(route('provider-payments.maintainers.llave-centro-costos', ['provider' => $target->tax_id]))
+            ->assertOk()->assertSee('value="Nombre operacional nuevo"', false)
+            ->assertDontSee('value="Agencia Sur"', false);
         $this->post($route, ['source_provider_id' => $source->id, 'target_provider_id' => $target->id])->assertRedirect();
         $this->assertSame(4, CostCenterKey::query()->where('provider_id', $target->id)->count());
         $this->assertSame(4, CostCenterKey::query()->where('provider_id', $source->id)->count());
