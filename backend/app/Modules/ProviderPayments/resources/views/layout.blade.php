@@ -55,11 +55,8 @@
         </details>
         <a class="nav-link {{ request()->routeIs('provider-payments.courier-movements.compile') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.compile') }}">Compilar Movimientos</a>
         <details {{ request()->routeIs('provider-payments.maintainers.*') ? 'open' : '' }}><summary class="nav-summary">Mantenedores</summary><nav class="subnav">
-            @foreach (['Clientes', 'Sucursales', 'Servicios', 'Centro de Costos', 'Tarifas CC'] as $name)
-                <a href="{{ route('provider-payments.maintainers.'.str($name)->slug()) }}">{{ $name }}</a>
-            @endforeach
-            @foreach (['Proveedores', 'Bancos', 'Vehículos', 'Coberturas', 'Llave centro costos', 'Estados'] as $name)
-                <a href="{{ route('provider-payments.maintainers.'.str($name)->slug()) }}">{{ $name }}</a>
+            @foreach (['Clientes' => 'clientes', 'Sucursales' => 'sucursales', 'Servicios' => 'servicios', 'Proveedores' => 'proveedores', 'Coberturas' => 'coberturas', 'Centro de Costos' => 'centro-de-costos', 'Tarifas CC' => 'tarifas-cc', 'Llave CC' => 'llave-centro-costos', 'Estados' => 'estados', 'Bancos' => 'bancos', 'Vehículos' => 'vehiculos'] as $label => $routeName)
+                <a href="{{ route('provider-payments.maintainers.'.$routeName) }}">{{ $label }}</a>
             @endforeach
             <details {{ request()->routeIs('provider-payments.maintainers.pesos*') ? 'open' : '' }}><summary class="nav-summary">Pesos</summary><nav class="subnav"><a href="{{ route('provider-payments.maintainers.pesos.transformados') }}">Peso Transformado</a><a href="{{ route('provider-payments.maintainers.pesos.reales') }}">Peso Real</a></nav></details>
         </nav></details>
