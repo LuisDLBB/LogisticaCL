@@ -56,6 +56,10 @@ class CourierMovementCompileTest extends TestCase
         $this->assertDatabaseHas('llave_centro_costos', ['id' => $draft->id, 'cost_center_code' => 88, 'payment_status' => 'SI', 'is_active' => true]);
         $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))
             ->assertOk()->assertSee('Revisar Inconsistencias Llave CC (0)');
+        $this->post(route('provider-payments.courier-movements.compile.keys.save'), [
+            'period' => '202607', 'rows' => [['id' => $draft->id, 'cost_center_code' => 88, 'payment_status' => 'NO', 'is_active' => 0]],
+        ])->assertRedirect();
+        $this->assertDatabaseHas('llave_centro_costos', ['id' => $draft->id, 'payment_status' => 'NO', 'is_active' => false]);
     }
 
     public function test_worked_records_can_be_searched_by_each_requested_field(): void

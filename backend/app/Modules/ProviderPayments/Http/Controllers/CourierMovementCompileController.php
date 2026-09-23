@@ -166,12 +166,9 @@ class CourierMovementCompileController
             'rows.*.payment_status' => ['required', 'in:SI,NO,REVISAR'],
             'rows.*.is_active' => ['required', 'boolean'],
         ]);
-        $allowedIds = $this->keyReviewGroups($tenant->id, $validated['period'])
-            ->pluck('key')->filter()->pluck('id')->all();
-        $saved = DB::transaction(function () use ($tenant, $validated, $allowedIds): int {
+        $saved = DB::transaction(function () use ($tenant, $validated): int {
             $saved = 0;
             foreach ($validated['rows'] as $row) {
-                abort_unless(in_array((int) $row['id'], $allowedIds, true), 422);
                 $key = CostCenterKey::query()->where('tenant_id', $tenant->id)->findOrFail($row['id']);
                 $key->fill([
                     'cost_center_code' => $row['cost_center_code'],
