@@ -463,6 +463,7 @@ class CourierMovementCompileController
                     $matches = $coverages->get($this->communeKey((string) $movement->destination_commune_name), collect());
                     $zones = $matches->pluck('zone')->filter()->unique();
                     $matrices = $matches->pluck('matrix_commune_name')->filter()->unique();
+                    $matrix = $matrices->count() === 1 ? $matrices->first() : null;
                     $providerRuts = $matches->map(fn (Coverage $coverage): string => strtoupper(trim((string) (
                         $coverage->provider?->tax_id ?: $coverage->provider_tax_id
                     ))))->filter()->unique()->values();
@@ -478,7 +479,7 @@ class CourierMovementCompileController
                         'tenant_id' => $tenant->id,
                         'courier_movement_id' => $movement->id,
                         'zona' => $zones->count() === 1 ? $zones->first() : null,
-                        'comuna_matriz' => $matrices->count() === 1 ? $matrices->first() : null,
+                        'comuna_matriz' => $matrix,
                         'tipo_pago' => $movement->tipo_pago ?: substr((string) $movement->nombre_proceso, 7),
                         'nombre_proceso' => substr((string) $movement->nombre_proceso, 7),
                         'periodo' => substr((string) $movement->nombre_proceso, 0, 6),
@@ -491,7 +492,7 @@ class CourierMovementCompileController
                         'razon_social_cliente' => $movement->client?->legal_name,
                         'peso_final' => $finalWeight,
                         'estado_envio' => $movement->status,
-                        'condicion_pago' => null,
+                        'condicion_pago' => $this->communeKey((string) $matrix) === 'envio externo' ? 'NO' : null,
                         'razon_social_proveedor' => $provider?->legal_name ?: $coverageProvider?->provider_name_source,
                         'rut_proveedor' => $providerRut,
                         'nombre_operacional' => $provider?->operational_name,
@@ -510,6 +511,12 @@ class CourierMovementCompileController
                 DB::table('Pago_Movimientos_Courier')->upsert($rows, ['tenant_id', 'courier_movement_id'], array_keys(array_diff_key($rows[0], array_flip(['tenant_id', 'courier_movement_id', 'created_at', 'condicion_pago']))));
                 $count += count($rows);
             });
+
+        DB::table('Pago_Movimientos_Courier')->where('tenant_id', $tenant->id)->where('periodo', $period)
+            ->whereRaw('LOWER(TRIM(comuna_matriz)) = ?', ['envio externo'])
+            ->where(fn ($query) => $query->whereNull('condicion_pago')
+                ->orWhere('condicion_pago', '!=', 'NO')->orWhereNotNull('valor'))
+            ->update(['condicion_pago' => 'NO', 'valor' => null, 'updated_at' => now()]);
 
         return redirect()->route('provider-payments.courier-movements.compile.work', ['period' => $period])
             ->with('status', number_format($count, 0, ',', '.').' registros trabajados. '.number_format($pendingProviders, 0, ',', '.').' sin proveedor único en Coberturas; se dejaron pendientes.');

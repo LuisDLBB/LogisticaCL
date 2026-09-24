@@ -21,7 +21,7 @@ class CourierMovementCompileTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_external_delivery_coverage_keeps_its_synthetic_provider_and_recovers_existing_payments(): void
+    public function test_external_delivery_is_always_no_even_with_a_payable_key(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $client = Client::create(['tenant_id' => $tenant->id, 'tax_id' => '22222222-2', 'tax_id_number' => '22222222', 'tax_id_check_digit' => '2', 'source_merchant_name' => 'Cliente externo', 'commercial_name' => 'Cliente externo', 'legal_name' => 'Cliente externo']);
@@ -40,13 +40,20 @@ class CourierMovementCompileTest extends TestCase
             'courier_name' => 'Hugo Lopez']);
 
         $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => '202607', 'processes' => ['Variable']])->assertRedirect();
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $movement->id, 'rut_proveedor' => '0-0', 'razon_social_proveedor' => 'Envio externo']);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $movement->id,
+            'rut_proveedor' => '0-0', 'razon_social_proveedor' => 'Envio externo', 'condicion_pago' => 'NO', 'valor' => null]);
 
         DB::table('Pago_Movimientos_Courier')->where('courier_movement_id', $movement->id)
-            ->update(['rut_proveedor' => null, 'razon_social_proveedor' => null]);
+            ->update(['condicion_pago' => 'SI', 'valor' => 100]);
         $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])->assertRedirect();
         $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $movement->id,
-            'rut_proveedor' => '0-0', 'razon_social_proveedor' => 'Envio externo', 'condicion_pago' => 'SI', 'valor' => 100]);
+            'rut_proveedor' => '0-0', 'razon_social_proveedor' => 'Envio externo', 'condicion_pago' => 'NO', 'valor' => null]);
+
+        DB::table('Pago_Movimientos_Courier')->where('courier_movement_id', $movement->id)
+            ->update(['condicion_pago' => 'SI', 'valor' => 100]);
+        $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => '202607', 'processes' => ['Variable']])->assertRedirect();
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $movement->id,
+            'condicion_pago' => 'NO', 'valor' => null]);
     }
 
     public function test_assign_payments_uses_the_key_for_each_postman_cargo_matrix(): void

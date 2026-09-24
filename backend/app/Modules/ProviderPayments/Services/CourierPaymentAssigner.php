@@ -21,6 +21,12 @@ class CourierPaymentAssigner
             'missing_coverage' => 0, 'ambiguous_coverage' => 0, 'missing_return_value' => 0,
             'weight_defaulted' => 0, 'weights_recalculated' => 0];
         $this->syncFinalWeights($tenantId, $period, $result);
+        $result['not_paid'] += DB::table('Pago_Movimientos_Courier')
+            ->where('tenant_id', $tenantId)->where('periodo', $period)
+            ->whereRaw('LOWER(TRIM(comuna_matriz)) = ?', ['envio externo'])
+            ->where(fn ($query) => $query->whereNull('condicion_pago')
+                ->orWhere('condicion_pago', '!=', 'NO')->orWhereNotNull('valor'))
+            ->update(['condicion_pago' => 'NO', 'valor' => null, 'updated_at' => now()]);
         $services = ServiceType::query()->get()->keyBy(fn (ServiceType $service): string => mb_strtolower(trim($service->name)));
         $keys = CostCenterKey::query()->where('tenant_id', $tenantId)->where('is_active', true)
             ->with(['provider', 'client'])->get()->groupBy(fn (CostCenterKey $key): string => $this->identity(
