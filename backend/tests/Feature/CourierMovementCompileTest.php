@@ -21,6 +21,34 @@ class CourierMovementCompileTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_external_delivery_coverage_keeps_its_synthetic_provider_and_recovers_existing_payments(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $client = Client::create(['tenant_id' => $tenant->id, 'tax_id' => '22222222-2', 'tax_id_number' => '22222222', 'tax_id_check_digit' => '2', 'source_merchant_name' => 'Cliente externo', 'commercial_name' => 'Cliente externo', 'legal_name' => 'Cliente externo']);
+        $service = ServiceType::factory()->create(['service_code' => 77, 'name' => 'Servicio externo']);
+        Coverage::create(['tenant_id' => $tenant->id, 'commune_name' => 'Chile Chico', 'matrix_commune_name' => 'Envio externo',
+            'provider_tax_id' => '0-0', 'provider_name_source' => 'Envio externo', 'zone' => 'Regiones']);
+        CostCenter::updateOrCreate(['cost_center_code' => 98], ['dispatch_guide_detail' => 'Envio externo', 'additional_kilo_value' => 0, 'is_active' => true]);
+        CostCenterWeightRate::updateOrCreate(['cost_center_code' => 98, 'final_weight' => 1], ['value' => 100, 'is_active' => true]);
+        CostCenterKey::create(['tenant_id' => $tenant->id, 'provider_tax_id' => '0-0', 'client_id' => $client->id,
+            'client_tax_id' => $client->tax_id, 'merchant_name' => $client->source_merchant_name,
+            'service_type_id' => $service->id, 'service_code' => $service->service_code, 'service_name' => $service->name,
+            'agent_name' => 'Envio externo', 'payment_status' => 'SI', 'cost_center_code' => 98, 'is_active' => true]);
+        $movement = CourierMovement::create(['tenant_id' => $tenant->id, 'client_id' => $client->id,
+            'tracking_number' => '4N202607030001-111', 'nombre_proceso' => '202607-Variable',
+            'destination_commune_name' => 'Chile Chico', 'service_name' => $service->name, 'peso_real' => 1,
+            'courier_name' => 'Hugo Lopez']);
+
+        $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => '202607', 'processes' => ['Variable']])->assertRedirect();
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $movement->id, 'rut_proveedor' => '0-0', 'razon_social_proveedor' => 'Envio externo']);
+
+        DB::table('Pago_Movimientos_Courier')->where('courier_movement_id', $movement->id)
+            ->update(['rut_proveedor' => null, 'razon_social_proveedor' => null]);
+        $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])->assertRedirect();
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $movement->id,
+            'rut_proveedor' => '0-0', 'razon_social_proveedor' => 'Envio externo', 'condicion_pago' => 'SI', 'valor' => 100]);
+    }
+
     public function test_assign_payments_uses_the_key_for_each_postman_cargo_matrix(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();

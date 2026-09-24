@@ -42,6 +42,7 @@ class CourierPaymentAssigner
                     ->pluck('service_name', 'id');
                 $updates = [];
                 foreach ($payments as $payment) {
+                    $this->recoverProviderFromCoverage($payment, $coverages);
                     if (strcasecmp(trim((string) $payment->nombre_proceso), 'Retornos') === 0) {
                         $return = $this->returnPayment($payment, $coverages);
                         if (isset($return['error'])) {
@@ -155,6 +156,47 @@ class CourierPaymentAssigner
     private function identity(?string $providerRut, ?string $clientRut, string $serviceCode): string
     {
         return strtoupper(trim((string) $providerRut)).'|'.strtoupper(trim((string) $clientRut)).'|'.$serviceCode;
+    }
+
+    private function recoverProviderFromCoverage(CourierPaymentMovement $payment, Collection $coverages): void
+    {
+        if (filled($payment->rut_proveedor)) {
+            return;
+        }
+
+        $matches = $coverages->get($this->communeKey((string) $payment->comuna_destino), collect());
+        $matrix = $this->communeKey((string) $payment->comuna_matriz);
+        if ($matrix !== '') {
+            $matrixMatches = $matches->filter(fn (Coverage $coverage): bool =>
+                $this->communeKey((string) $coverage->matrix_commune_name) === $matrix
+            );
+            if ($matrixMatches->isNotEmpty()) {
+                $matches = $matrixMatches;
+            }
+        }
+        $ruts = $matches->map(fn (Coverage $coverage): string => strtoupper(trim((string) (
+            $coverage->provider?->tax_id ?: $coverage->provider_tax_id
+        ))))->filter()->unique()->values();
+        if ($ruts->count() !== 1) {
+            return;
+        }
+
+        $rut = $ruts->first();
+        $coverage = $matches->first(fn (Coverage $candidate): bool =>
+            strtoupper(trim((string) ($candidate->provider?->tax_id ?: $candidate->provider_tax_id))) === $rut
+        );
+        $updated = DB::table('Pago_Movimientos_Courier')->where('id', $payment->id)
+            ->where(fn ($query) => $query->whereNull('rut_proveedor')->orWhere('rut_proveedor', ''))
+            ->update([
+                'rut_proveedor' => $rut,
+                'razon_social_proveedor' => $coverage->provider?->legal_name ?: $coverage->provider_name_source,
+                'nombre_operacional' => $coverage->provider?->operational_name,
+                'tipo_documento' => $coverage->provider?->tax_document_type,
+                'updated_at' => now(),
+            ]);
+        if ($updated) {
+            $payment->rut_proveedor = $rut;
+        }
     }
 
     private function returnPayment(CourierPaymentMovement $payment, Collection $coverages): array

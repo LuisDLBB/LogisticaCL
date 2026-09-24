@@ -463,10 +463,15 @@ class CourierMovementCompileController
                     $matches = $coverages->get($this->communeKey((string) $movement->destination_commune_name), collect());
                     $zones = $matches->pluck('zone')->filter()->unique();
                     $matrices = $matches->pluck('matrix_commune_name')->filter()->unique();
-                    $providers = $matches->map(fn (Coverage $coverage) => $coverage->provider ?: $providersByRut->get($coverage->provider_tax_id))
-                        ->filter()->unique('id');
-                    $provider = $providers->count() === 1 ? $providers->first() : null;
-                    if ($provider === null) {
+                    $providerRuts = $matches->map(fn (Coverage $coverage): string => strtoupper(trim((string) (
+                        $coverage->provider?->tax_id ?: $coverage->provider_tax_id
+                    ))))->filter()->unique()->values();
+                    $providerRut = $providerRuts->count() === 1 ? $providerRuts->first() : null;
+                    $provider = $providerRut ? $providersByRut->get($providerRut) : null;
+                    $coverageProvider = $providerRut ? $matches->first(fn (Coverage $coverage): bool =>
+                        strtoupper(trim((string) ($coverage->provider?->tax_id ?: $coverage->provider_tax_id))) === $providerRut
+                    ) : null;
+                    if ($providerRut === null) {
                         $pendingProviders++;
                     }
                     $rows[] = [
@@ -487,8 +492,8 @@ class CourierMovementCompileController
                         'peso_final' => $finalWeight,
                         'estado_envio' => $movement->status,
                         'condicion_pago' => null,
-                        'razon_social_proveedor' => $provider?->legal_name,
-                        'rut_proveedor' => $provider?->tax_id,
+                        'razon_social_proveedor' => $provider?->legal_name ?: $coverageProvider?->provider_name_source,
+                        'rut_proveedor' => $providerRut,
                         'nombre_operacional' => $provider?->operational_name,
                         'tipo_documento' => $provider?->tax_document_type,
                         'nombre_repartidor' => $movement->courier_name,
