@@ -613,8 +613,12 @@ class CourierParameterReviewTest extends TestCase
     public function test_a_loaded_process_can_be_deleted_without_affecting_other_processes(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
-        CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202612030001', 'nombre_proceso' => '202612-Lanas']);
-        CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202612030002', 'nombre_proceso' => '202612-Variable']);
+        $lanas = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202612030001', 'nombre_proceso' => '202612-Lanas']);
+        $variable = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202612030002', 'nombre_proceso' => '202612-Variable']);
+        foreach ([$lanas, $variable] as $movement) {
+            CourierPaymentMovement::create(['tenant_id' => $tenant->id, 'courier_movement_id' => $movement->id,
+                'periodo' => '202612', 'nombre_proceso' => $movement->nombre_proceso, 'tipo_pago' => 'Variable', 'peso_final' => 1]);
+        }
 
         $this->get(route('provider-payments.dashboard', ['period' => '202612']))
             ->assertOk()->assertSee('Eliminar procesos cargados')->assertSee('202612-Lanas')->assertSee('202612-Variable');
@@ -625,6 +629,8 @@ class CourierParameterReviewTest extends TestCase
 
         $this->assertDatabaseMissing('movimientos_courier', ['tracking_number' => '4N202612030001']);
         $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => '4N202612030002', 'nombre_proceso' => '202612-Variable']);
+        $this->assertDatabaseMissing('Pago_Movimientos_Courier', ['courier_movement_id' => $lanas->id]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $variable->id]);
     }
 
     public function test_excluded_coverage_errors_disappear_from_pending_review_but_remain_in_error_database(): void

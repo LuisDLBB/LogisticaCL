@@ -6,8 +6,9 @@ use App\Models\CourierMovement;
 use App\Models\Coverage;
 use App\Models\Tenant;
 use App\Modules\ProviderPayments\Services\CourierPaymentSummary;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -115,10 +116,20 @@ class ProviderPaymentsDashboardController
         ]);
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $processName = $validated['process_name'];
-        $deleted = CourierMovement::query()
-            ->where('tenant_id', $tenant->id)
-            ->where('nombre_proceso', $processName)
-            ->delete();
+        $deleted = DB::transaction(function () use ($tenant, $processName): int {
+            DB::table('Pago_Movimientos_Courier')
+                ->where('tenant_id', $tenant->id)
+                ->whereIn('courier_movement_id', DB::table('movimientos_courier')
+                    ->select('id')
+                    ->where('tenant_id', $tenant->id)
+                    ->where('nombre_proceso', $processName))
+                ->delete();
+
+            return CourierMovement::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('nombre_proceso', $processName)
+                ->delete();
+        });
 
         return redirect()->route('provider-payments.dashboard', ['period' => substr($processName, 0, 6)])
             ->with('status', $deleted > 0
