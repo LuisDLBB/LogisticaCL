@@ -143,7 +143,7 @@ class CourierMovementCompileController
             ->where(fn ($query) => $query->whereNull('condicion_pago')->orWhere('condicion_pago', '<>', 'NO'))->count();
         $paymentDashboard = $period === '' ? collect() : CourierPaymentMovement::query()
             ->where('tenant_id', $tenant->id)->where('periodo', $period)
-            ->selectRaw("CASE WHEN UPPER(TRIM(zona)) = 'RM' THEN 'RM' WHEN zona IS NULL OR TRIM(zona) = '' THEN 'Sin zona' ELSE 'Regiones' END AS grupo_zona, condicion_pago, COUNT(*) AS total")
+            ->selectRaw("CASE WHEN UPPER(TRIM(zona)) = 'RM' THEN 'RM' WHEN zona IS NULL OR TRIM(zona) = '' THEN 'Sin zona' ELSE 'Regiones' END AS grupo_zona, condicion_pago, COUNT(*) AS total, SUM(CASE WHEN condicion_pago = 'SI' THEN COALESCE(valor, 0) ELSE 0 END) AS neto_considerado")
             ->groupBy('grupo_zona', 'condicion_pago')->get()
             ->groupBy('grupo_zona');
         $keyReviewGroups = $period === '' ? collect() : $this->keyReviewGroups($tenant->id, $period);

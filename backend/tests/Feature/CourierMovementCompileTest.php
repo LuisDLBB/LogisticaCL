@@ -251,6 +251,26 @@ class CourierMovementCompileTest extends TestCase
         $this->assertDatabaseHas('llave_centro_costos', ['id' => $draft->id, 'payment_status' => 'NO', 'is_active' => false]);
     }
 
+    public function test_payment_summary_totals_only_considered_net_values_by_zone(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        foreach ([['RM', 'SI', 1234], ['RM', 'NO', 9999], ['Regiones', 'SI', 2500], [null, null, 4000]] as $index => [$zone, $condition, $value]) {
+            $movement = CourierMovement::create(['tenant_id' => $tenant->id,
+                'tracking_number' => '4N20260704000'.$index.'-111', 'nombre_proceso' => '202607-Variable']);
+            CourierPaymentMovement::create(['tenant_id' => $tenant->id, 'courier_movement_id' => $movement->id,
+                'periodo' => '202607', 'nombre_proceso' => 'Variable', 'tipo_pago' => 'Variable',
+                'peso_final' => 1, 'zona' => $zone, 'condicion_pago' => $condition, 'valor' => $value]);
+        }
+
+        $response = $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))
+            ->assertOk()->assertSee('Registros Considerados')->assertSee('Registros No Considerados')
+            ->assertSee('Total Neto Considerado')->assertSee('$ 1.234')->assertSee('$ 2.500')->assertSee('$ 3.734');
+        $dashboard = $response->viewData('paymentDashboard');
+        $this->assertSame(1234, (int) $dashboard->get('RM')->firstWhere('condicion_pago', 'SI')->neto_considerado);
+        $this->assertSame(0, (int) $dashboard->get('RM')->firstWhere('condicion_pago', 'NO')->neto_considerado);
+        $this->assertSame(2500, (int) $dashboard->get('Regiones')->firstWhere('condicion_pago', 'SI')->neto_considerado);
+    }
+
     public function test_worked_records_can_be_searched_by_each_requested_field(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
