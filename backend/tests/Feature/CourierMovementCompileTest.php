@@ -21,6 +21,32 @@ class CourierMovementCompileTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_assign_payments_uses_the_key_for_each_postman_cargo_matrix(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $provider = Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '76556632-0', 'tax_id_number' => '76556632', 'tax_id_check_digit' => '0', 'legal_name' => 'Postman Cargo', 'operator_type' => 'Courier']);
+        $client = Client::create(['tenant_id' => $tenant->id, 'tax_id' => '22222222-2', 'tax_id_number' => '22222222', 'tax_id_check_digit' => '2', 'source_merchant_name' => 'Cliente', 'commercial_name' => 'Cliente', 'legal_name' => 'Cliente']);
+        $service = ServiceType::factory()->create(['service_code' => 77, 'name' => 'Material Publicitario']);
+
+        foreach ([['Postman Cargo (Iquique)', 10, 100], ['Postman Cargo (Alto Hospicio)', 13, 200]] as [$matrix, $center, $value]) {
+            CostCenter::updateOrCreate(['cost_center_code' => $center], ['dispatch_guide_detail' => $matrix, 'additional_kilo_value' => 0, 'is_active' => true]);
+            CostCenterWeightRate::updateOrCreate(['cost_center_code' => $center, 'final_weight' => 1], ['value' => $value, 'is_active' => true]);
+            CostCenterKey::create(['tenant_id' => $tenant->id, 'provider_id' => $provider->id, 'provider_tax_id' => $provider->tax_id,
+                'client_id' => $client->id, 'client_tax_id' => $client->tax_id, 'merchant_name' => $client->source_merchant_name,
+                'service_type_id' => $service->id, 'service_code' => $service->service_code, 'service_name' => $service->name,
+                'agent_name' => $matrix, 'payment_status' => 'SI', 'cost_center_code' => $center, 'is_active' => true]);
+            $movement = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N20260703000'.$center.'-111',
+                'nombre_proceso' => '202607-Variable', 'service_name' => $service->name, 'peso_real' => 1]);
+            CourierPaymentMovement::create(['tenant_id' => $tenant->id, 'courier_movement_id' => $movement->id, 'periodo' => '202607',
+                'nombre_proceso' => 'Variable', 'tipo_pago' => 'Variable', 'comuna_matriz' => $matrix, 'peso_final' => 1,
+                'rut_proveedor' => $provider->tax_id, 'rut_cliente' => $client->tax_id]);
+        }
+
+        $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])->assertRedirect();
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['comuna_matriz' => 'Postman Cargo (Iquique)', 'condicion_pago' => 'SI', 'valor' => 100]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['comuna_matriz' => 'Postman Cargo (Alto Hospicio)', 'condicion_pago' => 'SI', 'valor' => 200]);
+    }
+
     public function test_assign_payments_defaults_missing_lanas_weight_to_one_before_looking_up_minimum_rate(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();

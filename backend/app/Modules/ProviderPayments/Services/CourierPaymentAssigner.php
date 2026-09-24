@@ -36,7 +36,7 @@ class CourierPaymentAssigner
 
         CourierPaymentMovement::query()->where('tenant_id', $tenantId)->where('periodo', $period)
             ->where(fn ($query) => $query->whereNull('condicion_pago')->orWhere('condicion_pago', 'SI'))
-            ->select(['id', 'courier_movement_id', 'rut_proveedor', 'rut_cliente', 'peso_final', 'condicion_pago', 'valor', 'nombre_proceso', 'comuna_destino', 'fecha'])
+            ->select(['id', 'courier_movement_id', 'rut_proveedor', 'rut_cliente', 'comuna_matriz', 'peso_final', 'condicion_pago', 'valor', 'nombre_proceso', 'comuna_destino', 'fecha'])
             ->chunkById(500, function ($payments) use ($services, $keys, $centers, $rates, $coverages, &$result): void {
                 $movements = CourierMovement::query()->whereIn('id', $payments->pluck('courier_movement_id'))
                     ->pluck('service_name', 'id');
@@ -64,6 +64,15 @@ class CourierPaymentAssigner
                     if ($matches === null || $matches->isEmpty()) {
                         $result['missing_key']++;
                         continue;
+                    }
+                    $matrix = $this->communeKey((string) $payment->comuna_matriz);
+                    if ($matrix !== '') {
+                        $matrixMatches = $matches->filter(fn (CostCenterKey $key): bool =>
+                            $this->communeKey((string) $key->agent_name) === $matrix
+                        );
+                        if ($matrixMatches->isNotEmpty()) {
+                            $matches = $matrixMatches;
+                        }
                     }
                     $configurations = $matches->unique(function (CostCenterKey $key): string {
                         $status = strtoupper(trim((string) $key->payment_status));
