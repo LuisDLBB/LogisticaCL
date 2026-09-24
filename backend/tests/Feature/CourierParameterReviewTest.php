@@ -560,14 +560,15 @@ class CourierParameterReviewTest extends TestCase
         $this->get(route('provider-payments.dashboard'))
             ->assertOk()->assertSee('Registros por servicio')->assertSee('Variable')->assertSee('Lanas')->assertSee('202607-Variable')->assertSee('202607-Lanas')
             ->assertSee('Cliente Nuevo')->assertDontSee('Cliente Antiguo')->assertSee('3')->assertSee('Registros cargados')
-            ->assertSee('Resumen de pago · 202607')->assertSee('Registros Considerados')
-            ->assertSee('Registros No Considerados')->assertSee('Total Neto Considerado')
-            ->assertSee('.payment-grid{', false)
-            ->assertSee('$ 2.300')->assertSee('$ 700')->assertSee('$ 3.000')->assertDontSee('$ 8.000');
+            ->assertSee('Pagos del período 202607')->assertSee('Registros considerados')
+            ->assertSee('Registros no considerados')->assertSee('Distribución del neto considerado')
+            ->assertSee('Regiones')->assertSee('76,7%')->assertSee('23,3%')
+            ->assertSee('$ 2.300')->assertSee('$ 700')->assertSee('$ 3.000')->assertDontSee('$ 8.000')
+            ->assertDontSee('class="payment-grid"', false);
 
         $this->get(route('provider-payments.dashboard', ['period' => '202606']))
             ->assertOk()->assertSee('Variable')->assertSee('202606-Variable')->assertSee('Cliente Antiguo')->assertDontSee('Cliente Nuevo')
-            ->assertSee('Resumen de pago · 202606')->assertSee('$ 100')->assertDontSee('$ 3.000');
+            ->assertSee('Pagos del período 202606')->assertSee('$ 100')->assertDontSee('$ 3.000');
     }
 
     public function test_dashboard_opens_a_read_only_filtered_movement_sheet_with_decrypted_fields(): void
