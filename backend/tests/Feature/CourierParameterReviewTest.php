@@ -633,7 +633,7 @@ class CourierParameterReviewTest extends TestCase
 
         $this->delete(route('provider-payments.movements.processes.destroy'), ['process_name' => '202612-Lanas', 'password' => 'test-master-key'])
             ->assertRedirect(route('provider-payments.dashboard', ['period' => '202612']))
-            ->assertSessionHas('status', 'Proceso 202612-Lanas eliminado: 1 registros borrados.');
+            ->assertSessionHas('status', 'Proceso 202612-Lanas eliminado. Movimientos: 1. Registros de pago: 1.');
 
         $this->assertDatabaseMissing('movimientos_courier', ['tracking_number' => '4N202612030001']);
         $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => '4N202612030002', 'nombre_proceso' => '202612-Variable']);

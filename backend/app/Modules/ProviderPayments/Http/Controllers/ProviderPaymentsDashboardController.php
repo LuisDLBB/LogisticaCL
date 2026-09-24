@@ -119,8 +119,8 @@ class ProviderPaymentsDashboardController
         $authorizer->authorize($request);
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $processName = $validated['process_name'];
-        $deleted = DB::transaction(function () use ($tenant, $processName): int {
-            DB::table('Pago_Movimientos_Courier')
+        [$deletedMovements, $deletedPayments] = DB::transaction(function () use ($tenant, $processName): array {
+            $deletedPayments = DB::table('Pago_Movimientos_Courier')
                 ->where('tenant_id', $tenant->id)
                 ->whereIn('courier_movement_id', DB::table('movimientos_courier')
                     ->select('id')
@@ -128,10 +128,12 @@ class ProviderPaymentsDashboardController
                     ->where('nombre_proceso', $processName))
                 ->delete();
 
-            return CourierMovement::query()
+            $deletedMovements = CourierMovement::query()
                 ->where('tenant_id', $tenant->id)
                 ->where('nombre_proceso', $processName)
                 ->delete();
+
+            return [$deletedMovements, $deletedPayments];
         });
 
         $returnRoute = ($validated['return_to'] ?? '') === 'work'
@@ -139,8 +141,8 @@ class ProviderPaymentsDashboardController
             : 'provider-payments.dashboard';
 
         return redirect()->route($returnRoute, ['period' => substr($processName, 0, 6)])
-            ->with('status', $deleted > 0
-                ? sprintf('Proceso %s eliminado: %s registros borrados.', $processName, number_format($deleted, 0, ',', '.'))
+            ->with('status', $deletedMovements > 0
+                ? sprintf('Proceso %s eliminado. Movimientos: %s. Registros de pago: %s.', $processName, number_format($deletedMovements, 0, ',', '.'), number_format($deletedPayments, 0, ',', '.'))
                 : sprintf('El proceso %s ya no tenía registros.', $processName));
     }
 }
