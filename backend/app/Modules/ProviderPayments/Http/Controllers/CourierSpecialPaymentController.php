@@ -32,12 +32,14 @@ class CourierSpecialPaymentController
     {
         $validated = $request->validate([
             'file' => ['required', 'file', 'extensions:xlsx', 'max:102400'],
+            'period_month' => ['required', 'date_format:Y-m'],
         ]);
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $file = $validated['file'];
-        $result = $importer->import($file->getRealPath(), $file->getClientOriginalName(), $tenant->id);
+        $period = str_replace('-', '', $validated['period_month']).'-Especiales';
+        $result = $importer->import($file->getRealPath(), $file->getClientOriginalName(), $tenant->id, $period);
 
         return redirect()->route('provider-payments.courier-movements.especiales')
-            ->with('status', "Se cargaron {$result['imported']} pagos especiales; {$result['existing']} filas ya estaban registradas.");
+            ->with('status', "Período {$period}: {$result['imported']} pagos cargados, {$result['reassigned']} corregidos y {$result['existing']} filas ya registradas.");
     }
 }

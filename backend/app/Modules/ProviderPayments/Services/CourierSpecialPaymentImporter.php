@@ -12,9 +12,13 @@ use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
 class CourierSpecialPaymentImporter
 {
-    /** @return array{total: int, imported: int, existing: int, amount: int} */
-    public function import(string $path, string $originalName, int $tenantId): array
+    /** @return array{total: int, imported: int, existing: int, reassigned: int, amount: int} */
+    public function import(string $path, string $originalName, int $tenantId, string $period): array
     {
+        if (! preg_match('/^\d{6}-Especiales$/', $period)) {
+            throw ValidationException::withMessages(['period_month' => 'Selecciona un período de pago válido.']);
+        }
+
         $hash = hash_file('sha256', $path);
         $reader = new Reader;
         $rows = [];
@@ -54,7 +58,7 @@ class CourierSpecialPaymentImporter
 
                     $rows[] = [
                         'tenant_id' => $tenantId,
-                        'periodo' => $date->format('Ym').'-Especiales',
+                        'periodo' => $period,
                         'fecha' => $date->format('Y-m-d'),
                         'usuario_ingresa' => trim((string) $values[1]),
                         'autoriza' => trim((string) $values[2]),
@@ -83,16 +87,19 @@ class CourierSpecialPaymentImporter
             throw ValidationException::withMessages(['file' => 'La planilla no contiene pagos especiales.']);
         }
 
-        $imported = DB::transaction(function () use ($rows): int {
+        [$imported, $reassigned] = DB::transaction(function () use ($rows, $tenantId, $hash, $period): array {
+            $reassigned = DB::table('courier_special_payments')
+                ->where('tenant_id', $tenantId)->where('hash_archivo', $hash)->where('periodo', '!=', $period)
+                ->update(['periodo' => $period, 'updated_at' => now()]);
             $count = 0;
             foreach (array_chunk($rows, 500) as $chunk) {
                 $count += DB::table('courier_special_payments')->insertOrIgnore($chunk);
             }
 
-            return $count;
+            return [$count, $reassigned];
         });
 
-        return ['total' => count($rows), 'imported' => $imported, 'existing' => count($rows) - $imported, 'amount' => array_sum(array_column($rows, 'monto'))];
+        return ['total' => count($rows), 'imported' => $imported, 'existing' => count($rows) - $imported, 'reassigned' => $reassigned, 'amount' => array_sum(array_column($rows, 'monto'))];
     }
 
     private function normalizeHeader(mixed $value): string
