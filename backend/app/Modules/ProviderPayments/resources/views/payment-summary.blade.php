@@ -1,7 +1,7 @@
 @once
 @push('styles')
 <style>
-.payment-dashboard{max-width:960px;margin:10px 0;padding:12px;overflow-x:auto}.payment-dashboard h2{margin:0 0 8px;font-size:17px}.payment-grid{display:grid;grid-template-columns:95px repeat(4,minmax(110px,1fr)) minmax(170px,1.3fr);min-width:735px;gap:1px;background:var(--line);border:1px solid var(--line);font-size:13px}.payment-grid>*{margin:0;padding:7px 9px;background:#fff}.payment-grid strong{background:#eaf8f8;color:var(--turquoise-dark)}.payment-grid .payment-total,.payment-grid .payment-grand{font-weight:800}.payment-grid .payment-grand{background:#d9f5f4;border-top:2px solid var(--turquoise-dark)}@media(max-width:600px){.payment-grid{font-size:11px}.payment-grid>*{padding:6px 4px}}
+.payment-dashboard{width:100%;margin:10px 0;padding:12px;overflow-x:auto}.payment-dashboard h2{margin:0 0 8px;font-size:16px}.payment-grid{display:grid;grid-template-columns:minmax(90px,.7fr) repeat(4,minmax(120px,1fr)) minmax(180px,1.4fr);width:100%;min-width:735px;gap:1px;background:var(--line);border:1px solid var(--line);font-size:12px}.payment-grid>*{margin:0;padding:7px 9px;background:#fff}.payment-grid strong{background:#eaf8f8;color:var(--turquoise-dark)}.payment-grid .payment-total,.payment-grid .payment-grand{font-weight:800}.payment-grid .payment-grand{background:#d9f5f4;border-top:2px solid var(--turquoise-dark)}@media(max-width:600px){.payment-grid{font-size:11px}.payment-grid>*{padding:6px 4px}}
 </style>
 @endpush
 @endonce
