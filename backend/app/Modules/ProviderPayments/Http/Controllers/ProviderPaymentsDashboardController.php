@@ -5,6 +5,7 @@ namespace App\Modules\ProviderPayments\Http\Controllers;
 use App\Models\CourierMovement;
 use App\Models\Coverage;
 use App\Models\Tenant;
+use App\Modules\ProviderPayments\Services\CourierPaymentSummary;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
@@ -12,7 +13,7 @@ use Illuminate\View\View;
 
 class ProviderPaymentsDashboardController
 {
-    public function __invoke(Request $request): View
+    public function __invoke(Request $request, CourierPaymentSummary $paymentSummary): View
     {
         $tenant = Tenant::query()->where('code', '4N')->first();
         $periods = $tenant ? CourierMovement::query()->where('tenant_id', $tenant->id)->whereNotNull('nombre_proceso')
@@ -46,8 +47,9 @@ class ProviderPaymentsDashboardController
             ->orderByDesc('total')
             ->get();
         $recordCount = (clone $movements)->count();
+        $paymentDashboard = $paymentSummary->forPeriod($tenant?->id, $selectedPeriod);
 
-        return view('provider-payments::dashboard', compact('merchantCounts', 'statusCounts', 'serviceCounts', 'periods', 'selectedPeriod', 'recordCount'));
+        return view('provider-payments::dashboard', compact('merchantCounts', 'statusCounts', 'serviceCounts', 'periods', 'selectedPeriod', 'recordCount', 'paymentDashboard'));
     }
 
     public function movements(Request $request): View

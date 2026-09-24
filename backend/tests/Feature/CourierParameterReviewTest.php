@@ -8,6 +8,7 @@ use App\Models\CostCenter;
 use App\Models\CostCenterKey;
 use App\Models\CourierImportError;
 use App\Models\CourierMovement;
+use App\Models\CourierPaymentMovement;
 use App\Models\Coverage;
 use App\Models\Provider;
 use App\Models\ProviderBankAccount;
@@ -545,17 +546,28 @@ class CourierParameterReviewTest extends TestCase
     public function test_dashboard_defaults_to_latest_period_and_filters_process_totals(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
-        CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202606010001', 'merchant_name' => 'Cliente Antiguo', 'status' => 'Entregado', 'nombre_proceso' => '202606-Variable']);
-        CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202607010001', 'merchant_name' => 'Cliente Nuevo', 'status' => 'Fallido', 'nombre_proceso' => '202607-Variable']);
-        CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202607010002', 'merchant_name' => 'Cliente Nuevo', 'status' => 'Entregado', 'nombre_proceso' => '202607-Variable']);
-        CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202607010003', 'merchant_name' => 'Cliente Nuevo', 'status' => 'Entregado', 'nombre_proceso' => '202607-Lanas']);
+        $old = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202606010001', 'merchant_name' => 'Cliente Antiguo', 'status' => 'Entregado', 'nombre_proceso' => '202606-Variable']);
+        $newRm = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202607010001', 'merchant_name' => 'Cliente Nuevo', 'status' => 'Fallido', 'nombre_proceso' => '202607-Variable']);
+        $newNo = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202607010002', 'merchant_name' => 'Cliente Nuevo', 'status' => 'Entregado', 'nombre_proceso' => '202607-Variable']);
+        $newRegions = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202607010003', 'merchant_name' => 'Cliente Nuevo', 'status' => 'Entregado', 'nombre_proceso' => '202607-Lanas']);
+        foreach ([[$old, '202606', 'Regiones', 'SI', 100], [$newRm, '202607', 'RM', 'SI', 2300],
+            [$newNo, '202607', 'Regiones', 'NO', 8000], [$newRegions, '202607', 'Regiones', 'SI', 700]] as [$movement, $period, $zone, $condition, $value]) {
+            CourierPaymentMovement::create(['tenant_id' => $tenant->id, 'courier_movement_id' => $movement->id,
+                'periodo' => $period, 'nombre_proceso' => 'Variable', 'tipo_pago' => 'Variable', 'peso_final' => 1,
+                'zona' => $zone, 'condicion_pago' => $condition, 'valor' => $value]);
+        }
 
         $this->get(route('provider-payments.dashboard'))
             ->assertOk()->assertSee('Registros por servicio')->assertSee('Variable')->assertSee('Lanas')->assertSee('202607-Variable')->assertSee('202607-Lanas')
-            ->assertSee('Cliente Nuevo')->assertDontSee('Cliente Antiguo')->assertSee('3')->assertSee('Registros cargados');
+            ->assertSee('Cliente Nuevo')->assertDontSee('Cliente Antiguo')->assertSee('3')->assertSee('Registros cargados')
+            ->assertSee('Resumen de pago · 202607')->assertSee('Registros Considerados')
+            ->assertSee('Registros No Considerados')->assertSee('Total Neto Considerado')
+            ->assertSee('.payment-grid{', false)
+            ->assertSee('$ 2.300')->assertSee('$ 700')->assertSee('$ 3.000')->assertDontSee('$ 8.000');
 
         $this->get(route('provider-payments.dashboard', ['period' => '202606']))
-            ->assertOk()->assertSee('Variable')->assertSee('202606-Variable')->assertSee('Cliente Antiguo')->assertDontSee('Cliente Nuevo');
+            ->assertOk()->assertSee('Variable')->assertSee('202606-Variable')->assertSee('Cliente Antiguo')->assertDontSee('Cliente Nuevo')
+            ->assertSee('Resumen de pago · 202606')->assertSee('$ 100')->assertDontSee('$ 3.000');
     }
 
     public function test_dashboard_opens_a_read_only_filtered_movement_sheet_with_decrypted_fields(): void

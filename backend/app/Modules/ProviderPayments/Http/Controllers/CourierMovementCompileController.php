@@ -13,6 +13,7 @@ use App\Models\Provider;
 use App\Models\ServiceType;
 use App\Models\Tenant;
 use App\Modules\ProviderPayments\Services\CourierPaymentAssigner;
+use App\Modules\ProviderPayments\Services\CourierPaymentSummary;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -71,7 +72,7 @@ class CourierMovementCompileController
             ->with('status', sprintf('%s-%s: %s registros trabajados eliminados.', $validated['period'], $validated['process'], number_format($deleted, 0, ',', '.')));
     }
 
-    public function work(Request $request): View
+    public function work(Request $request, CourierPaymentSummary $paymentSummary): View
     {
         $filters = $request->validate([
             'zone' => ['nullable', 'string', 'max:150'],
@@ -141,11 +142,7 @@ class CourierMovementCompileController
             ->where('tenant_id', $tenant->id)->where('periodo', $period)
             ->where('razon_social_proveedor', self::INTERNAL_PROVIDER_NAME)
             ->where(fn ($query) => $query->whereNull('condicion_pago')->orWhere('condicion_pago', '<>', 'NO'))->count();
-        $paymentDashboard = $period === '' ? collect() : CourierPaymentMovement::query()
-            ->where('tenant_id', $tenant->id)->where('periodo', $period)
-            ->selectRaw("CASE WHEN UPPER(TRIM(zona)) = 'RM' THEN 'RM' WHEN zona IS NULL OR TRIM(zona) = '' THEN 'Sin zona' ELSE 'Regiones' END AS grupo_zona, condicion_pago, COUNT(*) AS total, SUM(CASE WHEN condicion_pago = 'SI' THEN COALESCE(valor, 0) ELSE 0 END) AS neto_considerado")
-            ->groupBy('grupo_zona', 'condicion_pago')->get()
-            ->groupBy('grupo_zona');
+        $paymentDashboard = $paymentSummary->forPeriod($tenant->id, $period);
         $keyReviewGroups = $period === '' ? collect() : $this->keyReviewGroups($tenant->id, $period);
         $missingKeyProviders = $keyReviewGroups->pluck('provider_tax_id')->unique()->count();
         $missingKeyCombinations = $keyReviewGroups->whereNull('key')->count();
