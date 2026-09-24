@@ -6,6 +6,7 @@ use App\Models\CourierMovement;
 use App\Models\Coverage;
 use App\Models\Tenant;
 use App\Modules\ProviderPayments\Services\CourierPaymentSummary;
+use App\Modules\ProviderPayments\Services\ProcessDeletionAuthorizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -109,11 +110,13 @@ class ProviderPaymentsDashboardController
         ));
     }
 
-    public function destroyProcess(Request $request): RedirectResponse
+    public function destroyProcess(Request $request, ProcessDeletionAuthorizer $authorizer): RedirectResponse
     {
         $validated = $request->validate([
             'process_name' => ['required', 'string', 'regex:/^\d{6}-.+$/', 'max:100'],
+            'return_to' => ['nullable', 'in:work'],
         ]);
+        $authorizer->authorize($request);
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $processName = $validated['process_name'];
         $deleted = DB::transaction(function () use ($tenant, $processName): int {
@@ -131,7 +134,11 @@ class ProviderPaymentsDashboardController
                 ->delete();
         });
 
-        return redirect()->route('provider-payments.dashboard', ['period' => substr($processName, 0, 6)])
+        $returnRoute = ($validated['return_to'] ?? '') === 'work'
+            ? 'provider-payments.courier-movements.compile.work'
+            : 'provider-payments.dashboard';
+
+        return redirect()->route($returnRoute, ['period' => substr($processName, 0, 6)])
             ->with('status', $deleted > 0
                 ? sprintf('Proceso %s eliminado: %s registros borrados.', $processName, number_format($deleted, 0, ',', '.'))
                 : sprintf('El proceso %s ya no tenía registros.', $processName));

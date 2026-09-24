@@ -612,6 +612,7 @@ class CourierParameterReviewTest extends TestCase
 
     public function test_a_loaded_process_can_be_deleted_without_affecting_other_processes(): void
     {
+        config()->set('provider-payments.process_deletion_key', 'test-master-key');
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $lanas = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202612030001', 'nombre_proceso' => '202612-Lanas']);
         $variable = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202612030002', 'nombre_proceso' => '202612-Variable']);
@@ -621,9 +622,16 @@ class CourierParameterReviewTest extends TestCase
         }
 
         $this->get(route('provider-payments.dashboard', ['period' => '202612']))
-            ->assertOk()->assertSee('Eliminar procesos cargados')->assertSee('202612-Lanas')->assertSee('202612-Variable');
+            ->assertOk()->assertSee('Eliminar procesos cargados')->assertSee('202612-Lanas')->assertSee('202612-Variable')->assertSee('Clave maestra');
 
         $this->delete(route('provider-payments.movements.processes.destroy'), ['process_name' => '202612-Lanas'])
+            ->assertSessionHasErrors('password');
+        $this->delete(route('provider-payments.movements.processes.destroy'), ['process_name' => '202612-Lanas', 'password' => 'incorrecta'])
+            ->assertSessionHasErrors('password');
+        $this->assertDatabaseHas('movimientos_courier', ['id' => $lanas->id]);
+        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $lanas->id]);
+
+        $this->delete(route('provider-payments.movements.processes.destroy'), ['process_name' => '202612-Lanas', 'password' => 'test-master-key'])
             ->assertRedirect(route('provider-payments.dashboard', ['period' => '202612']))
             ->assertSessionHas('status', 'Proceso 202612-Lanas eliminado: 1 registros borrados.');
 
@@ -631,6 +639,26 @@ class CourierParameterReviewTest extends TestCase
         $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => '4N202612030002', 'nombre_proceso' => '202612-Variable']);
         $this->assertDatabaseMissing('Pago_Movimientos_Courier', ['courier_movement_id' => $lanas->id]);
         $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $variable->id]);
+    }
+
+    public function test_work_screen_lists_loaded_processes_and_requires_the_master_key_to_delete_one(): void
+    {
+        config()->set('provider-payments.process_deletion_key', 'test-master-key');
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $movement = CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => '4N202612030003', 'nombre_proceso' => '202612-Retornos']);
+
+        $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202612']))
+            ->assertOk()->assertSee('Eliminar registros cargados')->assertSee('202612-Retornos')->assertSee('Clave maestra');
+
+        $this->delete(route('provider-payments.movements.processes.destroy'), [
+            'process_name' => '202612-Retornos', 'return_to' => 'work', 'password' => 'incorrecta',
+        ])->assertSessionHasErrors('password');
+        $this->assertDatabaseHas('movimientos_courier', ['id' => $movement->id]);
+
+        $this->delete(route('provider-payments.movements.processes.destroy'), [
+            'process_name' => '202612-Retornos', 'return_to' => 'work', 'password' => 'test-master-key',
+        ])->assertRedirect(route('provider-payments.courier-movements.compile.work', ['period' => '202612']));
+        $this->assertDatabaseMissing('movimientos_courier', ['id' => $movement->id]);
     }
 
     public function test_excluded_coverage_errors_disappear_from_pending_review_but_remain_in_error_database(): void

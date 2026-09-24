@@ -2,18 +2,19 @@
 
 namespace App\Modules\ProviderPayments\Http\Controllers;
 
+use App\Models\Client;
+use App\Models\CostCenter;
+use App\Models\CostCenterKey;
 use App\Models\CourierMovement;
 use App\Models\CourierPaymentMovement;
 use App\Models\CourierStatus;
 use App\Models\Coverage;
-use App\Models\CostCenter;
-use App\Models\CostCenterKey;
-use App\Models\Client;
 use App\Models\Provider;
 use App\Models\ServiceType;
 use App\Models\Tenant;
 use App\Modules\ProviderPayments\Services\CourierPaymentAssigner;
 use App\Modules\ProviderPayments\Services\CourierPaymentSummary;
+use App\Modules\ProviderPayments\Services\ProcessDeletionAuthorizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -25,7 +26,9 @@ use Illuminate\View\View;
 class CourierMovementCompileController
 {
     private const PROCESS_TYPES = ['Variable', 'Lanas', 'Retornos'];
+
     private const INTERNAL_PROVIDER_NAME = '4 Nortes Logistica SPA';
+
     private const WORK_FILTER_COLUMNS = [
         'zone' => 'zona',
         'matrix' => 'comuna_matriz',
@@ -58,12 +61,13 @@ class CourierMovementCompileController
         ]);
     }
 
-    public function destroyProcess(Request $request): RedirectResponse
+    public function destroyProcess(Request $request, ProcessDeletionAuthorizer $authorizer): RedirectResponse
     {
         $validated = $request->validate([
             'period' => ['required', 'regex:/^\d{6}$/'],
             'process' => ['required', 'in:Variable,Lanas,Retornos'],
         ]);
+        $authorizer->authorize($request);
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $deleted = CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
             ->where('periodo', $validated['period'])->where('nombre_proceso', $validated['process'])->delete();
@@ -97,6 +101,9 @@ class CourierMovementCompileController
         $processes = $period === '' ? collect() : CourierMovement::query()->where('tenant_id', $tenant->id)
             ->whereIn('nombre_proceso', array_map(fn (string $type): string => $period.'-'.$type, self::PROCESS_TYPES))
             ->selectRaw('nombre_proceso, COUNT(*) AS total')->groupBy('nombre_proceso')->orderBy('nombre_proceso')->get();
+        $loadedProcessOptions = CourierMovement::query()->where('tenant_id', $tenant->id)
+            ->where('nombre_proceso', 'like', '______-%')
+            ->selectRaw('nombre_proceso, COUNT(*) AS total')->groupBy('nombre_proceso')->orderByDesc('nombre_proceso')->get();
         $compiled = $period === '' ? collect() : CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
             ->where('periodo', $period)->selectRaw('nombre_proceso, COUNT(*) AS total')->groupBy('nombre_proceso')->pluck('total', 'nombre_proceso');
         $rowsQuery = CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
@@ -146,7 +153,8 @@ class CourierMovementCompileController
         $keyReviewGroups = $period === '' ? collect() : $this->keyReviewGroups($tenant->id, $period);
         $missingKeyProviders = $keyReviewGroups->pluck('provider_tax_id')->unique()->count();
         $missingKeyCombinations = $keyReviewGroups->whereNull('key')->count();
-        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates', 'fourNorthSummary', 'internalProviderCount', 'paymentDashboard', 'missingKeyProviders', 'filters', 'filterOptions'));
+
+        return view('provider-payments::compile-work', compact('periods', 'period', 'processes', 'loadedProcessOptions', 'compiled', 'rows', 'nonPayableCounts', 'fourNorthCandidates', 'fourNorthSummary', 'internalProviderCount', 'paymentDashboard', 'missingKeyProviders', 'filters', 'filterOptions'));
     }
 
     public function reviewKeys(Request $request): View
@@ -317,15 +325,18 @@ class CourierMovementCompileController
                     $assignment = $assignments->get($this->assignmentKey($row->rut_proveedor, $row->comuna_matriz, $row->nombre_repartidor));
                     if ($assignment === null) {
                         $withoutAssignment++;
+
                         continue;
                     }
                     if (strtoupper(trim($assignment->NuevoRutProveedor)) === 'N/A') {
                         $notApplicable++;
+
                         continue;
                     }
                     $provider = $providers->get(strtoupper(trim($assignment->NuevoRutProveedor)));
                     if ($provider === null) {
                         $withoutAssignment++;
+
                         continue;
                     }
                     $byProvider[$provider->id]['provider'] = $provider;
@@ -364,11 +375,13 @@ class CourierMovementCompileController
             $total = (int) $group->total;
             if (trim((string) $group->nombre_repartidor) === '') {
                 $summary['without_user'] += $total;
+
                 continue;
             }
             $assignment = $assignments->get($this->assignmentKey('77346078-7', $group->comuna_matriz, $group->nombre_repartidor));
             if ($assignment === null) {
                 $summary['without_match'] += $total;
+
                 continue;
             }
             $rut = strtoupper(trim($assignment->NuevoRutProveedor));
@@ -466,8 +479,7 @@ class CourierMovementCompileController
                     ))))->filter()->unique()->values();
                     $providerRut = $providerRuts->count() === 1 ? $providerRuts->first() : null;
                     $provider = $providerRut ? $providersByRut->get($providerRut) : null;
-                    $coverageProvider = $providerRut ? $matches->first(fn (Coverage $coverage): bool =>
-                        strtoupper(trim((string) ($coverage->provider?->tax_id ?: $coverage->provider_tax_id))) === $providerRut
+                    $coverageProvider = $providerRut ? $matches->first(fn (Coverage $coverage): bool => strtoupper(trim((string) ($coverage->provider?->tax_id ?: $coverage->provider_tax_id))) === $providerRut
                     ) : null;
                     if ($providerRut === null) {
                         $pendingProviders++;

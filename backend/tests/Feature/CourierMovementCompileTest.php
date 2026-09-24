@@ -419,7 +419,11 @@ class CourierMovementCompileTest extends TestCase
         $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => '202608', 'processes' => ['Lanas']])->assertRedirect();
         $this->get(route('provider-payments.courier-movements.compile', ['period' => '202608']))
             ->assertOk()->assertSee('202608-Variable')->assertSee('202608-Lanas')->assertSee('Eliminar proceso');
-        $this->delete(route('provider-payments.courier-movements.compile.destroy'), ['period' => '202608', 'process' => 'Variable'])->assertRedirect();
+        config()->set('provider-payments.process_deletion_key', 'test-master-key');
+        $this->delete(route('provider-payments.courier-movements.compile.destroy'), ['period' => '202608', 'process' => 'Variable'])
+            ->assertSessionHasErrors('password');
+        $this->assertDatabaseCount('Pago_Movimientos_Courier', 3);
+        $this->delete(route('provider-payments.courier-movements.compile.destroy'), ['period' => '202608', 'process' => 'Variable', 'password' => 'test-master-key'])->assertRedirect();
         $this->assertDatabaseCount('Pago_Movimientos_Courier', 1);
         $this->assertDatabaseHas('Pago_Movimientos_Courier', ['nombre_proceso' => 'Lanas', 'periodo' => '202608']);
         $this->assertDatabaseCount('movimientos_courier', 3);
