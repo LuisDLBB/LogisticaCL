@@ -52,7 +52,16 @@
     $clientRunningAmount = 0;
     foreach ($clientAmounts as $clientName => $amount) {
         $index = count($clientSlices);
-        $color = 'hsl('.number_format(fmod($index * 137.508, 360), 1, '.', '').' 56% '.(36 + ($index % 3) * 8).'%)';
+        $clientKey = \Illuminate\Support\Str::of((string) $clientName)->ascii()->lower()->replaceMatches('/[^a-z0-9]+/', '')->toString();
+        $color = match (true) {
+            str_contains($clientKey, 'cruzverde') => '#087F23',
+            str_contains($clientKey, 'peumo') => '#7832A8',
+            str_contains($clientKey, 'revesderecho') => '#F28DB6',
+            str_contains($clientKey, 'maicao') => '#D500A3',
+            str_contains($clientKey, 'rendichmnos') => '#D62828',
+            str_starts_with($clientKey, '4nortes') => '#13B8C4',
+            default => 'hsl('.number_format(fmod($index * 137.508, 360), 1, '.', '').' 56% '.(36 + ($index % 3) * 8).'%)',
+        };
         $start = $clientTotal > 0 ? $clientRunningAmount * 100 / $clientTotal : 0;
         $clientRunningAmount += (int) $amount;
         $end = $clientTotal > 0 ? $clientRunningAmount * 100 / $clientTotal : 0;
