@@ -96,7 +96,8 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
         $this->get(route('provider-payments.dashboard', ['period' => '202608']))
             ->assertOk()->assertSee('Cierre definitivo: trabajado')->assertSee('Período 202608: Cerrado definitivamente');
         $this->get(route('provider-payments.dashboard'))
-            ->assertOk()->assertSee('Período 202609: En ejecución');
+            ->assertOk()->assertSee('Período 202608: Cerrado definitivamente')
+            ->assertDontSee('<option value="202609"', false);
         $this->post(route('provider-payments.courier-movements.compile.close'), ['period' => '202608'])
             ->assertSessionHasErrors('period');
         $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202608'])

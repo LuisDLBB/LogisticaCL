@@ -16,7 +16,6 @@ use App\Modules\ProviderPayments\Services\MonthlyPaymentClosingService;
 use App\Modules\ProviderPayments\Services\ProcessDeletionAuthorizer;
 use App\Modules\ProviderPayments\Services\RutaCvClosingService;
 use App\Modules\ProviderPayments\Services\VisitaDiariaClosingService;
-use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -34,15 +33,9 @@ class ProviderPaymentsDashboardController
             ->where('nombre_proceso', 'like', '______-%')
             ->distinct()->orderByDesc('period')->pluck('period')->all() : [];
         $latestClosedPeriod = $tenant ? DB::table('Cierres_Pagos')->where('tenant_id', $tenant->id)->max('periodo') : null;
-        $latestPeriod = max($periods[0] ?? '', $latestClosedPeriod ?? '');
-        if ($latestPeriod !== '' && $tenant && DB::table('Cierres_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $latestPeriod)->exists()) {
-            $nextPeriod = CarbonImmutable::create((int) substr($latestPeriod, 0, 4), (int) substr($latestPeriod, 4, 2), 1)->addMonth()->format('Ym');
-            if (! in_array($nextPeriod, $periods, true)) {
-                array_unshift($periods, $nextPeriod);
-            }
-        }
         if ($latestClosedPeriod !== null && ! in_array($latestClosedPeriod, $periods, true)) {
             $periods[] = $latestClosedPeriod;
+            rsort($periods);
         }
         $selectedPeriod = (string) $request->query('period', $periods[0] ?? '');
         if (! in_array($selectedPeriod, $periods, true)) {
