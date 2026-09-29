@@ -3,6 +3,8 @@
 <style>
 .payment-overview{margin:18px 0 0}.payment-overview-heading{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:12px}.payment-overview h2{margin:0;font-size:18px}.payment-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.payment-zone,.payment-chart-suite{min-width:0;padding:16px}.payment-zone h3,.payment-chart-suite h3{margin:0;color:var(--turquoise-dark);font-size:16px}.payment-zone .zone-total{display:block;margin:10px 0 2px;font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}.payment-zone .zone-label{color:var(--muted);font-size:12px}.payment-zone dl{display:grid;grid-template-columns:1fr auto;gap:7px;margin:16px 0 0;padding-top:13px;border-top:1px solid var(--line);font-size:13px}.payment-zone dt{color:var(--muted)}.payment-zone dd{margin:0;text-align:right;font-weight:750;font-variant-numeric:tabular-nums}.payment-zone .net-label,.payment-zone .net-value{padding-top:9px;border-top:1px solid var(--line);color:var(--ink);font-weight:800}.payment-chart-control{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;white-space:nowrap}.payment-chart-control select{width:auto;min-width:110px;padding:6px 28px 6px 10px;font-size:12px}.payment-chart-suite{grid-column:1/-1}.payment-chart-layout{display:grid;grid-template-columns:minmax(290px,350px) minmax(175px,225px) minmax(0,1fr);gap:20px;align-items:start}.payment-chart-module{min-width:0}.payment-chart-suite h3{font-size:14px;line-height:1.25}.payment-region-visual{display:flex;align-items:center;gap:18px;margin-top:17px}.payment-process-visual{display:flex;justify-content:center;margin-top:17px}.payment-donut{width:176px;height:176px;flex:none;display:grid;place-items:center;border-radius:50%;background:conic-gradient(var(--turquoise-dark) 0 var(--rm-end),var(--turquoise) var(--rm-end) var(--regions-end),#a5b7bb var(--regions-end) 100%)}.payment-donut.is-empty{background:#dce7e8}.payment-donut-center{width:128px;height:128px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:50%;background:#fff;text-align:center}.payment-donut-center span{color:var(--muted);font-size:11px}.payment-donut-center strong{margin-top:3px;font-size:16px;font-variant-numeric:tabular-nums}.payment-legend{display:grid;gap:9px;margin:0;padding:0;list-style:none;font-size:12px}.payment-legend li{display:grid;grid-template-columns:13px minmax(0,1fr);align-items:start;gap:7px;min-width:0}.payment-legend i{width:13px;height:13px;flex:none;margin-top:2px;border-radius:50%}.payment-legend .rm{background:var(--turquoise-dark)}.payment-legend .regions{background:var(--turquoise)}.payment-legend .unassigned{background:#a5b7bb}.payment-legend strong{font-weight:800;font-variant-numeric:tabular-nums}.payment-region-legend li span{white-space:nowrap}.payment-process-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 14px;align-content:start;padding-top:3px}.payment-process-legend small{display:block;margin-top:3px;color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}.payment-process-legend small strong{color:var(--ink)}.payment-process-legend li span{min-width:0;overflow-wrap:anywhere}.payment-chart-note{grid-column:1/-1;margin:0;color:var(--muted);font-size:11px;text-align:right}.payment-bars{display:none;min-width:0;margin-top:16px}.payment-bar-row{display:grid;gap:4px;margin-bottom:12px}.payment-bar-label{display:flex;justify-content:space-between;gap:8px;font-size:12px}.payment-bar-label strong{white-space:nowrap;font-variant-numeric:tabular-nums}.payment-bar-track{height:13px;overflow:hidden;border-radius:999px;background:#e5eeee}.payment-bar-fill{display:block;height:100%;min-width:0;border-radius:inherit;background:var(--bar-color);width:var(--bar-width)}.payment-bar-amount{color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}.payment-chart-suite[data-chart-view="barras"] .payment-chart-layout{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}.payment-chart-suite[data-chart-view="barras"] .payment-region-visual,.payment-chart-suite[data-chart-view="barras"] .payment-process-visual,.payment-chart-suite[data-chart-view="barras"] .payment-process-legend{display:none}.payment-chart-suite[data-chart-view="barras"] .payment-bars{display:block}.payment-chart-suite[data-chart-view="mixto"] .payment-chart-layout{grid-template-columns:minmax(290px,350px) minmax(220px,1fr) minmax(280px,1fr)}.payment-chart-suite[data-chart-view="mixto"] .payment-process-visual{display:none}.payment-chart-suite[data-chart-view="mixto"] .payment-process-bars{display:block}@media(max-width:1200px){.payment-chart-layout,.payment-chart-suite[data-chart-view="mixto"] .payment-chart-layout{grid-template-columns:minmax(290px,1fr) minmax(175px,1fr)}.payment-process-legend{grid-column:1/-1;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line);padding-top:12px}}@media(max-width:700px){.payment-chart-layout,.payment-chart-suite[data-chart-view="barras"] .payment-chart-layout,.payment-chart-suite[data-chart-view="mixto"] .payment-chart-layout,.payment-overview-grid{grid-template-columns:1fr}.payment-process-legend{grid-column:auto;grid-template-columns:repeat(2,minmax(0,1fr))}.payment-process-visual{justify-content:start}}@media(max-width:420px){.payment-overview-heading{align-items:start;flex-direction:column}.payment-region-visual{flex-wrap:wrap}.payment-process-legend{grid-template-columns:1fr}}
 .payment-chart-toolbar{display:flex;justify-content:flex-start;min-height:30px;margin:-4px 0 8px}
+.payment-client-suite h3{margin:0 0 14px}.payment-client-layout{display:grid;grid-template-columns:200px minmax(0,1fr);align-items:start;gap:20px}.payment-client-visual{display:flex;justify-content:center}.payment-client-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 16px;max-height:320px;overflow-y:auto;align-content:start;padding-right:8px}.payment-client-bars{display:none;max-height:420px;overflow-y:auto;padding-right:8px}.payment-client-suite[data-chart-view="barras"] .payment-client-layout{display:block}.payment-client-suite[data-chart-view="barras"] .payment-client-visual,.payment-client-suite[data-chart-view="barras"] .payment-client-legend{display:none}.payment-client-suite[data-chart-view="barras"] .payment-client-bars,.payment-client-suite[data-chart-view="mixto"] .payment-client-bars{display:block}.payment-client-suite[data-chart-view="mixto"] .payment-client-legend{display:none}.payment-client-suite .payment-chart-note{margin-top:12px}@media(max-width:850px){.payment-client-legend{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.payment-client-layout{grid-template-columns:1fr}.payment-client-visual{justify-content:start}.payment-client-legend{grid-template-columns:1fr}}
+.payment-client-legend small{display:block;margin-top:3px;color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}.payment-client-legend small strong{color:var(--ink)}.payment-client-legend li span{min-width:0;overflow-wrap:anywhere}
 </style>
 @endpush
 @endonce
@@ -43,6 +45,22 @@
         }
     @endphp
 @endisset
+@php
+    $clientTotal = (int) $clientAmounts->sum();
+    $clientSlices = [];
+    $clientGradient = [];
+    $clientRunningAmount = 0;
+    foreach ($clientAmounts as $clientName => $amount) {
+        $index = count($clientSlices);
+        $color = 'hsl('.number_format(fmod($index * 137.508, 360), 1, '.', '').' 56% '.(36 + ($index % 3) * 8).'%)';
+        $start = $clientTotal > 0 ? $clientRunningAmount * 100 / $clientTotal : 0;
+        $clientRunningAmount += (int) $amount;
+        $end = $clientTotal > 0 ? $clientRunningAmount * 100 / $clientTotal : 0;
+        $clientGradient[] = $color.' '.number_format($start, 4, '.', '').'% '.number_format($end, 4, '.', '').'%';
+        $clientSlices[] = ['name' => $clientName, 'amount' => (int) $amount, 'share' => $end - $start, 'color' => $color];
+    }
+    $clientDefaultView = count($clientSlices) > 12 ? 'barras' : 'anillos';
+@endphp
 <section class="payment-overview" aria-label="Pagos por zona del período {{ $period }}">
     <div class="payment-overview-heading">
         <h2>Pagos del período {{ $period }}</h2>
@@ -119,6 +137,44 @@
                 @endisset
             </div>
         </article>
+        <article class="card payment-chart-suite payment-client-suite" data-payment-chart-suite data-chart-view="{{ $clientDefaultView }}" aria-label="Neto considerado por cliente del período {{ $period }}">
+            <div class="payment-chart-toolbar">
+                <label class="payment-chart-control">Tipo de gráfico
+                    <select data-payment-chart-select aria-label="Tipo de gráfico de pagos por cliente">
+                        <option value="anillos" @selected($clientDefaultView === 'anillos')>Anillos</option>
+                        <option value="barras" @selected($clientDefaultView === 'barras')>Barras</option>
+                        <option value="mixto">Mixto</option>
+                    </select>
+                </label>
+            </div>
+            <h3>Neto considerado por cliente</h3>
+            @if($clientSlices !== [])
+                <div class="payment-client-layout">
+                    <div class="payment-client-visual">
+                        <div class="payment-donut" style="background:conic-gradient({{ implode(', ', $clientGradient) }})" role="img" aria-label="Neto considerado por cliente: $ {{ number_format($clientTotal, 0, ',', '.') }}">
+                            <div class="payment-donut-center"><span>Neto total</span><strong>$ {{ number_format($clientTotal, 0, ',', '.') }}</strong></div>
+                        </div>
+                    </div>
+                    <ul class="payment-legend payment-client-legend">
+                        @foreach($clientSlices as $slice)
+                            <li><i style="background:{{ $slice['color'] }}" aria-hidden="true"></i><span>{{ $slice['name'] }}<small>$ {{ number_format($slice['amount'], 0, ',', '.') }} · <strong>{{ number_format($slice['share'], 1, ',', '.') }}%</strong></small></span></li>
+                        @endforeach
+                    </ul>
+                    <div class="payment-client-bars">
+                        @foreach($clientSlices as $slice)
+                            <div class="payment-bar-row">
+                                <div class="payment-bar-label"><span>{{ $slice['name'] }}</span><strong>{{ number_format($slice['share'], 1, ',', '.') }}%</strong></div>
+                                <div class="payment-bar-track"><span class="payment-bar-fill" style="--bar-width:{{ number_format($slice['share'], 2, '.', '') }}%;--bar-color:{{ $slice['color'] }}"></span></div>
+                                <span class="payment-bar-amount">$ {{ number_format($slice['amount'], 0, ',', '.') }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @else
+                <p class="note">Aún no hay montos considerados por cliente en este período.</p>
+            @endif
+            <p class="payment-chart-note">Solo registros con condición de pago SI.</p>
+        </article>
         @foreach(['RM', 'Regiones'] as $zone)
             @php($data = $zones[$zone])
             <article class="card payment-zone">
@@ -146,7 +202,7 @@
 @push('scripts')
 <script>
 document.querySelectorAll('[data-payment-chart-select]').forEach((select) => {
-    const charts = select.closest('.payment-overview')?.querySelector('[data-payment-chart-suite]');
+    const charts = select.closest('[data-payment-chart-suite]');
     if (charts) {
         select.addEventListener('change', () => { charts.dataset.chartView = select.value; });
     }

@@ -3,6 +3,7 @@
 namespace App\Modules\ProviderPayments\Http\Controllers;
 
 use App\Models\ApoyoAlza;
+use App\Models\Client;
 use App\Models\CourierMovement;
 use App\Models\CourierPaymentMovement;
 use App\Models\Coverage;
@@ -108,10 +109,27 @@ class ProviderPaymentsDashboardController
             ->map(fn ($processes): int => (int) $processes->sum('amount'))
             ->filter(fn (int $amount): bool => $amount > 0)
             ->sortDesc();
+        $clientPaymentRows = CourierPaymentMovement::query()
+            ->when($tenant, fn ($query) => $query->where('tenant_id', $tenant->id), fn ($query) => $query->whereRaw('1 = 0'))
+            ->where('periodo', $selectedPeriod)->where('condicion_pago', 'SI')
+            ->selectRaw('client_id, comerciante_pila, SUM(COALESCE(valor, 0)) AS amount')
+            ->groupBy('client_id', 'comerciante_pila')->get();
+        $clients = $tenant ? Client::query()->where('tenant_id', $tenant->id)
+            ->whereIn('id', $clientPaymentRows->pluck('client_id')->filter()->unique())
+            ->get(['id', 'source_merchant_name', 'commercial_name', 'legal_name'])->keyBy('id') : collect();
+        $clientAmounts = $clientPaymentRows
+            ->groupBy(function (CourierPaymentMovement $row) use ($clients): string {
+                $client = $clients->get($row->client_id);
+
+                return trim((string) ($client?->source_merchant_name ?: $client?->commercial_name ?: $client?->legal_name ?: $row->comerciante_pila)) ?: 'Sin cliente';
+            })
+            ->map(fn ($rows): int => (int) $rows->sum('amount'))
+            ->filter(fn (int $amount): bool => $amount > 0)
+            ->sortDesc();
         $recordCount = (clone $movements)->count();
         $paymentDashboard = $paymentSummary->forPeriod($tenant?->id, $selectedPeriod);
 
-        return view('provider-payments::dashboard', compact('merchantCounts', 'statusCounts', 'serviceCounts', 'sourceProcessCounts', 'paymentCountsByProcess', 'pendingProcessCounts', 'processChecklist', 'processAmounts', 'periods', 'selectedPeriod', 'recordCount', 'paymentDashboard', 'monthClosed', 'closure'));
+        return view('provider-payments::dashboard', compact('merchantCounts', 'statusCounts', 'serviceCounts', 'sourceProcessCounts', 'paymentCountsByProcess', 'pendingProcessCounts', 'processChecklist', 'processAmounts', 'clientAmounts', 'periods', 'selectedPeriod', 'recordCount', 'paymentDashboard', 'monthClosed', 'closure'));
     }
 
     public function movements(Request $request): View

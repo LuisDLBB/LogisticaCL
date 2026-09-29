@@ -1103,6 +1103,42 @@ class CourierParameterReviewTest extends ProviderPaymentsWorkflowTestCase
             $response->viewData('processAmounts')->all());
     }
 
+    public function test_dashboard_client_chart_uses_client_short_names_and_only_considered_amounts(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $client = Client::create([
+            'tenant_id' => $tenant->id, 'tax_id' => '12345678-5', 'tax_id_number' => '12345678',
+            'tax_id_check_digit' => '5', 'source_merchant_name' => 'Cliente Pila',
+            'commercial_name' => 'Cliente Comercial', 'legal_name' => 'Cliente Legal SPA',
+        ]);
+        foreach ([
+            [$client->id, 'Nombre del archivo', 'SI', 2300],
+            [$client->id, 'Otro nombre del archivo', 'SI', 700],
+            [null, 'Cliente sin cruce', 'SI', 1000],
+            [$client->id, 'Nombre del archivo', 'NO', 9000],
+        ] as $index => [$clientId, $merchantName, $condition, $value]) {
+            $movement = CourierMovement::create([
+                'tenant_id' => $tenant->id, 'tracking_number' => 'CLIENT-CHART-'.($index + 1),
+                'nombre_proceso' => '202608-Variable',
+            ]);
+            CourierPaymentMovement::create([
+                'tenant_id' => $tenant->id, 'courier_movement_id' => $movement->id,
+                'periodo' => '202608', 'nombre_proceso' => 'Variable', 'tipo_pago' => 'Variable',
+                'client_id' => $clientId, 'comerciante_pila' => $merchantName,
+                'peso_final' => 1, 'zona' => 'RM', 'condicion_pago' => $condition, 'valor' => $value,
+            ]);
+        }
+
+        $response = $this->get(route('provider-payments.dashboard', ['period' => '202608']));
+        $response->assertOk()->assertSee('Neto considerado por cliente')
+            ->assertSee('Tipo de gráfico de pagos por cliente')
+            ->assertSeeInOrder(['Neto considerado por proceso', 'Neto considerado por cliente', '<h3>RM</h3>'], false)
+            ->assertDontSee('$ 9.000');
+        $this->assertSame(['Cliente Pila' => 3000, 'Cliente sin cruce' => 1000],
+            $response->viewData('clientAmounts')->all());
+        $this->assertSame($response->viewData('processAmounts')->sum(), $response->viewData('clientAmounts')->sum());
+    }
+
     public function test_dashboard_opens_a_read_only_filtered_movement_sheet_with_decrypted_fields(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
