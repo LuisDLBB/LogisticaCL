@@ -13,9 +13,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use Tests\TestCase;
+use Tests\ProviderPaymentsWorkflowTestCase;
 
-class BaseServicioTest extends TestCase
+class BaseServicioTest extends ProviderPaymentsWorkflowTestCase
 {
     use RefreshDatabase;
 

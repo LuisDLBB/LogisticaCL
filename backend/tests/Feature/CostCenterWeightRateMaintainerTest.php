@@ -5,9 +5,9 @@ namespace Tests\Feature;
 use App\Models\CostCenter;
 use App\Models\CostCenterWeightRate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use Tests\ProviderPaymentsWorkflowTestCase;
 
-class CostCenterWeightRateMaintainerTest extends TestCase
+class CostCenterWeightRateMaintainerTest extends ProviderPaymentsWorkflowTestCase
 {
     use RefreshDatabase;
 

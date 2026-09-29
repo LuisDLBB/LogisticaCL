@@ -17,9 +17,9 @@ use Illuminate\Http\UploadedFile;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use Tests\TestCase;
+use Tests\ProviderPaymentsWorkflowTestCase;
 
-class AcuerdoTest extends TestCase
+class AcuerdoTest extends ProviderPaymentsWorkflowTestCase
 {
     use RefreshDatabase;
 

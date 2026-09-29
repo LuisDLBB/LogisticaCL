@@ -14,9 +14,9 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use Tests\TestCase;
+use Tests\ProviderPaymentsWorkflowTestCase;
 
-class RutaCvTest extends TestCase
+class RutaCvTest extends ProviderPaymentsWorkflowTestCase
 {
     use RefreshDatabase;
 

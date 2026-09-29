@@ -10,9 +10,9 @@ use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Tests\TestCase;
+use Tests\ProviderPaymentsWorkflowTestCase;
 
-class PurchaseOrderMailTest extends TestCase
+class PurchaseOrderMailTest extends ProviderPaymentsWorkflowTestCase
 {
     use RefreshDatabase;
 

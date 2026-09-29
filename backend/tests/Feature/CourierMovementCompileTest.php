@@ -26,9 +26,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use Tests\TestCase;
+use Tests\ProviderPaymentsWorkflowTestCase;
 
-class CourierMovementCompileTest extends TestCase
+class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
 {
     use RefreshDatabase;
 

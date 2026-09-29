@@ -35,26 +35,27 @@ class MasterDataSeeder extends Seeder
 
     private function users(): void
     {
-        $userIds = DB::table('tenant_users')->where('tenant_id', $this->tenantId)->pluck('user_id');
-        DB::table('tenant_users')->where('tenant_id', $this->tenantId)->delete();
-        DB::table('users')->whereIn('id', $userIds)->whereNotExists(function ($query): void {
-            $query->selectRaw('1')->from('tenant_users')->whereColumn('tenant_users.user_id', 'users.id');
-        })->delete();
-
         foreach ($this->rows('initial_users.tsv') as $row) {
             $sourceEmail = trim($row['Correo corporativo'] ?? '');
             $email = filter_var($sourceEmail, FILTER_VALIDATE_EMAIL)
                 ? strtolower($sourceEmail)
                 : strtolower(trim($row['Rut'])).'@usuarios.4n.local';
-            $id = DB::table('users')->updateOrInsert(['email' => $email], [
-                'name' => $row['Nombre completo'], 'tax_id' => $row['Rut'], 'username' => $row['Usuario'],
-                'password' => Hash::make((string) $row['Clave Provisoria']), 'area' => $row['Área'],
-                'profile_name' => $row['Perfil'], 'license_type' => $row['Tipo Licencia'],
-                'locality_name' => $row['Localidad'], 'driver_license_expires_at' => $this->date($row['Vencimiento Licencia conducir']),
-                'phone' => $row['Numero Telefono'], 'updated_at' => now(), 'created_at' => now(),
-            ]);
-            $userId = DB::table('users')->where('email', $email)->value('id');
-            DB::table('tenant_users')->updateOrInsert(['tenant_id' => $this->tenantId, 'user_id' => $userId], [
+            $existingUser = DB::table('users')->where('email', $email)
+                ->when(trim($row['Usuario'] ?? '') !== '', fn ($query) => $query->orWhere('username', trim($row['Usuario'])))
+                ->first();
+            if (! $existingUser) {
+                DB::table('users')->insertOrIgnore([
+                    'email' => $email,
+                    'name' => $row['Nombre completo'], 'tax_id' => $row['Rut'], 'username' => $row['Usuario'],
+                    'password' => Hash::make((string) $row['Clave Provisoria']), 'area' => $row['Área'],
+                    'profile_name' => $row['Perfil'], 'license_type' => $row['Tipo Licencia'],
+                    'locality_name' => $row['Localidad'], 'driver_license_expires_at' => $this->date($row['Vencimiento Licencia conducir']),
+                    'phone' => $row['Numero Telefono'], 'updated_at' => now(), 'created_at' => now(),
+                ]);
+            }
+            $userId = $existingUser?->id ?? DB::table('users')->where('email', $email)->value('id');
+            DB::table('tenant_users')->insertOrIgnore([
+                'tenant_id' => $this->tenantId, 'user_id' => $userId,
                 'rut_empresa' => $row['RutEmpresa'], 'role_code' => Str::slug($row['Perfil'] ?: 'operator', '_'),
                 'is_active' => true, 'updated_at' => now(), 'created_at' => now(),
             ]);

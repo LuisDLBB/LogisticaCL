@@ -17,9 +17,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use Tests\TestCase;
+use Tests\ProviderPaymentsWorkflowTestCase;
 
-class MonthlyPaymentClosingTest extends TestCase
+class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
 {
     use RefreshDatabase;
 

@@ -15,9 +15,9 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use Tests\TestCase;
+use Tests\ProviderPaymentsWorkflowTestCase;
 
-class WeightAndExternalShipmentImportTest extends TestCase
+class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCase
 {
     use RefreshDatabase;
 

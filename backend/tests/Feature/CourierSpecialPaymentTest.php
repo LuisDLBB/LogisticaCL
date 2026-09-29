@@ -16,9 +16,9 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use Tests\TestCase;
+use Tests\ProviderPaymentsWorkflowTestCase;
 
-class CourierSpecialPaymentTest extends TestCase
+class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
 {
     use RefreshDatabase;
 

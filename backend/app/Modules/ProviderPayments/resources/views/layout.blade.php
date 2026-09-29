@@ -44,7 +44,7 @@
 <body>
 <header class="topbar">
     <a class="brand" href="{{ route('provider-payments.dashboard') }}"><span class="brand-mark">4N</span><span><strong>Pago Proveedores</strong><small>4N Logística · PMBC</small></span></a>
-    <div class="user-area">Administrador 4N · Administrador <a href="#">Salir</a></div>
+    <div class="user-area"><a href="{{ route('portal.home') }}">Inicio</a> · <a href="{{ route('portal.profile') }}">{{ auth()->user()?->name }}</a><form method="POST" action="{{ route('logout') }}" style="display:inline">@csrf<button type="submit" style="border:0;background:none;color:inherit;cursor:pointer;font:inherit">Salir</button></form></div>
 </header>
 <div class="shell">
     <aside class="sidebar" aria-label="Menú Pago Proveedores">

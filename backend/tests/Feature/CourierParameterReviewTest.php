@@ -30,9 +30,9 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Tests\TestCase;
+use Tests\ProviderPaymentsWorkflowTestCase;
 
-class CourierParameterReviewTest extends TestCase
+class CourierParameterReviewTest extends ProviderPaymentsWorkflowTestCase
 {
     use RefreshDatabase;
 
