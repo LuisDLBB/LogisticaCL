@@ -15,10 +15,12 @@
         .brand strong,.brand small { display:block; }.brand strong{font-size:16px}.brand small{margin-top:2px;color:#c9eeee;font-size:12px}.topbar-right{display:flex;align-items:center;gap:12px;margin-left:auto;min-width:0}.user-area{font-size:13px;white-space:nowrap}.user-area a{margin-left:18px;color:var(--turquoise);text-decoration:none}
         .shell { display:grid; grid-template-columns:222px minmax(0,1fr); min-height:calc(100vh - 76px); }
         .sidebar { padding:23px 9px; border-right:1px solid var(--line); background:#fff; }
-        .nav-link,.nav-summary { display:block; width:100%; padding:12px 15px; border-radius:9px; color:#26474c; cursor:pointer; font-size:14px; font-weight:700; text-decoration:none; }
+        .nav-link,.nav-summary { display:flex; align-items:center; gap:10px; width:100%; padding:12px 15px; border-radius:9px; color:#26474c; cursor:pointer; font-size:14px; font-weight:700; text-decoration:none; }
+        .sidebar .icon{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+        .nav-text{flex:1;min-width:0}
         .nav-link:hover,.nav-summary:hover,.nav-link.active { background:var(--turquoise-soft); color:#006d70; }
-        .nav-summary { list-style:none; }.nav-summary::-webkit-details-marker{display:none}.nav-summary::after{float:right;content:'⌄';color:var(--turquoise-dark)}details[open]>.nav-summary::after{content:'⌃'}
-        .subnav a { display:block; padding:9px 15px 9px 30px; color:#53696d; font-size:13px; text-decoration:none; }.subnav a:hover,.subnav a.active{color:var(--turquoise-dark);font-weight:800}
+        .nav-summary { list-style:none; }.nav-summary::-webkit-details-marker{display:none}.nav-summary::after{margin-left:auto;content:'⌄';color:var(--turquoise-dark)}details[open]>.nav-summary::after{content:'⌃'}
+        .subnav a { display:block; padding:9px 15px 9px 43px; color:#53696d; font-size:13px; text-decoration:none; }.subnav a:hover,.subnav a.active{color:var(--turquoise-dark);font-weight:800}
         .content { min-width:0; padding:28px clamp(20px,4vw,64px) 48px; }
         .eyebrow { margin:0 0 8px; color:var(--turquoise-dark); font-size:11px; font-weight:900; letter-spacing:1.6px; text-transform:uppercase; }
         .page-heading{display:flex;align-items:center;gap:10px;max-width:100%;margin:0 0 10px;overflow-x:auto;white-space:nowrap;scrollbar-width:thin}
@@ -37,7 +39,7 @@
         .note{color:var(--muted);font-size:14px}.warning{padding:15px;border-left:4px solid #db9f34;background:#fff6e4}.progress-track{height:9px;overflow:hidden;border-radius:99px;background:#dcecec}.progress-bar{width:35%;height:100%;background:var(--turquoise);animation:loading 1.2s ease-in-out infinite}@keyframes loading{from{transform:translateX(-110%)}to{transform:translateX(310%)}}progress{width:100%;accent-color:var(--turquoise-dark)}
         .pp-pager{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0;font-size:14px}.pp-pager-current,.pp-pager-button{display:inline-flex;align-items:center;min-height:38px;padding:8px 12px;border:1px solid var(--line);border-radius:7px;background:#fff;white-space:nowrap}.pp-pager-actions{display:flex;gap:8px;margin-left:auto}.pp-pager-button{color:var(--turquoise-dark);text-decoration:none}.pp-pager-button:hover{border-color:var(--turquoise-dark);background:var(--turquoise-soft)}.pp-pager-button.is-disabled{color:var(--muted);opacity:.7;cursor:default}.pp-pager-button.is-disabled:hover{border-color:var(--line);background:#fff}@media(max-width:480px){.pp-pager{flex-wrap:wrap}.pp-pager-actions{margin-left:0}}
         .master-tools{display:grid;grid-template-columns:minmax(240px,1fr) 220px auto;gap:10px;align-items:end;margin:0 0 22px;padding:16px;border:1px solid var(--line);border-radius:12px;background:#fff}.master-tools label{display:grid;gap:6px;color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase}.master-tools input,.master-tools select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}.master-results{padding:10px 0;color:var(--muted);font-size:13px;white-space:nowrap}.new-record-toggle{margin:0 0 18px}.creator-open{display:block!important;grid-column:1/-1}
-        @media(max-width:760px){.topbar{height:auto;min-height:70px}.user-area{display:none}.shell{display:block}.sidebar{border-right:0;border-bottom:1px solid var(--line)}.content{padding:26px 18px}.sidebar>.nav-link,.sidebar>details{display:inline-block;width:auto;vertical-align:top}.subnav{position:absolute;z-index:10;background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px}.master-tools{grid-template-columns:1fr}}
+        @media(max-width:760px){.topbar{height:auto;min-height:70px}.user-area{display:none}.shell{display:block}.sidebar{border-right:0;border-bottom:1px solid var(--line)}.content{padding:26px 18px}.sidebar>.nav-link{display:inline-flex;width:auto;vertical-align:top}.sidebar>details{display:inline-block;width:auto;vertical-align:top}.subnav{position:absolute;z-index:10;background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px}.master-tools{grid-template-columns:1fr}}
     </style>
     @stack('styles')
 </head>
@@ -48,10 +50,10 @@
 </header>
 <div class="shell">
     <aside class="sidebar" aria-label="Menú Pago Proveedores">
-        <a class="nav-link" href="{{ route('portal.home') }}" id="provider-back-link">← Volver</a>
-        <a class="nav-link {{ request()->routeIs('provider-payments.dashboard') ? 'active' : '' }}" href="{{ route('provider-payments.dashboard') }}">Resumen</a>
+        <a class="nav-link" href="{{ route('portal.home') }}" id="provider-back-link">@include('portal.icon', ['icon' => 'arrow-left'])<span class="nav-text">Volver</span></a>
+        <a class="nav-link {{ request()->routeIs('provider-payments.dashboard') ? 'active' : '' }}" href="{{ route('provider-payments.dashboard') }}">@include('portal.icon', ['icon' => 'chart'])<span class="nav-text">Resumen</span></a>
         <details {{ (request()->routeIs('provider-payments.courier-movements.*') && ! request()->routeIs('provider-payments.courier-movements.compile')) || request()->routeIs('provider-payments.maintainers.pesos.reales*') ? 'open' : '' }}>
-            <summary class="nav-summary">Carga Movimientos Courier</summary>
+            <summary class="nav-summary">@include('portal.icon', ['icon' => 'truck'])<span class="nav-text">Carga Movimientos Courier</span></summary>
             <nav class="subnav">
                 <a class="{{ request()->routeIs('provider-payments.maintainers.pesos.reales*') ? 'active' : '' }}" href="{{ route('provider-payments.maintainers.pesos.reales') }}">Pesos Reales</a>
                 <a class="{{ request()->routeIs('provider-payments.courier-movements.upload', 'provider-payments.courier-movements.lanas', 'provider-payments.courier-movements.retornos', 'provider-payments.courier-movements.validate', 'provider-payments.courier-movements.review-parameters') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.upload') }}">Bases Courier</a>
@@ -64,8 +66,8 @@
                 <a class="{{ request()->routeIs('provider-payments.courier-movements.visitas*') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.visitas') }}">Visitas Diarias</a>
             </nav>
         </details>
-        <a class="nav-link {{ request()->routeIs('provider-payments.courier-movements.compile') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.compile') }}">Compilar Movimientos</a>
-        <details {{ request()->routeIs('provider-payments.maintainers.*') ? 'open' : '' }}><summary class="nav-summary">Mantenedores</summary><nav class="subnav">
+        <a class="nav-link {{ request()->routeIs('provider-payments.courier-movements.compile') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.compile') }}">@include('portal.icon', ['icon' => 'grid'])<span class="nav-text">Compilar Movimientos</span></a>
+        <details {{ request()->routeIs('provider-payments.maintainers.*') ? 'open' : '' }}><summary class="nav-summary">@include('portal.icon', ['icon' => 'settings'])<span class="nav-text">Mantenedores</span></summary><nav class="subnav">
             @foreach (['Clientes' => 'clientes', 'Sucursales' => 'sucursales', 'Servicios' => 'servicios', 'Proveedores' => 'proveedores', 'Coberturas' => 'coberturas', 'Centro de Costos' => 'centro-de-costos', 'Tarifas CC' => 'tarifas-cc', 'Llave CC' => 'llave-centro-costos', 'Estados' => 'estados', 'Bancos' => 'bancos', 'Vehículos' => 'vehiculos'] as $label => $routeName)
                 <a href="{{ route('provider-payments.maintainers.'.$routeName) }}">{{ $label }}</a>
             @endforeach
