@@ -39,6 +39,11 @@
 </header>
 <div class="shell">
     <aside class="sidebar" aria-label="Menú Pago Proveedores">
+        @auth
+            @if(app(\App\Fleet\FleetAccess::class)->canEnter(auth()->user()))
+                <a class="nav-link" href="{{ route('fleet.home') }}">Control de Flota</a>
+            @endif
+        @endauth
         <a class="nav-link {{ request()->routeIs('provider-payments.dashboard') ? 'active' : '' }}" href="{{ route('provider-payments.dashboard') }}">Resumen</a>
         <details {{ request()->routeIs('provider-payments.courier-movements.*') && ! request()->routeIs('provider-payments.courier-movements.compile') ? 'open' : '' }}>
             <summary class="nav-summary">Carga Movimientos Courier</summary>

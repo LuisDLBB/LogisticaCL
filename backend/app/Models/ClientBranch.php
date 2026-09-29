@@ -22,6 +22,11 @@ class ClientBranch extends Model
         'latitude',
         'longitude',
         'is_active',
+        'operational_emails',
+        'operational_email_pending',
+        'address_status',
+        'source_street',
+        'source_number',
     ];
 
     protected function casts(): array
@@ -30,6 +35,7 @@ class ClientBranch extends Model
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
             'is_active' => 'boolean',
+            'operational_email_pending' => 'boolean',
         ];
     }
 

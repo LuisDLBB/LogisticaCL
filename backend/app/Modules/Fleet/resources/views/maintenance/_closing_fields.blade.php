@@ -1,0 +1,12 @@
+<div class="maintenance-form-grid">
+    <label>Tipo de ejecución<select name="execution_type" required><option value="internal" @selected(old('execution_type', $maintenance->execution_type) === 'internal')>Interna</option><option value="external" @selected(old('execution_type', $maintenance->execution_type) === 'external')>Externa</option></select></label>
+    <label>Fecha y hora real de cierre<input type="datetime-local" name="closed_at" required value="{{ old('closed_at', $maintenance->closed_at?->format('Y-m-d\TH:i') ?? now()->format('Y-m-d\TH:i')) }}"></label>
+    <label>Kilometraje de cierre<input type="number" name="closed_odometer_km" min="0" required value="{{ old('closed_odometer_km', $maintenance->closed_odometer_km ?? $maintenance->reported_odometer_km) }}"></label>
+    <label>Proveedor externo<select name="provider_id"><option value="">Sin proveedor / ejecución interna</option>@foreach($providers as $provider)<option value="{{ $provider->id }}" @selected((string) old('provider_id', $maintenance->provider_id) === (string) $provider->id)>{{ $provider->operational_name ?: $provider->legal_name }}</option>@endforeach</select></label>
+    <label>Costo real ($)<input type="number" name="actual_cost" min="0" step="0.01" required value="{{ old('actual_cost', $maintenance->actual_cost) }}"></label>
+    <label>Tipo de documento<select name="document_type"><option value="">Sin documento</option><option value="invoice" @selected(old('document_type', $maintenance->document_type) === 'invoice')>Factura</option><option value="receipt" @selected(old('document_type', $maintenance->document_type) === 'receipt')>Boleta</option><option value="work_order" @selected(old('document_type', $maintenance->document_type) === 'work_order')>OT</option><option value="other" @selected(old('document_type', $maintenance->document_type) === 'other')>Otro</option></select></label>
+    <label>Número de documento<input type="text" name="document_number" maxlength="100" value="{{ old('document_number', $maintenance->document_number) }}"></label>
+    <label>Próxima mantención por fecha<input type="date" name="next_due_at" value="{{ old('next_due_at', $maintenance->next_due_at?->format('Y-m-d')) }}"></label>
+    <label>Próxima mantención por kilometraje<input type="number" name="next_due_km" min="0" value="{{ old('next_due_km', $maintenance->next_due_km) }}"></label>
+    <label class="wide">Observaciones de cierre<textarea name="closing_notes" rows="3">{{ old('closing_notes', $maintenance->closing_notes) }}</textarea></label>
+</div>

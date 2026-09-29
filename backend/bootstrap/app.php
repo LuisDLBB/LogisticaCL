@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\FleetLocalAdminLogin;
+use App\Http\Middleware\RequireFleetPermission;
+use App\Http\Middleware\ResolveFleetTenant;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,7 +15,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->prependToGroup('web', FleetLocalAdminLogin::class);
+        $middleware->redirectGuestsTo('/control-flota/ingresar');
+        $middleware->redirectUsersTo('/control-flota');
+        $middleware->alias([
+            'fleet.tenant' => ResolveFleetTenant::class,
+            'fleet.permission' => RequireFleetPermission::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
