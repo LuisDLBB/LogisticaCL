@@ -21,7 +21,7 @@ class ProveedoresUsuarios4NTest extends TestCase
         $this->seed(ProveedoresUsuarios4NSeeder::class);
         $this->seed(ProveedoresUsuarios4NSeeder::class);
 
-        $this->assertSame(87, DB::table('Proveedores_usuarios_4N')->count());
+        $this->assertSame(89, DB::table('Proveedores_usuarios_4N')->count());
         $this->assertDatabaseHas('Proveedores_usuarios_4N', [
             'RutProveedor' => '77346078-7', 'ComunaMatriz' => '4N RM',
             'NombreRepartidor' => 'Claudio Gonzalez', 'NuevoRutProveedor' => '78350442-1',

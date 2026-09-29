@@ -16,7 +16,7 @@ class Provider extends Model
     protected $fillable = [
         'tenant_id', 'tax_id', 'tax_id_number', 'tax_id_check_digit', 'legal_name',
         'operational_name', 'operator_type', 'tax_document_type', 'commercial_address',
-        'commercial_commune_name', 'contact_name', 'contact_phone', 'contact_email', 'is_active',
+        'commercial_commune_name', 'contact_name', 'contact_phone', 'contact_email', 'contact_email_secondary', 'payment_terms', 'payment_terms_pmcb', 'is_active',
     ];
 
     protected function casts(): array
@@ -32,6 +32,11 @@ class Provider extends Model
     public function bankAccounts(): HasMany
     {
         return $this->hasMany(ProviderBankAccount::class);
+    }
+
+    public function ocFilenames(): HasMany
+    {
+        return $this->hasMany(ProviderOcFilename::class);
     }
 
     public function coverages(): HasMany

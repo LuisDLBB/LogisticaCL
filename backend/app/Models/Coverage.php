@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Modules\ProviderPayments\Services\ProviderZone;
 use Database\Factories\CoverageFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -19,6 +20,13 @@ class Coverage extends Model
         'aerial_commune_name', 'aerial_route_code', 'base_commune_name', 'trunk_name', 'post_name',
         'trunk_delivery_order', 'effective_from', 'effective_to', 'is_active',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $coverage): void {
+            $coverage->zone = ProviderZone::resolve($coverage->provider_tax_id, $coverage->provider_id, $coverage->zone);
+        });
+    }
 
     protected function casts(): array
     {

@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <button type="submit" disabled>Guardar cambios de la página</button>
     <span id="key-change-count" class="note" aria-live="polite">No hay filas modificadas.</span>
 </form>
-{{ $rows->links() }}
+@include('provider-payments::partials.pagination', ['paginator' => $rows])
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('save-key-changes');

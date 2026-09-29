@@ -7,6 +7,7 @@
 @endonce
 <section class="card payment-dashboard" aria-label="Resumen por zona y condición de pago">
     <h2>Resumen de pago · {{ $period }}</h2>
+    <p class="note">Este resumen cuenta únicamente registros preparados en Pagos_movimientos_courier. Los movimientos cargados que aún no se han trabajado no figuran como considerados, no considerados ni sin definir; tampoco están incluidos en el monto.</p>
     <div class="payment-grid">
         <strong>Zona</strong><strong>Registros Considerados</strong><strong>Registros No Considerados</strong><strong>Sin definir</strong><strong>Total</strong><strong>Total Neto Considerado</strong>
         @php($totals = ['yes' => 0, 'no' => 0, 'unset' => 0, 'net' => 0])

@@ -7,6 +7,7 @@ use Database\Factories\CourierMovementFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Validation\ValidationException;
 
 class CourierMovement extends Model
 {
@@ -63,6 +64,10 @@ class CourierMovement extends Model
     protected static function booted(): void
     {
         static::saving(function (CourierMovement $movement): void {
+            $tracking = MaestroPago::trackingKey((string) $movement->tracking_number);
+            if ($tracking !== '' && MaestroPago::query()->whereKey($tracking)->exists()) {
+                throw ValidationException::withMessages(['seguimiento_paquete' => "El seguimiento {$tracking} ya está cerrado en Maestro_Pagos."]);
+            }
             if ($movement->weight_kg === null) {
                 $movement->weight_kg = 1;
             }

@@ -5,24 +5,45 @@ namespace App\Modules\ProviderPayments\Services;
 use App\Models\CostCenter;
 use App\Models\CostCenterKey;
 use App\Models\CostCenterWeightRate;
-use App\Models\Coverage;
 use App\Models\CourierMovement;
 use App\Models\CourierPaymentMovement;
+use App\Models\Coverage;
 use App\Models\ServiceType;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CourierPaymentAssigner
 {
-    public function assign(int $tenantId, string $period): array
+    public function __construct(private PeumoPaymentAssigner $peumo) {}
+
+    public function assign(int $tenantId, string $period, ?string $providerRut = null): array
     {
         $result = ['paid' => 0, 'not_paid' => 0, 'missing_key' => 0, 'ambiguous_key' => 0, 'missing_rate' => 0,
             'missing_coverage' => 0, 'ambiguous_coverage' => 0, 'missing_return_value' => 0,
             'weight_defaulted' => 0, 'weights_recalculated' => 0];
-        $this->syncFinalWeights($tenantId, $period, $result);
+        $this->syncFinalWeights($tenantId, $period, $result, $providerRut);
         $result['not_paid'] += DB::table('Pago_Movimientos_Courier')
             ->where('tenant_id', $tenantId)->where('periodo', $period)
+            ->when($providerRut !== null, fn ($query) => $query->where('rut_proveedor', $providerRut))
+            ->whereIn('seguimiento_paquete', DB::table('envios_externos')->where('tenant_id', $tenantId)
+                ->where('exclude_provider_payment', true)->select('tracking_number'))
+            ->where(fn ($query) => $query->whereNull('condicion_pago')->orWhere('condicion_pago', '<>', 'NO')
+                ->orWhereNull('valor')->orWhere('valor', '<>', 0))
+            ->update(['condicion_pago' => 'NO', 'valor' => 0, 'updated_at' => now()]);
+        $result['not_paid'] += DB::table('Pago_Movimientos_Courier')
+            ->where('tenant_id', $tenantId)->where('periodo', $period)
+            ->when($providerRut !== null, fn ($query) => $query->where('rut_proveedor', $providerRut))
+            ->whereNotIn('tipo_pago', ['Especiales', 'Ruta CV', 'Servicios', 'Acuerdos', 'Apoyo Alza', 'Visitas Diarias'])
+            ->whereNotIn('nombre_proceso', ['Especiales', 'Ruta CV', 'Servicios', 'Acuerdos', 'Apoyo', 'Visitas'])
+            ->where('nombre_proceso', 'not like', '%-Especiales')
+            ->where('nombre_proceso', 'not like', '%-Ruta CV')
+            ->where('nombre_proceso', 'not like', '%-Servicios')
+            ->where('nombre_proceso', 'not like', '%-Acuerdos')
+            ->where('nombre_proceso', 'not like', '%-Apoyo')
+            ->where('nombre_proceso', 'not like', '%-Visitas')
+            ->whereNotIn('seguimiento_paquete', DB::table('envios_externos')->where('tenant_id', $tenantId)
+                ->where('exclude_provider_payment', true)->select('tracking_number'))
             ->whereRaw('LOWER(TRIM(comuna_matriz)) = ?', ['envio externo'])
             ->where(fn ($query) => $query->whereNull('condicion_pago')
                 ->orWhere('condicion_pago', '!=', 'NO')->orWhereNotNull('valor'))
@@ -41,6 +62,9 @@ class CourierPaymentAssigner
             ->with('provider')->get()->groupBy(fn (Coverage $coverage): string => $this->communeKey($coverage->commune_name));
 
         CourierPaymentMovement::query()->where('tenant_id', $tenantId)->where('periodo', $period)
+            ->when($providerRut !== null, fn ($query) => $query->where('rut_proveedor', $providerRut))
+            ->excludingSpecials()
+            ->where('nombre_proceso', '!=', 'Peumo')
             ->where(fn ($query) => $query->whereNull('condicion_pago')->orWhere('condicion_pago', 'SI'))
             ->select(['id', 'courier_movement_id', 'rut_proveedor', 'rut_cliente', 'comuna_matriz', 'peso_final', 'condicion_pago', 'valor', 'nombre_proceso', 'comuna_destino', 'fecha'])
             ->chunkById(500, function ($payments) use ($services, $keys, $centers, $rates, $coverages, &$result): void {
@@ -49,33 +73,37 @@ class CourierPaymentAssigner
                 $updates = [];
                 foreach ($payments as $payment) {
                     $this->recoverProviderFromCoverage($payment, $coverages);
-                    if (strcasecmp(trim((string) $payment->nombre_proceso), 'Retornos') === 0) {
+                    if (strcasecmp(trim((string) $payment->nombre_proceso), 'Retornos') === 0
+                        || str_ends_with((string) $payment->nombre_proceso, '-Retornos')) {
                         $return = $this->returnPayment($payment, $coverages);
                         if (isset($return['error'])) {
                             $result[$return['error']]++;
+
                             continue;
                         }
                         if ($payment->condicion_pago === $return['status'] && $payment->valor === $return['value']) {
                             continue;
                         }
                         $updates[$return['status'].'|'.($return['value'] ?? 'null')][] = $payment->id;
+
                         continue;
                     }
                     $serviceName = $movements->get($payment->courier_movement_id);
                     $service = $serviceName ? $services->get(mb_strtolower(trim($serviceName))) : null;
                     if ($service === null || ! filled($payment->rut_proveedor) || ! filled($payment->rut_cliente)) {
                         $result['missing_key']++;
+
                         continue;
                     }
                     $matches = $keys->get($this->identity($payment->rut_proveedor, $payment->rut_cliente, (string) $service->service_code));
                     if ($matches === null || $matches->isEmpty()) {
                         $result['missing_key']++;
+
                         continue;
                     }
                     $matrix = $this->communeKey((string) $payment->comuna_matriz);
                     if ($matrix !== '') {
-                        $matrixMatches = $matches->filter(fn (CostCenterKey $key): bool =>
-                            $this->communeKey((string) $key->agent_name) === $matrix
+                        $matrixMatches = $matches->filter(fn (CostCenterKey $key): bool => $this->communeKey((string) $key->agent_name) === $matrix
                         );
                         if ($matrixMatches->isNotEmpty()) {
                             $matches = $matrixMatches;
@@ -88,16 +116,19 @@ class CourierPaymentAssigner
                     });
                     if ($configurations->count() !== 1) {
                         $result['ambiguous_key']++;
+
                         continue;
                     }
                     $key = $configurations->first();
                     $status = strtoupper(trim((string) $key->payment_status));
                     if ($status === 'NO') {
                         $updates['NO|null'][] = $payment->id;
+
                         continue;
                     }
                     if ($status !== 'SI') {
                         $result['missing_key']++;
+
                         continue;
                     }
                     $center = $centers->get($key->cost_center_code);
@@ -106,6 +137,7 @@ class CourierPaymentAssigner
                         ? $rates->get($center->cost_center_code.'|'.min($weight, 20)) : null;
                     if ($rate === null) {
                         $result['missing_rate']++;
+
                         continue;
                     }
                     $value = (int) $rate->value + max(0, $weight - 20) * (int) $center->additional_kilo_value;
@@ -127,15 +159,27 @@ class CourierPaymentAssigner
                 }
             });
 
+        $result['peumo'] = $providerRut === null ? $this->peumo->assign($tenantId, $period)
+            : ['paid' => 0, 'pending' => 0, 'missing_guide' => 0, 'missing_rate' => 0, 'ambiguous_rate' => 0, 'missing_identity' => 0];
+
         return $result;
     }
 
-    private function syncFinalWeights(int $tenantId, string $period, array &$result): void
+    private function syncFinalWeights(int $tenantId, string $period, array &$result, ?string $providerRut = null): void
     {
         $weight = 'CASE WHEN peso_real > 0 THEN peso_real WHEN peso_transformado > 0 THEN peso_transformado ELSE 1 END';
         $paymentWeight = '(SELECT peso_final FROM movimientos_courier WHERE movimientos_courier.id = Pago_Movimientos_Courier.courier_movement_id AND movimientos_courier.tenant_id = Pago_Movimientos_Courier.tenant_id)';
         $payments = fn () => DB::table('Pago_Movimientos_Courier')
-            ->where('Pago_Movimientos_Courier.tenant_id', $tenantId)->where('Pago_Movimientos_Courier.periodo', $period);
+            ->where('Pago_Movimientos_Courier.tenant_id', $tenantId)->where('Pago_Movimientos_Courier.periodo', $period)
+            ->when($providerRut !== null, fn ($query) => $query->where('Pago_Movimientos_Courier.rut_proveedor', $providerRut))
+            ->whereNotIn('Pago_Movimientos_Courier.tipo_pago', ['Especiales', 'Ruta CV', 'Servicios', 'Acuerdos', 'Apoyo Alza', 'Visitas Diarias'])
+            ->whereNotIn('Pago_Movimientos_Courier.nombre_proceso', ['Especiales', 'Ruta CV', 'Servicios', 'Acuerdos', 'Apoyo', 'Visitas'])
+            ->where('Pago_Movimientos_Courier.nombre_proceso', 'not like', '%-Especiales')
+            ->where('Pago_Movimientos_Courier.nombre_proceso', 'not like', '%-Ruta CV')
+            ->where('Pago_Movimientos_Courier.nombre_proceso', 'not like', '%-Servicios')
+            ->where('Pago_Movimientos_Courier.nombre_proceso', 'not like', '%-Acuerdos')
+            ->where('Pago_Movimientos_Courier.nombre_proceso', 'not like', '%-Apoyo')
+            ->where('Pago_Movimientos_Courier.nombre_proceso', 'not like', '%-Visitas');
 
         DB::transaction(function () use ($tenantId, $weight, $paymentWeight, $payments, &$result): void {
             $result['weight_defaulted'] = $payments()
@@ -173,8 +217,7 @@ class CourierPaymentAssigner
         $matches = $coverages->get($this->communeKey((string) $payment->comuna_destino), collect());
         $matrix = $this->communeKey((string) $payment->comuna_matriz);
         if ($matrix !== '') {
-            $matrixMatches = $matches->filter(fn (Coverage $coverage): bool =>
-                $this->communeKey((string) $coverage->matrix_commune_name) === $matrix
+            $matrixMatches = $matches->filter(fn (Coverage $coverage): bool => $this->communeKey((string) $coverage->matrix_commune_name) === $matrix
             );
             if ($matrixMatches->isNotEmpty()) {
                 $matches = $matrixMatches;
@@ -188,13 +231,13 @@ class CourierPaymentAssigner
         }
 
         $rut = $ruts->first();
-        $coverage = $matches->first(fn (Coverage $candidate): bool =>
-            strtoupper(trim((string) ($candidate->provider?->tax_id ?: $candidate->provider_tax_id))) === $rut
+        $coverage = $matches->first(fn (Coverage $candidate): bool => strtoupper(trim((string) ($candidate->provider?->tax_id ?: $candidate->provider_tax_id))) === $rut
         );
         $updated = DB::table('Pago_Movimientos_Courier')->where('id', $payment->id)
             ->where(fn ($query) => $query->whereNull('rut_proveedor')->orWhere('rut_proveedor', ''))
             ->update([
                 'rut_proveedor' => $rut,
+                'zona' => ProviderZone::resolve($rut, $coverage->provider_id, $payment->zona),
                 'razon_social_proveedor' => $coverage->provider?->legal_name ?: $coverage->provider_name_source,
                 'nombre_operacional' => $coverage->provider?->operational_name,
                 'tipo_documento' => $coverage->provider?->tax_document_type,
@@ -209,8 +252,7 @@ class CourierPaymentAssigner
     {
         $matches = $coverages->get($this->communeKey((string) $payment->comuna_destino), collect());
         $date = $payment->fecha?->toDateString();
-        $matches = $matches->filter(fn (Coverage $coverage): bool =>
-            ($coverage->effective_from === null || ($date !== null && $coverage->effective_from->toDateString() <= $date))
+        $matches = $matches->filter(fn (Coverage $coverage): bool => ($coverage->effective_from === null || ($date !== null && $coverage->effective_from->toDateString() <= $date))
             && ($coverage->effective_to === null || ($date !== null && $coverage->effective_to->toDateString() >= $date))
         );
         if ($matches->isEmpty()) {

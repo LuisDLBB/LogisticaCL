@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\ProviderBankAccount;
+use App\Modules\ProviderPayments\Services\ProviderZone;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -83,19 +85,23 @@ class MasterDataSeeder extends Seeder
     {
         foreach ($this->rows('initial_providers.tsv') as $row) {
             [$number, $dv] = $this->rutParts($row['Rut_Proveedor']);
+            $existingProvider = DB::table('providers')->where('tenant_id', $this->tenantId)
+                ->where('tax_id_number', $number)->first(['id', 'contact_email']);
             DB::table('providers')->updateOrInsert(['tenant_id' => $this->tenantId, 'tax_id_number' => $number], [
                 'tax_id' => strtoupper($row['Rut_Proveedor']), 'tax_id_check_digit' => $dv, 'legal_name' => $row['Razon_Social'],
                 'operational_name' => $row['Operador'], 'operator_type' => $row['TipoOperador'], 'tax_document_type' => $row['Tipo_Documento'],
                 'commercial_address' => $row['DireccionComercial'], 'commercial_commune_name' => $row['ComunaComercial'],
-                'contact_name' => $row['NombreContacto'], 'contact_phone' => $row['TelefonoContacto'], 'contact_email' => $row['CorreoContacto'],
+                'contact_name' => $row['NombreContacto'], 'contact_phone' => $row['TelefonoContacto'],
+                'contact_email' => $existingProvider?->contact_email ?? $row['CorreoContacto'],
                 'is_active' => true, 'updated_at' => now(), 'created_at' => now(),
             ]);
-            $providerId = DB::table('providers')->where('tenant_id', $this->tenantId)->where('tax_id_number', $number)->value('id');
-            if (trim($row['Banco'] ?? '') !== '') {
-                DB::table('provider_bank_accounts')->updateOrInsert(['provider_id' => $providerId, 'account_number' => $row['Nro_Cuenta']], [
+            $providerId = $existingProvider?->id ?? DB::table('providers')->where('tenant_id', $this->tenantId)->where('tax_id_number', $number)->value('id');
+            if (trim($row['Banco'] ?? '') !== '' && ! DB::table('provider_bank_accounts')->where('provider_id', $providerId)->exists()) {
+                ProviderBankAccount::query()->create([
+                    'provider_id' => $providerId, 'account_number' => $row['Nro_Cuenta'],
                     'account_holder_name' => $row['Titular_Banco'], 'account_holder_tax_id' => $row['RUT_Titular_Banco'],
                     'bank_name' => $row['Banco'], 'account_type' => $row['Tipo_Cuenta'], 'is_primary' => true,
-                    'is_active' => true, 'updated_at' => now(), 'created_at' => now(),
+                    'is_active' => true,
                 ]);
             }
         }
@@ -107,7 +113,7 @@ class MasterDataSeeder extends Seeder
             $providerId = DB::table('providers')->where('tenant_id', $this->tenantId)->where('tax_id', strtoupper($row['Rut_Proveedor']))->value('id');
             DB::table('coverages')->updateOrInsert(['tenant_id' => $this->tenantId, 'commune_name' => $row['Comuna'], 'route_code' => $row['Ruta']], [
                 'provider_id' => $providerId, 'matrix_commune_name' => $row['ComunaMatriz'], 'provider_tax_id' => strtoupper($row['Rut_Proveedor']),
-                'provider_name_source' => $row['NombreProveedor'], 'zone' => $row['Zona'], 'return_payment_applies' => strtoupper($row['PAGAR RETORNO']) === 'SI',
+                'provider_name_source' => $row['NombreProveedor'], 'zone' => ProviderZone::resolve($row['Rut_Proveedor'], $providerId, $row['Zona']), 'return_payment_applies' => strtoupper($row['PAGAR RETORNO']) === 'SI',
                 'return_value' => $this->number($row['VALOR/RETORNO']), 'delivery_frequency' => $row['Frecuencia'], 'delivery_type' => $row['TipoEntrega'],
                 'region_code' => $this->integer($row['Region']), 'consideration_code' => $this->integer($row['Considerar']),
                 'aerial_commune_name' => $row['ComunaAereo'], 'aerial_route_code' => $row['ruta aerea'], 'base_commune_name' => $row['ComunaBase'],

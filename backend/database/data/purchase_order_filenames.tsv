@@ -1,0 +1,88 @@
+RUT	PROVEEDOR	EMPRESA	TIPO	NOMBRE_ARCHIVO
+77201525-9	DS GROUP SPA	4N	FACTURA	DSG
+77235107-0	TRANSPORTES Y DISTRIBUCION PMCB SPA	4N	FACTURA	Quincena
+7220635-5	Esnedi Del Carmen Beroiza Beroiza	PMCB	BOLETA	EsnediBeroiza
+10869353-3	Claudia Morales Venegas	4N	FACTURA	ClaudiaMorales
+77656334-K	SANREY SPA	4N	FACTURA	ClaudiaReyes
+17662544-9	Ana Luisa Venegas Bruna	4N	FACTURA	EstebanHuenchuquen
+78350442-1	ACS DISTRIBUCION Y SERVICIOS SPA	4N	FACTURA	ClaudioGonzalez
+76716142-5	EDICIONES LIZ	4N	FACTURA	WalterRobles
+78429685-7	DISTRIBUIDOR SERVICIOS Y ENCARGOS SPA	4N	FACTURA	JoseHormazabal
+76147222-4	Transportes Mándame SPA	4N	FACTURA	Talagante
+8960481-8	Celia Carolina León Díaz	4N	FACTURA EXENTA	Litoral
+11189365-9	Maria Antonia Guerrero Plaza	4N	FACTURA	CasaBlanca
+10.124.367-2	Nelson Luis Cisternas Rivera	4N	FACTURA	ARICA
+76556632-0	Postman Logística y Distribución EIRL	4N	FACTURA	IQUIQUE
+77300326-2	Transportes Claudio Andres Castro Valenzuela E.I.R.L. 	4N	FACTURA	ANTOFAGASTA
+9846947-8	Hector Eduardo Rivera Carrasco	4N	FACTURA	COQUIMBO
+77301587-2	Distribuidora Graciela Burgos Jeldes EIRL	4N	FACTURA	COPIAPO
+8906841-K	Hugo Mauricio López Beltran	4N	BOLETA	RANCAGUA
+76064767-5	Distribucion y Servicios Daphne Katalina Meza Ramos EIRL	4N	FACTURA	SAN_FERNANDO
+76528088-5	Servicio de Encargo y Encomiendas Daniela Soto G EIRL	4N	FACTURA	CURICO
+77145818-1	Transportes Villaseca SPA	4N	FACTURA	TALCA
+76052551-0	Transportes Distribucion y servicios ltda	4N	FACTURA	MERCASUR
+76052551-0	Transportes Distribucion y servicios ltda	PMCB	FACTURA	MERCASUR_PMCB
+76115557-1	Soc. Som. Austral Distribuciones Ltda.	4N	FACTURA	PUNTA_ARENAS
+77458608-3	De Tentempie SPA	4N	FACTURA	VALDIVIA
+13590206-3	Johanna Andrea Oyarzo de la Fuente	4N	FACTURA	OSORNO
+7481733-5	Sergio Antonio Pino Ibaceta	4N	FACTURA	PUERTO_MONTT
+77417055-3	TRANSPORTES Y DISTRIBUCIONES AVAA SPA	4N	FACTURA	COYHAIQUE
+16945660-7	Fabian Alonso Pino Miranda	4N	BOLETA	CHILOE
+77653925-2	DISTRIBUIDORA VICTOR PEREZ SPA	4N	FACTURA	VictorPerez
+78269187-2	Mauricio Alejandro Zuñiga Fuentes Transportes EIRL	4N	FACTURA	MauricioZuniga
+13072027-7	Manuel Jesus Hernandez Cadiz	4N	FACTURA	ManuelHernandez
+77946757-0	Transportes Alvaro Patricio  Conejeros Michellod EIRL	4N	FACTURA	AlvaroConejeros
+78138313-9	Asetrans Spa	4N	FACTURA	GiuseppePerini
+124603846	Manuel Vargas Gonzalez	4N	BOLETA	ManuelVargas
+19282015-4	Marcelo Fabian Soto Maidana	4N	BOLETA	MarceloSoto
+77.390.761-7	TRANSPORTE BAG SPA	PMCB	FACTURA	BAG_PMCB
+76728145-5	Transporte HG Quintupeu SPA	4N	FACTURA	HectorGuerrero
+20980542-1	Daniel Esteban Lillo Ojeda	4N	BOLETA	DanielLillo
+77.816.089-7	Transportes Vago SPA	4N	FACTURA	DavidVargas
+11.866.495-7	CECILIA ISABEL BURGOS CACERES	4N	FACTURA	CeciliaBurgos
+12987094-K	MAURICIO DEL CARMEN JARA MELO	4N	FACTURA	MauricioJara
+77.845.965-5	BULLDOG TRAVELS SPA	4N	FACTURA	JonathanReyes
+14.188.758-0	Juan Antonio Manzo Montecinos	4N - AGENCIAS	BOLETA	JuanManzo
+9.481.156-2	Erwin Patricio Salazar	4N - AGENCIAS	BOLETA	ErwinSalazar
+14.093.030-k	Saul Andres Lira Lira	4N - AGENCIAS	BOLETA	SaulLira
+99.595.520-2	Distribuidora Marcos Alarcon e Hijos SA	4N - AGENCIAS	FACTURA	DistribuidoraAlarcon
+9.155.587-5	Carlos Guillermo Iglesias Lopez	4N - AGENCIAS	BOLETA	CarlosIglesias
+15.538.591-k	Susan Aurora Valenzuela Astudillo	4N - AGENCIAS	BOLETA	SusanValenzuela
+12.388.671-2	Yonny Ñanculeo Marileo	4N - AGENCIAS	BOLETA	YonniNanculeo
+9.126.442-0	Eliana del Carmen Moreno Escobar	4N - AGENCIAS	BOLETA	ElianaMoreno
+78464442-1	GRC LOGÍSTICA Y DISTRIBUCIÓN SPA	4N - AGENCIAS	FACTURA	GuillermoGuevara
+12.269.012-1	Juan Oyarce Valenzuela	4N - AGENCIAS	BOLETA	JuanOyarce
+18.765.018-6	Scarlett Arce Villegas	4N - AGENCIAS	BOLETA	ScarlettArce
+6.889.211-2	David Arellano Morales	4N - AGENCIAS	FACTURA	DavidArellano
+77.201.525-9	DS GROUP SPA	4N - AGENCIAS	FACTURA	DSG_RUTA_V
+9.707.165-9	Marcela Alejandra Alonso Jimenez	4N - AGENCIAS	BOLETA	MarcelaAlonso
+13559367-2	Nicolas Gabriel Gonzalez Zambrano	4N TEMUCO	BOLETA	NicolasMartinez
+12538127-8	Claudio Andres Cuevas Aravena	4N TEMUCO	BOLETA	ClaudioCuevas
+78480951-k	JJ Cargo y Distribucion Spa	4N TEMUCO	FACTURA	JavierSalgado
+77521671-9	R/B TRANSPORTES SPA	4N	FACTURA	LuisMiranda
+17850968-3	Jose Ignacio Collio Paillao	4N	FACTURA	JoseCollio
+10320311-2	Nelson Enrique Torres Castro	4N	BOLETA	NelsonTorres
+77586894-5	Happy Friends SPA	4N	FACTURA	HectorDiaz
+96771540-9	INVERSIONES REYBAL LIMITADA	4N - AGENCIAS	FACTURA	InversionesReybal
+78206404-5	JIG SPA	4N	FACTURA	JIG
+11643242-0	Patricio Segundo Vega Vallejos	4N	FACTURA	PatricioVega
+77366957-0	Jose Miguel Rosales Carmona E.I.R.L 	4N	FACTURA	JoseRosales
+78464442-1	GRC LOGÍSTICA Y DISTRIBUCIÓN SPA	4N	FACTURA	GuillermoGuevara
+15536672-9	Nelson Andres Lopez Carreño	PMCB	BOLETA	NelsonLopez
+77813534-5	Razón social JR Transporte Spa	4N	FACTURA	JR_Transportes
+15558738-5	Carlos Cortes Fabian Chavez	4N	FACTURA	CarlosCortes
+ 10629309-0	Jorge Luis Tarbes Vergara	4N	FACTURA	JorgeTarbes
+77570576-0	Transportes Gupa SPA	4N	FACTURA	AlbertoParra
+10985368-2	Jorge Arcos Gatica	4N	FACTURA	JorgeArcos
+15474387-1	Maria Jose Boada Gonzalez	4N	FACTURA	CristianRubilar
+78207289-7	Transporte Romina Gonzalez EIRL	4N	FACTURA	IsaiasContreras
+77.390.761-7	TRANSPORTE BAG SPA	4N	FACTURA	BAG_4N
+17850968-3	Jose Ignacio Collio Paillao	4N	FACTURA	JoseCollio_2
+11657404-7	Lorgio lautaro  Rozas Devia	4N	FACTURA	GladysCerna
+11942383-K	José Abraham Caneo Figueroa	4N	FACTURA	LA_LIGUA_OVALLE
+17657150-0	Micael Eleazar Figueroa Diaz. 	4N	FACTURA	LOS_ANDES
+19488954-2	Paula Valencia Báez	4N	FACTURA	VINA_DEL_MAR
+13013180-8	Víctor Enrique Robledo Escalona	4N	FACTURA	CALAMA-Victor
+77.201.525-9	DS GROUP SPA	4N - RUTA NORTE	FACTURA	DSG_Troncal_Norte
+15743735-6	Maribel Elena Silva Donoso	4N	FACTURA	MaribelSilva
+13172671-6	Marcelo Alejandro Avendaño Tapia	4N	FACTURA	CALAMA

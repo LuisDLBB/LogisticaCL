@@ -16,12 +16,14 @@ use Illuminate\View\View;
 
 class OperationalMasterMaintainerController
 {
-    public function providers(): View
+    public function providers(Request $request): View
     {
         return view('provider-payments::providers-index', [
-            'providers' => Provider::with('bankAccounts')->where('tenant_id', $this->tenant()->id)->orderBy('legal_name')->get(),
+            'providers' => Provider::with(['bankAccounts', 'ocFilenames'])->where('tenant_id', $this->tenant()->id)->orderBy('legal_name')->get(),
             'banks' => Banco::query()->where('is_active', true)->orderBy('banco')->get(),
             'accountTypes' => TipoCuentaBancaria::query()->where('is_active', true)->orderBy('id_tipo_cuenta')->get(),
+            'returnPeriod' => preg_match('/^\d{4}(0[1-9]|1[0-2])$/', (string) $request->query('return_period'))
+                ? (string) $request->query('return_period') : null,
         ]);
     }
 
@@ -29,29 +31,40 @@ class OperationalMasterMaintainerController
     {
         $tenant = $this->tenant();
         $data = $request->validate([
+            'return_period' => ['nullable', 'date_format:Ym'],
             'tax_id' => ['required', 'string', 'max:15', Rule::unique('providers')->where('tenant_id', $tenant->id)],
             'legal_name' => ['required', 'string', 'max:255'], 'operational_name' => ['nullable', 'string', 'max:160'],
             'operator_type' => ['required', 'string', 'max:20'], 'tax_document_type' => ['nullable', 'string', 'max:80'],
             'commercial_address' => ['nullable', 'string', 'max:255'], 'commercial_commune_name' => ['nullable', 'string', 'max:100'],
             'contact_name' => ['nullable', 'string', 'max:160'], 'contact_phone' => ['nullable', 'string', 'max:40'],
             'contact_email' => ['nullable', 'email', 'max:160'],
+            'contact_email_secondary' => ['nullable', 'email', 'max:160'],
+            'payment_terms' => ['nullable', 'string', 'max:80'],
+            'payment_terms_pmcb' => ['nullable', 'string', 'max:80'],
+            'account_holder_name' => ['nullable', 'string', 'max:255'],
+            'account_holder_tax_id' => ['nullable', 'string', 'max:20'],
             'bank_name' => ['nullable', 'string', 'max:100', 'required_with:account_number', Rule::exists('bancos', 'banco')->where('is_active', true)],
             'account_type' => ['nullable', 'string', 'max:80', 'required_with:account_number', Rule::exists('tipos_cuenta_bancaria', 'tipo_cuenta')->where('is_active', true)],
             'account_number' => ['nullable', 'string', 'max:100', 'required_with:bank_name,account_type'],
         ]);
         [$number, $digit] = $this->rutParts($data['tax_id']);
-        $provider = Provider::create([...Arr::except($data, ['bank_name', 'account_type', 'account_number']), 'tenant_id' => $tenant->id, 'tax_id' => $number.'-'.$digit, 'tax_id_number' => $number, 'tax_id_check_digit' => $digit, 'is_active' => true]);
+        $provider = Provider::create([...Arr::except($data, ['bank_name', 'account_type', 'account_number', 'account_holder_name', 'account_holder_tax_id', 'return_period']), 'tenant_id' => $tenant->id, 'tax_id' => $number.'-'.$digit, 'tax_id_number' => $number, 'tax_id_check_digit' => $digit, 'is_active' => true]);
 
         if (filled($data['account_number'] ?? null)) {
             $provider->bankAccounts()->create([
-                'account_holder_name' => $provider->legal_name,
-                'account_holder_tax_id' => $provider->tax_id,
+                'account_holder_name' => filled($data['account_holder_name'] ?? null) ? $data['account_holder_name'] : $provider->legal_name,
+                'account_holder_tax_id' => filled($data['account_holder_tax_id'] ?? null) ? $data['account_holder_tax_id'] : $provider->tax_id,
                 'bank_name' => $data['bank_name'],
                 'account_type' => $data['account_type'],
                 'account_number' => $data['account_number'],
                 'is_primary' => true,
                 'is_active' => true,
             ]);
+        }
+
+        if (filled($data['return_period'] ?? null)) {
+            return redirect()->route('provider-payments.courier-movements.rutas-cv', ['periodo' => $data['return_period']])
+                ->with('status', "Proveedor {$provider->tax_id} creado. Selecciónalo en la ruta correspondiente y guarda los cambios.");
         }
 
         return back()->with('status', 'Proveedor creado correctamente.');
@@ -65,20 +78,25 @@ class OperationalMasterMaintainerController
             'operator_type' => ['required', 'string', 'max:20'], 'tax_document_type' => ['nullable', 'string', 'max:80'],
             'commercial_address' => ['nullable', 'string', 'max:255'], 'commercial_commune_name' => ['nullable', 'string', 'max:100'],
             'contact_name' => ['nullable', 'string', 'max:160'], 'contact_phone' => ['nullable', 'string', 'max:40'],
-            'contact_email' => ['nullable', 'email', 'max:160'], 'is_active' => ['required', 'boolean'],
+            'contact_email' => ['nullable', 'email', 'max:160'],
+            'contact_email_secondary' => ['nullable', 'email', 'max:160'], 'is_active' => ['required', 'boolean'],
+            'payment_terms' => ['nullable', 'string', 'max:80'],
+            'payment_terms_pmcb' => ['nullable', 'string', 'max:80'],
+            'account_holder_name' => ['nullable', 'string', 'max:255'],
+            'account_holder_tax_id' => ['nullable', 'string', 'max:20'],
             'bank_name' => ['nullable', 'string', 'max:100', Rule::exists('bancos', 'banco')->where('is_active', true)],
             'account_type' => ['nullable', 'string', 'max:80', Rule::exists('tipos_cuenta_bancaria', 'tipo_cuenta')->where('is_active', true)],
             'account_number' => ['nullable', 'string', 'max:100'],
         ]);
-        $provider->update(Arr::except($data, ['bank_name', 'account_type', 'account_number']));
+        $provider->update(Arr::except($data, ['bank_name', 'account_type', 'account_number', 'account_holder_name', 'account_holder_tax_id']));
 
         $bankAccount = $provider->bankAccounts()->where('is_primary', true)->first()
             ?? $provider->bankAccounts()->first();
 
         if ($bankAccount && filled($data['bank_name'] ?? null) && filled($data['account_type'] ?? null)) {
             $bankAccountData = [
-                'account_holder_name' => $provider->legal_name,
-                'account_holder_tax_id' => $provider->tax_id,
+                'account_holder_name' => filled($data['account_holder_name'] ?? null) ? $data['account_holder_name'] : ($bankAccount->account_holder_name ?: $provider->legal_name),
+                'account_holder_tax_id' => filled($data['account_holder_tax_id'] ?? null) ? $data['account_holder_tax_id'] : ($bankAccount->account_holder_tax_id ?: $provider->tax_id),
                 'bank_name' => $data['bank_name'],
                 'account_type' => $data['account_type'],
                 'is_primary' => true,
@@ -90,8 +108,8 @@ class OperationalMasterMaintainerController
             $bankAccount->update($bankAccountData);
         } elseif (filled($data['account_number'] ?? null) && filled($data['bank_name'] ?? null) && filled($data['account_type'] ?? null)) {
             $provider->bankAccounts()->create([
-                'account_holder_name' => $provider->legal_name,
-                'account_holder_tax_id' => $provider->tax_id,
+                'account_holder_name' => filled($data['account_holder_name'] ?? null) ? $data['account_holder_name'] : $provider->legal_name,
+                'account_holder_tax_id' => filled($data['account_holder_tax_id'] ?? null) ? $data['account_holder_tax_id'] : $provider->tax_id,
                 'bank_name' => $data['bank_name'],
                 'account_type' => $data['account_type'],
                 'account_number' => $data['account_number'],
@@ -101,6 +119,23 @@ class OperationalMasterMaintainerController
         }
 
         return back()->with('status', "Proveedor {$provider->tax_id} actualizado sin modificar su llave.");
+    }
+
+    public function saveProviderOcFilename(Request $request, Provider $provider): RedirectResponse
+    {
+        $this->guardTenant($provider->tenant_id);
+        $data = $request->validate([
+            'company_code' => ['required', Rule::in(['4N', 'PMCB'])],
+            'service_scope' => ['required', Rule::in(['General', 'Troncal Norte', 'Troncal V', 'Servicios hasta 14/08/2026', 'Servicios hasta 17/09/2026'])],
+            'file_stem' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9_-]+$/'],
+        ]);
+
+        $provider->ocFilenames()->updateOrCreate(
+            Arr::only($data, ['company_code', 'service_scope']),
+            Arr::only($data, ['file_stem'])
+        );
+
+        return back()->with('status', "Nombre de archivo de {$provider->tax_id} guardado para {$data['company_code']} · {$data['service_scope']}.");
     }
 
     public function banks(): View

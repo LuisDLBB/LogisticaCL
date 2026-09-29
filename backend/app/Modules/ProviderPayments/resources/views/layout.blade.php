@@ -35,6 +35,7 @@
         input:not([type=checkbox]):not([type=radio]):not([type=hidden]),select,textarea{max-width:100%;font-size:13px}select,input:not([type=checkbox]):not([type=radio]):not([type=hidden]){min-height:36px}
         table{width:100%;border-collapse:collapse}th,td{padding:9px 12px;border-bottom:1px solid #e7eeee;text-align:left}th{background:#effafa;color:#087477;font-size:11px;text-transform:uppercase}td:last-child,th:last-child{text-align:right}tr:last-child td{border-bottom:0}.table-wrap{overflow:auto}
         .note{color:var(--muted);font-size:14px}.warning{padding:15px;border-left:4px solid #db9f34;background:#fff6e4}.progress-track{height:9px;overflow:hidden;border-radius:99px;background:#dcecec}.progress-bar{width:35%;height:100%;background:var(--turquoise);animation:loading 1.2s ease-in-out infinite}@keyframes loading{from{transform:translateX(-110%)}to{transform:translateX(310%)}}progress{width:100%;accent-color:var(--turquoise-dark)}
+        .pp-pager{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0;font-size:14px}.pp-pager-current,.pp-pager-button{display:inline-flex;align-items:center;min-height:38px;padding:8px 12px;border:1px solid var(--line);border-radius:7px;background:#fff;white-space:nowrap}.pp-pager-actions{display:flex;gap:8px;margin-left:auto}.pp-pager-button{color:var(--turquoise-dark);text-decoration:none}.pp-pager-button:hover{border-color:var(--turquoise-dark);background:var(--turquoise-soft)}.pp-pager-button.is-disabled{color:var(--muted);opacity:.7;cursor:default}.pp-pager-button.is-disabled:hover{border-color:var(--line);background:#fff}@media(max-width:480px){.pp-pager{flex-wrap:wrap}.pp-pager-actions{margin-left:0}}
         .master-tools{display:grid;grid-template-columns:minmax(240px,1fr) 220px auto;gap:10px;align-items:end;margin:0 0 22px;padding:16px;border:1px solid var(--line);border-radius:12px;background:#fff}.master-tools label{display:grid;gap:6px;color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase}.master-tools input,.master-tools select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}.master-results{padding:10px 0;color:var(--muted);font-size:13px;white-space:nowrap}.new-record-toggle{margin:0 0 18px}.creator-open{display:block!important;grid-column:1/-1}
         @media(max-width:760px){.topbar{height:auto;min-height:70px}.user-area{display:none}.shell{display:block}.sidebar{border-right:0;border-bottom:1px solid var(--line)}.content{padding:26px 18px}.sidebar>.nav-link,.sidebar>details{display:inline-block;width:auto;vertical-align:top}.subnav{position:absolute;z-index:10;background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px}.master-tools{grid-template-columns:1fr}}
     </style>
@@ -48,17 +49,18 @@
 <div class="shell">
     <aside class="sidebar" aria-label="Menú Pago Proveedores">
         <a class="nav-link {{ request()->routeIs('provider-payments.dashboard') ? 'active' : '' }}" href="{{ route('provider-payments.dashboard') }}">Resumen</a>
-        <details {{ request()->routeIs('provider-payments.courier-movements.*') && ! request()->routeIs('provider-payments.courier-movements.compile') ? 'open' : '' }}>
+        <details {{ (request()->routeIs('provider-payments.courier-movements.*') && ! request()->routeIs('provider-payments.courier-movements.compile')) || request()->routeIs('provider-payments.maintainers.pesos.reales*') ? 'open' : '' }}>
             <summary class="nav-summary">Carga Movimientos Courier</summary>
             <nav class="subnav">
-                @php($activeCourierProcess = session('courier_review.process_type', 'variables'))
-                <a class="{{ request()->routeIs('provider-payments.courier-movements.upload') || (request()->routeIs('provider-payments.courier-movements.validate', 'provider-payments.courier-movements.review-parameters') && $activeCourierProcess === 'variables') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.upload') }}">Courier Variables</a>
-                <a class="{{ request()->routeIs('provider-payments.courier-movements.lanas') || (request()->routeIs('provider-payments.courier-movements.validate', 'provider-payments.courier-movements.review-parameters') && $activeCourierProcess === 'lanas') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.lanas') }}">Courier Lanas</a>
-                <a class="{{ request()->routeIs('provider-payments.courier-movements.retornos') || (request()->routeIs('provider-payments.courier-movements.validate', 'provider-payments.courier-movements.review-parameters') && $activeCourierProcess === 'retornos') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.retornos') }}">Courier Retornos</a>
+                <a class="{{ request()->routeIs('provider-payments.maintainers.pesos.reales*') ? 'active' : '' }}" href="{{ route('provider-payments.maintainers.pesos.reales') }}">Pesos Reales</a>
+                <a class="{{ request()->routeIs('provider-payments.courier-movements.upload', 'provider-payments.courier-movements.lanas', 'provider-payments.courier-movements.retornos', 'provider-payments.courier-movements.validate', 'provider-payments.courier-movements.review-parameters') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.upload') }}">Bases Courier</a>
+                <a class="{{ request()->routeIs('provider-payments.courier-movements.externos*') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.externos') }}">Envíos Externos</a>
                 <a class="{{ request()->routeIs('provider-payments.courier-movements.especiales') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.especiales') }}">Courier Especiales</a>
                 <a class="{{ request()->routeIs('provider-payments.courier-movements.rutas-cv') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.rutas-cv') }}">Rutas CV</a>
                 <a class="{{ request()->routeIs('provider-payments.courier-movements.servicios') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.servicios') }}">Servicios</a>
                 <a class="{{ request()->routeIs('provider-payments.courier-movements.acuerdos') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.acuerdos') }}">Acuerdos</a>
+                <a class="{{ request()->routeIs('provider-payments.courier-movements.apoyo-alza') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.apoyo-alza') }}">Apoyo Alza</a>
+                <a class="{{ request()->routeIs('provider-payments.courier-movements.visitas*') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.visitas') }}">Visitas Diarias</a>
             </nav>
         </details>
         <a class="nav-link {{ request()->routeIs('provider-payments.courier-movements.compile') ? 'active' : '' }}" href="{{ route('provider-payments.courier-movements.compile') }}">Compilar Movimientos</a>
@@ -66,7 +68,7 @@
             @foreach (['Clientes' => 'clientes', 'Sucursales' => 'sucursales', 'Servicios' => 'servicios', 'Proveedores' => 'proveedores', 'Coberturas' => 'coberturas', 'Centro de Costos' => 'centro-de-costos', 'Tarifas CC' => 'tarifas-cc', 'Llave CC' => 'llave-centro-costos', 'Estados' => 'estados', 'Bancos' => 'bancos', 'Vehículos' => 'vehiculos'] as $label => $routeName)
                 <a href="{{ route('provider-payments.maintainers.'.$routeName) }}">{{ $label }}</a>
             @endforeach
-            <details {{ request()->routeIs('provider-payments.maintainers.pesos*') ? 'open' : '' }}><summary class="nav-summary">Pesos</summary><nav class="subnav"><a href="{{ route('provider-payments.maintainers.pesos.transformados') }}">Peso Transformado</a><a href="{{ route('provider-payments.maintainers.pesos.reales') }}">Peso Real</a></nav></details>
+            <a href="{{ route('provider-payments.maintainers.pesos.transformados') }}">Peso Transformado</a>
         </nav></details>
     </aside>
     <main class="content">
@@ -84,6 +86,7 @@
         @yield('content')
     </main>
 </div>
+@include('provider-payments::partials.system-visual-styles')
 @stack('scripts')
 <script>
 (() => {

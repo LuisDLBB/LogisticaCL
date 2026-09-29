@@ -9,6 +9,7 @@ use App\Models\CourierImportError;
 use App\Models\Provider;
 use App\Models\ServiceType;
 use App\Models\Tenant;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -40,8 +41,7 @@ class CostCenterKeyMaintainerController
             $selectedCenter = trim((string) $request->query('center'));
             $selectedPayment = trim((string) $request->query('payment'));
             $viewMode = $request->query('vista') === 'cliente' ? 'cliente' : 'proveedor';
-            $matches = fn (CostCenterKey $key, string $except = ''): bool =>
-                ($except === 'client' || $selectedClient === '' || $this->clientFilterKey($key) === $selectedClient)
+            $matches = fn (CostCenterKey $key, string $except = ''): bool => ($except === 'client' || $selectedClient === '' || $this->clientFilterKey($key) === $selectedClient)
                 && ($except === 'provider' || $selectedProvider === '' || $this->providerFilterKey($key) === $selectedProvider)
                 && ($except === 'service' || $selectedService === '' || (string) $key->service_code === $selectedService)
                 && ($except === 'center' || $selectedCenter === '' || ($key->cost_center_code === null ? 'none' : (string) $key->cost_center_code) === $selectedCenter)
@@ -105,12 +105,13 @@ class CostCenterKeyMaintainerController
                 'costCenters' => CostCenter::query()->where('is_active', true)->orderBy('cost_center_code')->get(),
             ]);
         }
-        $service = ServiceType::query()->where('is_active', true)->where('name', $serviceName)->first();
-        $templateRows = $service
-            ? CostCenterKey::query()->where('tenant_id', $tenant->id)->where('is_active', true)->where('service_code', $service->service_code)
-                ->orderBy('merchant_name')->orderBy('agent_name')->get()
+        $service = ServiceType::query()->whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower($serviceName)])->first();
+        $targetClient = Client::query()->where('tenant_id', $tenant->id)->where('is_active', true)
+            ->whereRaw('LOWER(TRIM(source_merchant_name)) = ?', [mb_strtolower($merchantName)])->first();
+        $templateRows = $targetClient && (! $service || $service->is_active)
+            ? $this->templateRowsForClient($targetClient, $service, $serviceName)
             : collect();
-        $templateGroups = $templateRows->groupBy(fn (CostCenterKey $key): string => $key->merchant_name.'|'.$key->service_code)
+        $templateGroups = $templateRows->groupBy(fn (CostCenterKey $key): string => (string) $key->service_code)
             ->map(fn ($rows) => (object) [
                 'template_id' => $rows->first()->id,
                 'merchant_name' => $rows->first()->merchant_name,
@@ -122,10 +123,14 @@ class CostCenterKeyMaintainerController
         return view('provider-payments::cost-center-key-create', [
             'merchantName' => $merchantName,
             'serviceName' => $serviceName,
-            'targetClientRut' => Client::query()->where('tenant_id', $tenant->id)->where('source_merchant_name', $merchantName)->value('tax_id') ?? 'Cliente pendiente',
+            'reviewBatchId' => $request->session()->get('courier_review.batch_id'),
+            'targetClient' => $targetClient,
+            'targetService' => $service,
+            'targetClientRut' => $targetClient?->tax_id ?? 'Cliente pendiente',
             'templates' => $templateGroups,
+            'providers' => Provider::query()->where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('legal_name')->get(),
             'templateRows' => $templateGroups->mapWithKeys(function ($group) use ($templateRows): array {
-                $rows = $templateRows->where('merchant_name', $group->merchant_name)->where('service_code', $group->service_code)
+                $rows = $templateRows->where('service_code', $group->service_code)
                     ->map(fn (CostCenterKey $key): array => [
                         'source_id' => $key->id,
                         'provider_tax_id' => $key->provider_tax_id,
@@ -148,42 +153,96 @@ class CostCenterKeyMaintainerController
             'merchant_name' => ['required', 'string', 'max:255'],
             'service_name' => ['required', 'string', 'max:160'],
             'template_id' => [
-                'required',
+                'nullable',
                 'integer',
                 Rule::exists('llave_centro_costos', 'id')->where(fn ($query) => $query->where('tenant_id', $tenant->id)->where('is_active', true)),
             ],
-            'rows' => ['required', 'array', 'min:1'],
-            'rows.*.source_id' => ['required', 'integer'],
+            'rows' => ['required_with:template_id', 'array', 'min:1'],
+            'rows.*.source_id' => ['required', 'integer', 'distinct'],
             'rows.*.provider_tax_id' => ['nullable', 'string', 'max:15'],
             'rows.*.agent_name' => ['nullable', 'string', 'max:160'],
             'rows.*.payment_status' => ['required', 'string', 'max:20'],
             'rows.*.cost_center_code' => ['nullable', 'integer', Rule::exists('cost_centers', 'cost_center_code')],
+            'provider_id' => ['nullable', Rule::exists('providers', 'id')->where('tenant_id', $tenant->id)->where('is_active', true)],
+            'agent_name' => ['nullable', 'string', 'max:160'],
+            'payment_status' => ['nullable', Rule::in(['SI', 'NO', 'REVISAR'])],
+            'cost_center_code' => ['nullable', 'integer', Rule::exists('cost_centers', 'cost_center_code')],
         ]);
 
         $client = Client::query()->where('tenant_id', $tenant->id)->where('is_active', true)
             ->whereRaw('LOWER(TRIM(source_merchant_name)) = ?', [mb_strtolower(trim($validated['merchant_name']))])->first();
-        $service = ServiceType::query()->where('is_active', true)->where('name', $validated['service_name'])->first();
+        $service = ServiceType::query()->whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower(trim($validated['service_name']))])->first();
         if (! $client) {
             throw ValidationException::withMessages(['merchant_name' => 'Primero debes crear o corregir este cliente en el maestro de clientes.']);
         }
-        if (! $service) {
-            throw ValidationException::withMessages(['service_name' => 'Este servicio no existe en el catálogo de servicios.']);
+        if ($service && ! $service->is_active) {
+            throw ValidationException::withMessages(['service_name' => 'Este servicio está inactivo. Actívalo en el catálogo antes de crear la combinación.']);
         }
 
-        $representative = CostCenterKey::query()->where('tenant_id', $tenant->id)->whereKey($validated['template_id'])->firstOrFail();
-        if ((int) $representative->service_code !== (int) $service->service_code) {
-            throw ValidationException::withMessages(['template_id' => 'La combinación seleccionada debe corresponder al mismo ID Servicio.']);
+        if (empty($validated['template_id'])) {
+            if ($this->templateRowsForClient($client, $service, $validated['service_name'])->isNotEmpty()) {
+                throw ValidationException::withMessages(['template_id' => 'Hay servicios configurados para este cliente. Selecciona uno como plantilla.']);
+            }
+            $provider = isset($validated['provider_id'])
+                ? Provider::query()->where('tenant_id', $tenant->id)->findOrFail($validated['provider_id'])
+                : null;
+            DB::transaction(function () use ($client, $provider, $service, $validated): void {
+                $service ??= ServiceType::query()->create([
+                    'service_code' => ((int) ServiceType::query()->max('service_code')) + 1,
+                    'name' => trim($validated['service_name']),
+                    'is_active' => true,
+                ]);
+                DB::table('client_service_type')->updateOrInsert(
+                    ['client_id' => $client->id, 'service_type_id' => $service->id],
+                    ['is_active' => true, 'created_at' => now(), 'updated_at' => now()],
+                );
+                if ($provider) {
+                    $agentName = trim($validated['agent_name'] ?? '') ?: ($provider->operational_name ?: $provider->legal_name);
+                    CostCenterKey::query()->create([
+                        'tenant_id' => $client->tenant_id,
+                        'provider_id' => $provider->id,
+                        'client_id' => $client->id,
+                        'service_type_id' => $service->id,
+                        'provider_tax_id' => $provider->tax_id,
+                        'agent_name' => $agentName,
+                        'client_tax_id' => $client->tax_id,
+                        'merchant_name' => $client->source_merchant_name,
+                        'service_code' => $service->service_code,
+                        'service_name' => $service->name,
+                        'key_code' => implode('/', [$provider->tax_id, $client->tax_id, $service->service_code]),
+                        'key_text' => $agentName.$client->source_merchant_name.$service->name,
+                        'payment_status' => $validated['payment_status'] ?? 'REVISAR',
+                        'cost_center_code' => $validated['cost_center_code'] ?? null,
+                        'is_active' => true,
+                    ]);
+                }
+            });
+
+            $sourceKey = $validated['merchant_name'].' → '.$validated['service_name'];
+            $this->resolveReviewedService($request, $sourceKey);
+
+            return redirect()->route('provider-payments.courier-movements.review-parameters')
+                ->with('status', $provider
+                    ? "Combinación {$sourceKey} creada y asociada al cliente con una llave de proveedor."
+                    : "Servicio {$sourceKey} creado y asociado al cliente. La llave de proveedor se puede configurar en Llave CC.");
         }
-        $templateRows = CostCenterKey::query()->where('tenant_id', $tenant->id)->where('is_active', true)
-            ->where('merchant_name', $representative->merchant_name)
-            ->where('service_code', $representative->service_code)
-            ->get()->keyBy('id');
+        $availableRows = $this->templateRowsForClient($client, $service, $validated['service_name']);
+        $representative = $availableRows->firstWhere('id', (int) $validated['template_id']);
+        if (! $representative) {
+            throw ValidationException::withMessages(['template_id' => 'Selecciona un servicio configurado para este mismo cliente.']);
+        }
+        $templateRows = $availableRows->where('service_code', $representative->service_code)->keyBy('id');
         $submittedSourceIds = collect($validated['rows'])->pluck('source_id')->map(fn ($id): int => (int) $id);
         if ($submittedSourceIds->count() !== $templateRows->count() || $submittedSourceIds->diff($templateRows->keys())->isNotEmpty()) {
             throw ValidationException::withMessages(['rows' => 'La vista previa cambió. Selecciona nuevamente la combinación para cargar todos sus registros.']);
         }
 
         DB::transaction(function () use ($client, $service, $templateRows, $validated): void {
+            $service ??= ServiceType::query()->create([
+                'service_code' => ((int) ServiceType::query()->max('service_code')) + 1,
+                'name' => trim($validated['service_name']),
+                'is_active' => true,
+            ]);
             CostCenterKey::query()
                 ->where('tenant_id', $client->tenant_id)
                 ->where('service_code', $service->service_code)
@@ -222,14 +281,28 @@ class CostCenterKeyMaintainerController
         });
 
         $sourceKey = $validated['merchant_name'].' → '.$validated['service_name'];
-        $snapshot = $request->session()->get('courier_review');
-        if ($snapshot) {
-            CourierImportError::query()->where('batch_id', $snapshot['batch_id'])->where('category', 'services')
-                ->where('source_key', $sourceKey)->update(['status' => 'RESUELTO', 'exclude_from_import' => false]);
-        }
+        $this->resolveReviewedService($request, $sourceKey);
 
         return redirect()->route('provider-payments.courier-movements.review-parameters')
             ->with('status', "Combinación {$sourceKey} creada con {$templateRows->count()} registros revisados de Llave Centro Costo.");
+    }
+
+    private function templateRowsForClient(Client $client, ?ServiceType $targetService, string $targetServiceName): EloquentCollection
+    {
+        return CostCenterKey::query()
+            ->where('tenant_id', $client->tenant_id)
+            ->where('is_active', true)
+            ->whereRaw('LOWER(TRIM(service_name)) <> ?', [mb_strtolower(trim($targetServiceName))])
+            ->where(function ($query) use ($client): void {
+                $query->where('client_id', $client->id)
+                    ->orWhere(function ($legacy) use ($client): void {
+                        $legacy->whereNull('client_id')
+                            ->where('client_tax_id', $client->tax_id)
+                            ->whereRaw('LOWER(TRIM(merchant_name)) = ?', [mb_strtolower(trim($client->source_merchant_name))]);
+                    });
+            })
+            ->when($targetService, fn ($query) => $query->where('service_code', '!=', $targetService->service_code))
+            ->orderBy('service_name')->orderBy('agent_name')->get();
     }
 
     public function storeManual(Request $request): RedirectResponse
@@ -271,6 +344,15 @@ class CostCenterKeyMaintainerController
         return back()->with('status', 'Llave Centro de Costo creada correctamente.');
     }
 
+    private function resolveReviewedService(Request $request, string $sourceKey): void
+    {
+        $snapshot = $request->session()->get('courier_review');
+        if ($snapshot) {
+            CourierImportError::query()->where('batch_id', $snapshot['batch_id'])->where('category', 'services')
+                ->where('source_key', $sourceKey)->update(['status' => 'RESUELTO', 'exclude_from_import' => false]);
+        }
+    }
+
     public function replicateProvider(Request $request): RedirectResponse
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
@@ -298,6 +380,7 @@ class CostCenterKeyMaintainerController
                 $identity = $this->combinationIdentity($sourceKey);
                 if (isset($existing[$identity])) {
                     $skipped++;
+
                     continue;
                 }
                 $key = $sourceKey->replicate();

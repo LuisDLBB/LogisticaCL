@@ -2,6 +2,8 @@
 
 namespace App\Modules\ProviderPayments\Services;
 
+use App\Models\MaestroPago;
+use App\Models\Provider;
 use Carbon\CarbonImmutable;
 use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
@@ -12,16 +14,21 @@ use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
 class CourierSpecialPaymentImporter
 {
-    /** @return array{total: int, imported: int, existing: int, reassigned: int, amount: int} */
+    public function __construct(private readonly CalamaProviderTransition $transition) {}
+
+    /** @return array{total: int, imported: int, existing: int, reassigned: int, amount: int, paid_rows: array} */
     public function import(string $path, string $originalName, int $tenantId, string $period): array
     {
         if (! preg_match('/^\d{6}-Especiales$/', $period)) {
             throw ValidationException::withMessages(['period_month' => 'Selecciona un período de pago válido.']);
         }
+        MonthlyPaymentClosingService::assertOpen($tenantId, substr($period, 0, 6));
 
         $hash = hash_file('sha256', $path);
         $reader = new Reader;
         $rows = [];
+        $paidRows = [];
+        $providers = Provider::query()->where('tenant_id', $tenantId)->get();
 
         try {
             $reader->open($path);
@@ -56,16 +63,38 @@ class CourierSpecialPaymentImporter
                         }
                     }
 
+                    $tracking = $this->optionalText($values[5] ?? null);
+                    $paid = $tracking !== null && strtoupper($tracking) !== 'N/A'
+                        ? MaestroPago::query()->whereKey(MaestroPago::trackingKey($tracking))->first() : null;
+                    if ($paid !== null) {
+                        $paidRows[] = [
+                            'tracking' => $tracking,
+                            'source_row' => $rowNumber,
+                            'paid_period' => $paid->periodo,
+                            'paid_process' => $paid->nombre_proceso,
+                            'provider' => $paid->razon_social_proveedor,
+                            'amount' => $paid->valor === null ? null : (int) $paid->valor,
+                        ];
+
+                        continue;
+                    }
+
+                    $agent = trim((string) $values[3]);
+                    $locality = trim((string) $values[6]);
+                    $provider = $this->transition->providerFor($providers, substr($period, 0, 6), 'Especiales', $locality, null, null);
+                    $provider ??= $this->transition->providerFor($providers, substr($period, 0, 6), 'Especiales', preg_replace('/^operador\s+/iu', '', $agent), null, null);
+
                     $rows[] = [
                         'tenant_id' => $tenantId,
                         'periodo' => $period,
                         'fecha' => $date->format('Y-m-d'),
                         'usuario_ingresa' => trim((string) $values[1]),
                         'autoriza' => trim((string) $values[2]),
-                        'agente' => trim((string) $values[3]),
+                        'agente' => $agent,
                         'zona_tipo' => trim((string) $values[4]),
-                        'codigo_seguimiento' => $this->optionalText($values[5] ?? null),
-                        'localidad' => trim((string) $values[6]),
+                        'codigo_seguimiento' => $tracking,
+                        'localidad' => $locality,
+                        'provider_id' => $provider?->id,
                         'cliente' => $this->optionalText($values[7] ?? null),
                         'descripcion' => $this->optionalText($values[8] ?? null),
                         'monto' => (int) $amount,
@@ -83,13 +112,20 @@ class CourierSpecialPaymentImporter
             $reader->close();
         }
 
-        if ($rows === []) {
+        if ($rows === [] && $paidRows === []) {
             throw ValidationException::withMessages(['file' => 'La planilla no contiene pagos especiales.']);
         }
 
         [$imported, $reassigned] = DB::transaction(function () use ($rows, $tenantId, $hash, $period): array {
+            $closedPeriods = DB::table('Cierres_Pagos')->where('tenant_id', $tenantId)->pluck('periodo')
+                ->map(fn (string $closedPeriod): string => $closedPeriod.'-Especiales');
+            if ($closedPeriods->isNotEmpty() && DB::table('courier_special_payments')
+                ->where('tenant_id', $tenantId)->where('hash_archivo', $hash)->whereNull('finalized_at')
+                ->whereIn('periodo', $closedPeriods)->exists()) {
+                throw ValidationException::withMessages(['file' => 'Este archivo ya tiene registros en un período cerrado. No se pueden trasladar a otro mes.']);
+            }
             $reassigned = DB::table('courier_special_payments')
-                ->where('tenant_id', $tenantId)->where('hash_archivo', $hash)->where('periodo', '!=', $period)
+                ->where('tenant_id', $tenantId)->where('hash_archivo', $hash)->whereNull('finalized_at')->where('periodo', '!=', $period)
                 ->update(['periodo' => $period, 'updated_at' => now()]);
             $count = 0;
             foreach (array_chunk($rows, 500) as $chunk) {
@@ -99,7 +135,7 @@ class CourierSpecialPaymentImporter
             return [$count, $reassigned];
         });
 
-        return ['total' => count($rows), 'imported' => $imported, 'existing' => count($rows) - $imported, 'reassigned' => $reassigned, 'amount' => array_sum(array_column($rows, 'monto'))];
+        return ['total' => count($rows) + count($paidRows), 'imported' => $imported, 'existing' => count($rows) - $imported, 'reassigned' => $reassigned, 'amount' => array_sum(array_column($rows, 'monto')), 'paid_rows' => $paidRows];
     }
 
     private function normalizeHeader(mixed $value): string

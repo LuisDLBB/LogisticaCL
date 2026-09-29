@@ -9,8 +9,9 @@ class RealWeight extends Model
     protected $table = 'peso_real';
 
     protected $fillable = [
-        'tenant_id', 'seguimiento_paquete', 'peso_real', 'codigo_seguimiento',
-        'fecha_proceso', 'comerciante', 'servicio',
+        'tenant_id', 'seguimiento_paquete', 'peso_real', 'talla', 'codigo_seguimiento',
+        'fecha_proceso', 'comerciante', 'servicio', 'cliente_origen',
+        'operario', 'observacion', 'guia_cliente',
     ];
 
     protected function casts(): array

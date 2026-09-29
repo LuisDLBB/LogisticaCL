@@ -15,9 +15,13 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(MasterDataSeeder::class);
+        $this->call(ProviderPaymentTermsSeeder::class);
+        $this->call(ProviderOcFilenameSeeder::class);
         $this->call(TipoEnvioSeeder::class);
         $this->call(BancoSeeder::class);
         $this->call(TipoCuentaBancariaSeeder::class);
         $this->call(ProveedoresUsuarios4NSeeder::class);
+        $this->call(CalamaProviderTransitionSeeder::class);
+        $this->call(ClaudioCuevasPaymentKeysSeeder::class);
     }
 }

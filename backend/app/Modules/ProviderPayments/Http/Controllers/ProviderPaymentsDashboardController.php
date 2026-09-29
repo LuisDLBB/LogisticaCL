@@ -2,15 +2,26 @@
 
 namespace App\Modules\ProviderPayments\Http\Controllers;
 
+use App\Models\ApoyoAlza;
 use App\Models\CourierMovement;
+use App\Models\CourierPaymentMovement;
 use App\Models\Coverage;
 use App\Models\Tenant;
+use App\Modules\ProviderPayments\Services\AcuerdoClosingService;
+use App\Modules\ProviderPayments\Services\ApoyoAlzaClosingService;
+use App\Modules\ProviderPayments\Services\BaseServicioClosingService;
 use App\Modules\ProviderPayments\Services\CourierPaymentSummary;
+use App\Modules\ProviderPayments\Services\CourierSpecialPaymentRollback;
+use App\Modules\ProviderPayments\Services\MonthlyPaymentClosingService;
 use App\Modules\ProviderPayments\Services\ProcessDeletionAuthorizer;
+use App\Modules\ProviderPayments\Services\RutaCvClosingService;
+use App\Modules\ProviderPayments\Services\VisitaDiariaClosingService;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ProviderPaymentsDashboardController
@@ -22,6 +33,17 @@ class ProviderPaymentsDashboardController
             ->selectRaw('SUBSTR(nombre_proceso, 1, 6) AS period')
             ->where('nombre_proceso', 'like', '______-%')
             ->distinct()->orderByDesc('period')->pluck('period')->all() : [];
+        $latestClosedPeriod = $tenant ? DB::table('Cierres_Pagos')->where('tenant_id', $tenant->id)->max('periodo') : null;
+        $latestPeriod = max($periods[0] ?? '', $latestClosedPeriod ?? '');
+        if ($latestPeriod !== '' && $tenant && DB::table('Cierres_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $latestPeriod)->exists()) {
+            $nextPeriod = CarbonImmutable::create((int) substr($latestPeriod, 0, 4), (int) substr($latestPeriod, 4, 2), 1)->addMonth()->format('Ym');
+            if (! in_array($nextPeriod, $periods, true)) {
+                array_unshift($periods, $nextPeriod);
+            }
+        }
+        if ($latestClosedPeriod !== null && ! in_array($latestClosedPeriod, $periods, true)) {
+            $periods[] = $latestClosedPeriod;
+        }
         $selectedPeriod = (string) $request->query('period', $periods[0] ?? '');
         if (! in_array($selectedPeriod, $periods, true)) {
             $selectedPeriod = $periods[0] ?? '';
@@ -42,16 +64,61 @@ class ProviderPaymentsDashboardController
             ->orderByDesc('total')
             ->get();
 
-        $serviceCounts = (clone $movements)
+        $sourceProcessCounts = (clone $movements)
             ->whereNotNull('nombre_proceso')
             ->selectRaw('SUBSTR(nombre_proceso, 8) AS service_name, count(*) AS total')
             ->groupByRaw('SUBSTR(nombre_proceso, 8)')
             ->orderByDesc('total')
             ->get();
+        $serviceCounts = CourierPaymentMovement::query()
+            ->when($tenant, fn ($query) => $query->where('tenant_id', $tenant->id), fn ($query) => $query->whereRaw('1 = 0'))
+            ->where('periodo', $selectedPeriod)
+            ->selectRaw('nombre_proceso, COUNT(*) AS total')
+            ->groupBy('nombre_proceso')->orderByDesc('total')->get()
+            ->each(function (CourierPaymentMovement $process) use ($selectedPeriod): void {
+                $process->service_name = str_starts_with($process->nombre_proceso, $selectedPeriod.'-')
+                    ? substr($process->nombre_proceso, 7) : $process->nombre_proceso;
+            });
+        $paymentCountsByProcess = $serviceCounts->groupBy('service_name')
+            ->map(fn ($processes): int => (int) $processes->sum('total'));
+        $closure = $tenant ? DB::table('Cierres_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $selectedPeriod)->first() : null;
+        $monthClosed = $closure !== null;
+        $pendingProcessCounts = $tenant && ! $monthClosed ? (clone $movements)
+            ->whereNotIn('id', CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
+                ->whereNotNull('courier_movement_id')->select('courier_movement_id'))
+            ->selectRaw('SUBSTR(nombre_proceso, 8) AS service_name, count(*) AS total')
+            ->groupByRaw('SUBSTR(nombre_proceso, 8)')
+            ->orderByDesc('total')->get() : collect();
+        $processChecklist = collect([
+            'Variable' => 'Variables',
+            'Lanas' => 'Lanas',
+            'Retornos' => 'Retornos',
+            'Peumo' => 'Peumo',
+            'Especiales' => 'Especiales',
+            'Ruta CV' => 'Ruta CV',
+            'Servicios' => 'Servicios',
+            'Acuerdos' => 'Acuerdos',
+            'Apoyo' => 'Apoyo Alza',
+            'Visitas' => 'Visitas Diarias',
+        ])->map(fn (string $label, string $process): array => [
+            'label' => $label,
+            'worked' => ($paymentCountsByProcess[$process] ?? 0) > 0,
+        ])->values();
+        $processChecklist->push(['label' => 'Cierre definitivo', 'worked' => $monthClosed]);
+        $processAmounts = CourierPaymentMovement::query()
+            ->when($tenant, fn ($query) => $query->where('tenant_id', $tenant->id), fn ($query) => $query->whereRaw('1 = 0'))
+            ->where('periodo', $selectedPeriod)->where('condicion_pago', 'SI')
+            ->selectRaw('nombre_proceso, SUM(COALESCE(valor, 0)) AS amount')
+            ->groupBy('nombre_proceso')->get()
+            ->groupBy(fn (CourierPaymentMovement $process): string => str_starts_with($process->nombre_proceso, $selectedPeriod.'-')
+                ? substr($process->nombre_proceso, 7) : $process->nombre_proceso)
+            ->map(fn ($processes): int => (int) $processes->sum('amount'))
+            ->filter(fn (int $amount): bool => $amount > 0)
+            ->sortDesc();
         $recordCount = (clone $movements)->count();
         $paymentDashboard = $paymentSummary->forPeriod($tenant?->id, $selectedPeriod);
 
-        return view('provider-payments::dashboard', compact('merchantCounts', 'statusCounts', 'serviceCounts', 'periods', 'selectedPeriod', 'recordCount', 'paymentDashboard'));
+        return view('provider-payments::dashboard', compact('merchantCounts', 'statusCounts', 'serviceCounts', 'sourceProcessCounts', 'paymentCountsByProcess', 'pendingProcessCounts', 'processChecklist', 'processAmounts', 'periods', 'selectedPeriod', 'recordCount', 'paymentDashboard', 'monthClosed', 'closure'));
     }
 
     public function movements(Request $request): View
@@ -99,7 +166,18 @@ class ProviderPaymentsDashboardController
             ->where('tenant_id', $tenant->id)->where('is_active', true)->whereNotNull('provider_id')->with('provider:id,operational_name,legal_name')
             ->get()->filter(fn (Coverage $coverage): bool => $coverage->provider !== null)
             ->mapWithKeys(fn (Coverage $coverage): array => [Str::of($coverage->commune_name)->squish()->lower()->ascii()->toString() => $coverage->provider]) : collect();
+        $fixedProcessPayments = $tenant ? CourierPaymentMovement::query()
+            ->where('tenant_id', $tenant->id)->whereIn('tipo_pago', ['Ruta CV', 'Servicios', 'Acuerdos', 'Apoyo Alza', 'Visitas Diarias'])
+            ->whereIn('courier_movement_id', $movements->pluck('id'))
+            ->get(['courier_movement_id', 'nombre_operacional', 'razon_social_proveedor'])
+            ->keyBy('courier_movement_id') : collect();
         foreach ($movements as $movement) {
+            if (in_array($movement->source_system, ['Ruta CV', 'Servicios', 'Acuerdos', 'Apoyo Alza', 'Visitas Diarias'], true)) {
+                $payment = $fixedProcessPayments->get($movement->id);
+                $movement->setAttribute('resolved_operational_name', $payment?->nombre_operacional ?: $payment?->razon_social_proveedor);
+
+                continue;
+            }
             $provider = $providersByCommune->get(Str::of((string) $movement->destination_commune_name)->squish()->lower()->ascii()->toString());
             $movement->setAttribute('resolved_operational_name', $provider?->operational_name ?: $provider?->legal_name);
         }
@@ -110,7 +188,7 @@ class ProviderPaymentsDashboardController
         ));
     }
 
-    public function destroyProcess(Request $request, ProcessDeletionAuthorizer $authorizer): RedirectResponse
+    public function destroyProcess(Request $request, ProcessDeletionAuthorizer $authorizer, CourierSpecialPaymentRollback $specialRollback, RutaCvClosingService $rutaCvClosing, BaseServicioClosingService $servicioClosing, AcuerdoClosingService $acuerdoClosing, ApoyoAlzaClosingService $apoyoClosing, VisitaDiariaClosingService $visitaClosing): RedirectResponse
     {
         $validated = $request->validate([
             'process_name' => ['required', 'string', 'regex:/^\d{6}-.+$/', 'max:100'],
@@ -119,7 +197,74 @@ class ProviderPaymentsDashboardController
         $authorizer->authorize($request);
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $processName = $validated['process_name'];
+        MonthlyPaymentClosingService::assertOpen($tenant->id, substr($processName, 0, 6));
+        $returnRoute = ($validated['return_to'] ?? '') === 'work'
+            ? 'provider-payments.courier-movements.compile.work'
+            : 'provider-payments.dashboard';
+        if (str_ends_with($processName, '-Apoyo')) {
+            $period = substr($processName, 0, 6);
+            $count = $apoyoClosing->reopen($tenant->id, $period);
+
+            return redirect()->route('provider-payments.courier-movements.apoyo-alza', ['periodo' => $period])
+                ->with('status', "Período {$period} reabierto. {$count} pagos de Apoyo Alza retirados; ya puedes corregir y volver a cerrar.");
+        }
+        $period = substr($processName, 0, 6);
+        $baseProcess = match ($processName) {
+            $period.'-Acuerdos' => 'Acuerdos',
+            $period.'-Ruta CV' => 'Ruta CV',
+            $period.'-Variable' => 'Variables',
+            default => null,
+        };
+        if ($baseProcess !== null && ApoyoAlza::query()->where('tenant_id', $tenant->id)
+            ->where('periodo', $period)->where('proceso_base', $baseProcess)
+            ->whereNotNull('closed_at')->exists()) {
+            throw ValidationException::withMessages(['process_name' => 'Primero reabre Apoyo Alza de este período con la clave maestra para modificar el proceso base.']);
+        }
+        if (str_ends_with($processName, '-Ruta CV')) {
+            $period = substr($processName, 0, 6);
+            $count = $rutaCvClosing->reopen($tenant->id, $period);
+
+            return redirect()->route('provider-payments.courier-movements.rutas-cv', ['periodo' => $period])
+                ->with('status', "Período {$period} reabierto. {$count} pagos de Ruta CV retirados; ya puedes corregir y volver a cerrar.");
+        }
+        if (str_ends_with($processName, '-Visitas')) {
+            $count = $visitaClosing->reopen($tenant->id, $period);
+
+            return redirect()->route('provider-payments.courier-movements.visitas', ['periodo' => $period])
+                ->with('status', "Período {$period} reabierto. {$count} pagos de Visitas retirados.");
+        }
+        if (str_ends_with($processName, '-Servicios')) {
+            $period = substr($processName, 0, 6);
+            $count = $servicioClosing->reopen($tenant->id, $period);
+
+            return redirect()->route('provider-payments.courier-movements.servicios', ['periodo' => $period, 'estado' => 'todos'])
+                ->with('status', "Período {$period} reabierto. {$count} pagos de Servicios retirados; ya puedes corregir y volver a cerrar.");
+        }
+        if (str_ends_with($processName, '-Acuerdos')) {
+            $period = substr($processName, 0, 6);
+            $count = $acuerdoClosing->reopen($tenant->id, $period);
+
+            return redirect()->route('provider-payments.courier-movements.acuerdos', ['periodo' => $period])
+                ->with('status', "Período {$period} reabierto. {$count} pagos de Acuerdos retirados; ya puedes corregir y volver a cerrar.");
+        }
+        if (str_ends_with($processName, '-Especiales')) {
+            $result = $specialRollback->rollback($tenant->id, $processName);
+
+            return redirect()->route($returnRoute, ['period' => substr($processName, 0, 6)])
+                ->with('status', sprintf('Especiales revertidos. Movimientos nuevos eliminados: %s. Pagos anteriores restaurados: %s.',
+                    number_format($result['deleted_movements'], 0, ',', '.'), number_format($result['restored'], 0, ',', '.')));
+        }
         [$deletedMovements, $deletedPayments] = DB::transaction(function () use ($tenant, $processName): array {
+            $movementIds = DB::table('movimientos_courier')->select('id')
+                ->where('tenant_id', $tenant->id)->where('nombre_proceso', $processName);
+            $hasSpecialPayments = DB::table('Pago_Movimientos_Courier')
+                ->where('tenant_id', $tenant->id)->whereIn('courier_movement_id', $movementIds)
+                ->where(fn ($query) => $query->where('tipo_pago', 'Especiales')
+                    ->orWhere('nombre_proceso', 'Especiales')
+                    ->orWhere('nombre_proceso', 'like', '%-Especiales'))->exists();
+            if ($hasSpecialPayments) {
+                throw ValidationException::withMessages(['process_name' => 'Este proceso tiene pagos Especiales asociados. Revierte Especiales antes de eliminar sus movimientos de origen.']);
+            }
             $deletedPayments = DB::table('Pago_Movimientos_Courier')
                 ->where('tenant_id', $tenant->id)
                 ->whereIn('courier_movement_id', DB::table('movimientos_courier')
@@ -135,10 +280,6 @@ class ProviderPaymentsDashboardController
 
             return [$deletedMovements, $deletedPayments];
         });
-
-        $returnRoute = ($validated['return_to'] ?? '') === 'work'
-            ? 'provider-payments.courier-movements.compile.work'
-            : 'provider-payments.dashboard';
 
         return redirect()->route($returnRoute, ['period' => substr($processName, 0, 6)])
             ->with('status', $deletedMovements > 0

@@ -55,8 +55,10 @@ class ProveedoresUsuarios4NSeeder extends Seeder
 4N RM|Macarena Castro|77201525-9
 4N RM|Manuel Isaias Contreras Mardones|78207289-7
 4N RM|Maria Galleguillos|77201525-9
-4N RM|Maribel Silva Donoso|77201525-9
-4N RM|Maribel Elena Silva Donoso|77201525-9
+4N RM|Maribel Silva Donoso|15743735-6
+4N RM|Maribel Elena Silva Donoso|15743735-6
+4N RM|Maribel Silva Donoso|15743735-6|77201525-9
+4N RM|Maribel Elena Silva Donoso|15743735-6|77201525-9
 4N RM|Mariela Diaz|N/A
 4N RM|Mario Jose Lioi|77390761-7
 4N RM|Mario Lioi|77390761-7
@@ -101,9 +103,9 @@ ROWS;
 
         $rows = [];
         foreach (explode("\n", $data) as $line) {
-            [$matrix, $courier, $newRut] = array_map('trim', explode('|', $line));
+            [$matrix, $courier, $newRut, $sourceRut] = array_pad(array_map('trim', explode('|', $line)), 4, '77346078-7');
             $rows[] = [
-                'RutProveedor' => '77346078-7',
+                'RutProveedor' => $sourceRut,
                 'ComunaMatriz' => $matrix,
                 'NombreRepartidor' => $courier,
                 'NuevoRutProveedor' => $newRut,

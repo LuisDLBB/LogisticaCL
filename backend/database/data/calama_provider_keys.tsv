@@ -1,0 +1,89 @@
+RutCliente	Comerciante	IDServicio	Servicio	Pagar	CentroCosto	Activo
+#N/D	Disalcar	11	"Servicio Standar"	SI	10	1
+#N/D	"La Hora"	11	"Servicio Standar"	SI	11	1
+60910000-1	"Universidad de chile"	11	"Servicio Standar"	SI	11	1
+76012833-3	"Rendic Hmnos"	7	"Retiro en ruta"	SI	10	1
+76012833-3	"Rendic Hmnos"	8	Retornos	NO	0	1
+76012833-3	"Rendic Hmnos"	12	"Servicio Standar (Alvi)"	SI	10	1
+76012833-3	"Rendic Hmnos"	22	"Servicio Standar (Of. Central)"	SI	10	1
+76012833-3	"Rendic Hmnos"	23	"Servicio Standar (Proveedores)"	SI	10	1
+76012833-3	"Rendic Hmnos"	32	"Servicio Standar (Tecnologia)"	SI	10	1
+76012833-3	"Rendic Hmnos"	34	"Servicio Standar (Valijas)"	NO	2	1
+76057337-K	Nutrabody	16	"Servicio Standar (Ecommerce)"	SI	11	1
+76058647-1	"Verisure Spa"	7	"Retiro en ruta"	SI	10	1
+76058647-1	"Verisure Spa"	8	Retornos	NO	0	1
+76058647-1	"Verisure Spa"	11	"Servicio Standar"	SI	10	1
+76072176-K	"Hemisferio Norte SA"	11	"Servicio Standar"	SI	11	1
+76263819-3	RevesDerecho	7	"Retiro en ruta"	SI	10	1
+76263819-3	Revesderecho	16	"Servicio Standar (Ecommerce)"	SI	5	1
+76263819-3	Revesderecho	21	"Servicio Standar (Mayorista)"	NO	0	1
+76263819-3	Revesderecho	27	"Servicio Standar (R. Tiendas)"	SI	6	1
+76263819-3	Revesderecho	28	"Servicio Standar (Retail)"	SI	6	1
+76263819-3	Revesderecho	29	"Servicio Standar (Retorno)"	NO	0	1
+76263819-3	Revesderecho	30	"Servicio Standar (SAC)"	SI	5	1
+76288430-5	"(Postalchile) Sociedad De Distribucion Y Logistica Postalchile Ltda"	7	"Retiro en ruta"	SI	10	1
+76288430-5	"(Postalchile) Sociedad De Distribucion Y Logistica Postalchile Ltda"	15	"Servicio Standar (Correspondencia)"	SI	10	1
+76288430-5	"(Postalchile) Sociedad De Distribucion Y Logistica Postalchile Ltda"	16	"Servicio Standar (Ecommerce)"	SI	11	1
+76336423-2	"Imprenta Babieca"	11	"Servicio Standar"	SI	11	1
+76377752-9	"Ediciones Issue Spa"	20	"Servicio Standar (Lanzado)"	SI	11	1
+76438001-0	"(R. Ambiente) Ambiente diseño y Comunicacion Spa"	11	"Servicio Standar"	SI	15	1
+76504464-2	"Comercial VLB Ltda"	11	"Servicio Standar"	SI	11	1
+76564940-4	"Diario el Sur"	11	"Servicio Standar"	SI	10	1
+76578735-1	"EVERGROUP SPA"	11	"Servicio Standar"	SI	11	1
+76631490-2	"Global Med"	11	"Servicio Standar"	SI	11	1
+76710584-3	"Opia Marcketing Spa"	11	"Servicio Standar"	SI	11	1
+76713273-5	"(HN Metales) Inversiones Saldivia Spa"	11	"Servicio Standar"	SI	11	1
+76849822-9	"CALA  SPA"	11	"Servicio Standar"	SI	11	1
+77310592-8	"BGB SPA"	11	"Servicio Standar"	SI	11	1
+77346078-7	4Nortes	1	"Abastecimiento de insumos"	SI	10	1
+77346078-7	4Nortes	11	"Servicio Standar"	SI	10	1
+77346078-7	4Nortes	13	"Servicio Standar (Compra Agil)"	SI	11	1
+77415130-3	"(Ushop) Articulos Publicitarios LW"	11	"Servicio Standar"	SI	11	1
+77415130-3	"(Ushop) Articulos Publicitarios LW"	18	"Servicio Standar (GMPI)"	SI	11	1
+77419350-2	Adhegraf	11	"Servicio Standar"	SI	11	1
+77861584-3	Habasit	9	"Servicio Sameday"	SI	11	1
+77861584-3	Habasit	11	"Servicio Standar"	SI	11	1
+77907823-K	"Ecopaños y Huaipes SPA"	11	"Servicio Standar"	SI	11	1
+77970068-2	Vinilo	11	"Servicio Standar"	SI	11	1
+78064534-2	Drop	11	"Servicio Standar"	SI	11	1
+78293000-1	"Global Courier SA"	7	"Retiro en ruta"	SI	10	1
+78293000-1	"Global Courier SA"	8	Retornos	NO	0	1
+78293000-1	"Global Courier SA"	11	"Servicio Standar"	SI	10	1
+78347433-6	"The Planners Group Spa"	11	"Servicio Standar"	SI	11	1
+78445850-4	"Envia Ltda"	11	"Servicio Standar"	SI	10	1
+78599750-6	InduAmbiente	20	"Servicio Standar (Lanzado)"	SI	11	1
+79500520-K	Maicao	2	"Abastecimiento Uniformes"	SI	10	1
+79500520-K	Maicao	3	"Catalogo Publicitario"	SI	10	1
+79500520-K	Maicao	4	"Correspondencia diaria"	NO	0	1
+79500520-K	Maicao	6	"Material Publicitario"	SI	10	1
+79500520-K	Maicao	7	"Retiro en ruta"	SI	10	1
+79500520-K	Maicao	11	"Servicio Standar"	SI	10	1
+79647180-8	"Comercial Reginella Ltda"	16	"Servicio Standar (Ecommerce)"	SI	5	1
+79647180-8	"Comercial Reginella Ltda"	21	"Servicio Standar (Mayorista)"	SI	6	1
+79840580-2	"Imprenta Socias Ltda"	11	"Servicio Standar"	SI	10	1
+81826800-9	"Cajas Los Andes"	7	"Retiro en ruta"	SI	10	1
+81826800-9	"Cajas Los Andes"	8	Retornos	NO	0	1
+81826800-9	"Cajas Los Andes"	24	"Servicio Standar (Providencia)"	SI	10	1
+81826800-9	"Cajas Los Andes"	31	"Servicio Standar (Stgo Alonso)"	SI	10	1
+81826800-9	"Cajas Los Andes"	35	"Servicio Standar (Cotizacion)"	SI	10	1
+85037900-9	"Comercial Peumo Ltda"	33	"Servicio Standar (V. Trabajadores)"	REVISAR	0	1
+89807200-2	"Cruz Verde"	3	"Catalogo Publicitario"	SI	10	1
+89807200-2	"Cruz Verde"	5	"Correspondencia diaria (Valijas)"	NO	0	1
+89807200-2	"Cruz Verde"	6	"Material Publicitario"	SI	10	1
+89807200-2	"Cruz Verde"	7	"Retiro en ruta"	SI	10	1
+89807200-2	"Cruz Verde"	11	"Servicio Standar"	SI	10	1
+89807200-2	"Cruz Verde"	19	"Servicio Standar (Kit de ingreso)"	SI	10	1
+90106000-2	"Grafica Quilicura"	11	"Servicio Standar"	SI	11	1
+90106000-2	"Grafica Quilicura"	25	"Servicio Standar (R. Carabineros de chile)"	SI	10	1
+90106000-2	"Grafica Quilicura"	26	"Servicio Standar (R. Los Heroes)"	SI	10	1
+96500230-8	"(Orquidea) Hilanderia Maisa"	16	"Servicio Standar (Ecommerce)"	SI	5	1
+96511460-2	Construmart	4	"Correspondencia diaria"	NO	0	1
+96511460-2	Construmart	7	"Retiro en ruta"	SI	10	1
+96511460-2	Construmart	11	"Servicio Standar"	NO	2	1
+96776000-5	Solventa	7	"Retiro en ruta"	SI	10	1
+96776000-5	Solventa	11	"Servicio Standar"	SI	10	1
+96830710-K	Aimpresores	11	"Servicio Standar"	SI	11	1
+96830710-K	Aimpresores	14	"Servicio Standar (Condenast)"	SI	11	1
+96830710-K	Aimpresores	17	"Servicio Standar (Fucoa)"	SI	10	1
+96950080-9	Chilepost	7	"Retiro en ruta"	SI	10	1
+96950080-9	Chilepost	11	"Servicio Standar"	SI	10	1

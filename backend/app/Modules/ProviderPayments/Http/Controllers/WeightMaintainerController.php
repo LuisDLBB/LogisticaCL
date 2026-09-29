@@ -6,9 +6,12 @@ use App\Models\CourierMovement;
 use App\Models\RealWeight;
 use App\Models\Tenant;
 use App\Models\WeightTransformation;
+use App\Modules\ProviderPayments\Services\RealWeightImporter;
+use App\Modules\ProviderPayments\Services\RealWeightSynchronizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -30,7 +33,7 @@ class WeightMaintainerController
                     return [
                         'source_weight' => $sourceWeight,
                         'comparison_key' => $this->weightKey($sourceWeight),
-                        'suggested_weight' => max(1, (int) ceil((float) $movement->weight_kg)),
+                        'suggested_weight' => max(1, WeightTransformation::integerPart($sourceWeight) ?? 1),
                         'movement_count' => (int) $movement->movement_count,
                     ];
                 })->reject(fn (array $weight): bool => $knownKeys->has($weight['comparison_key']))->values();
@@ -56,8 +59,10 @@ class WeightMaintainerController
         if ($period === '') {
             $period = (string) ($periods->first() ?? '');
         }
-        $merchants = (clone $base)->select('comerciante')->distinct()->orderBy('comerciante')->pluck('comerciante');
-        $services = (clone $base)->select('servicio')->distinct()->orderBy('servicio')->pluck('servicio');
+        $merchants = (clone $base)->where('comerciante', '<>', '')
+            ->select('comerciante')->distinct()->orderBy('comerciante')->pluck('comerciante');
+        $services = (clone $base)->where('servicio', '<>', '')
+            ->select('servicio')->distinct()->orderBy('servicio')->pluck('servicio');
         $rows = (clone $base)
             ->when($period !== '', fn ($query) => $query->whereRaw("strftime('%Y-%m', fecha_proceso) = ?", [$period]))
             ->when($merchant !== '', fn ($query) => $query->where('comerciante', $merchant))
@@ -66,59 +71,51 @@ class WeightMaintainerController
                 $query->where('seguimiento_paquete', 'like', '%'.$search.'%')
                     ->orWhere('codigo_seguimiento', 'like', '%'.$search.'%')
                     ->orWhere('comerciante', 'like', '%'.$search.'%')
-                    ->orWhere('servicio', 'like', '%'.$search.'%');
+                    ->orWhere('servicio', 'like', '%'.$search.'%')
+                    ->orWhere('cliente_origen', 'like', '%'.$search.'%')
+                    ->orWhere('talla', 'like', '%'.$search.'%')
+                    ->orWhere('operario', 'like', '%'.$search.'%')
+                    ->orWhere('guia_cliente', 'like', '%'.$search.'%');
             }))
             ->orderByDesc('fecha_proceso')->orderByDesc('id')->paginate(100)->withQueryString();
+        $reportPath = "real-weight-imports/last-{$tenant->id}.json";
+        $lastReport = Storage::disk('local')->exists($reportPath)
+            ? (json_decode(Storage::disk('local')->get($reportPath), true) ?: []) : [];
+        $importIssues = session('import_issues', $lastReport['issues'] ?? []);
+        $issueOverflow = session('issue_overflow', $lastReport['issue_overflow'] ?? 0);
+        $importedAt = $lastReport['imported_at'] ?? null;
 
         return view('provider-payments::weights-real', compact(
             'rows', 'periods', 'period', 'merchants', 'merchant', 'services', 'service', 'search',
+            'importIssues', 'issueOverflow', 'importedAt',
         ));
     }
 
-    public function syncRealWeights(): RedirectResponse
+    public function importRealWeights(Request $request, RealWeightImporter $importer): RedirectResponse
+    {
+        $file = $request->validate(['file' => ['required', 'file', 'mimes:xlsx,csv,txt', 'extensions:xlsx,csv', 'max:102400']])['file'];
+        $tenant = $this->tenant();
+        set_time_limit(300);
+        $result = $importer->import($file->getRealPath(), $tenant->id, strtolower($file->getClientOriginalExtension()));
+
+        return redirect()->route('provider-payments.maintainers.pesos.reales', ['period' => $result['period']])
+            ->with('status', sprintf('Peso Real: %s nuevos, %s actualizados, %s ya pagados y %s de períodos cerrados omitidos. %s filas con errores omitidas y %s seguimientos repetidos resueltos con la fecha más reciente. Revisa el detalle consolidado de incidencias. %s sin cruce con Movimientos Courier; su cliente y servicio se completarán al cargar ese movimiento.',
+                number_format($result['created'], 0, ',', '.'), number_format($result['updated'], 0, ',', '.'),
+                number_format($result['paid'], 0, ',', '.'), number_format($result['closed'], 0, ',', '.'),
+                number_format($result['invalid'], 0, ',', '.'), number_format($result['duplicate'], 0, ',', '.'),
+                number_format($result['unmatched'], 0, ',', '.')))
+            ->with('import_issues', $result['issues'])
+            ->with('issue_overflow', $result['issue_overflow']);
+    }
+
+    public function syncRealWeights(RealWeightSynchronizer $synchronizer): RedirectResponse
     {
         $tenant = $this->tenant();
-        $updated = 0;
-        $withoutMatch = 0;
-        CourierMovement::query()->where('tenant_id', $tenant->id)->select(['id', 'tenant_id', 'tracking_number', 'weight_kg', 'peso_real', 'peso_transformado', 'peso_final'])
-            ->chunkById(1000, function ($movements) use ($tenant, &$updated, &$withoutMatch): void {
-                $realWeights = RealWeight::query()->where('tenant_id', $tenant->id)
-                    ->whereIn('seguimiento_paquete', $movements->pluck('tracking_number'))
-                    ->pluck('peso_real', 'seguimiento_paquete');
-                $updates = [];
-                $weightOnlyUpdates = [];
-                foreach ($movements as $movement) {
-                    $realWeight = $realWeights->get($movement->tracking_number);
-                    if ($realWeight === null) {
-                        $withoutMatch++;
-                        $finalWeight = CourierMovement::pesoFinal($movement->peso_real, $movement->peso_transformado);
-                        if ($movement->peso_final !== $finalWeight) {
-                            $weightOnlyUpdates[$finalWeight][] = $movement->id;
-                        }
-                        continue;
-                    }
-                    $updates[] = [
-                        'id' => $movement->id,
-                        'tenant_id' => $movement->tenant_id,
-                        'tracking_number' => $movement->tracking_number,
-                        'weight_kg' => $movement->weight_kg,
-                        'peso_real' => (int) $realWeight,
-                        'peso_final' => CourierMovement::pesoFinal((int) $realWeight, $movement->peso_transformado),
-                        'updated_at' => now(),
-                    ];
-                }
-                if ($updates !== []) {
-                    DB::table('movimientos_courier')->upsert($updates, ['id'], ['peso_real', 'peso_final', 'updated_at']);
-                    $updated += count($updates);
-                }
-                foreach ($weightOnlyUpdates as $weight => $ids) {
-                    DB::table('movimientos_courier')->where('tenant_id', $tenant->id)->whereIn('id', $ids)
-                        ->update(['peso_final' => $weight, 'updated_at' => now()]);
-                }
-            });
+        $result = $synchronizer->syncOpen($tenant->id);
 
         return redirect()->route('provider-payments.maintainers.pesos.reales')
-            ->with('status', number_format($updated, 0, ',', '.').' movimientos Courier actualizados con Peso Real y Peso Final. '.number_format($withoutMatch, 0, ',', '.').' sin coincidencia de Seguimiento paquete en Peso_Real; conservaron su Peso Real y se recalculó Peso Final.');
+            ->with('status', number_format($result['updated'], 0, ',', '.').' movimientos Courier actualizados con Peso Real y Peso Final. '.number_format($result['without_match'], 0, ',', '.').' sin coincidencia de Seguimiento paquete en Peso_Real; conservaron su Peso Real y se recalculó Peso Final.'
+                .($result['protected'] > 0 ? ' '.number_format($result['protected'], 0, ',', '.').' registros pagados o de períodos cerrados quedaron intactos.' : ''));
     }
 
     public function storeReal(Request $request): RedirectResponse
@@ -145,6 +142,41 @@ class WeightMaintainerController
 
         return redirect()->route('provider-payments.maintainers.pesos.transformados', $request->input('return_to') === 'discovery' ? ['discover' => 1] : [])
             ->with('status', "Peso Fuente {$sourceWeight} agregado correctamente.");
+    }
+
+    public function storeReviewWeights(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'weights' => ['required', 'array', 'min:1', 'max:5000'],
+            'weights.*.source_weight' => ['required', 'string', 'max:100', 'distinct'],
+            'weights.*.transformed_weight' => ['required', 'integer', 'min:1'],
+        ]);
+        $snapshot = $request->session()->get('courier_review');
+        if (! $snapshot) {
+            return redirect()->route('provider-payments.courier-movements.upload')
+                ->withErrors(['weights' => 'Primero debes validar el archivo Courier.']);
+        }
+        $allowedWeights = collect($snapshot['groups']['weights'] ?? [])->pluck('values.0')->all();
+        foreach ($validated['weights'] as $weight) {
+            if (! in_array($weight['source_weight'], $allowedWeights, true)
+                || WeightTransformation::integerPart($weight['source_weight']) === null) {
+                throw ValidationException::withMessages(['weights' => 'Hay un peso ajeno al archivo o con formato inválido. Revisa la tabla antes de guardar.']);
+            }
+        }
+
+        $tenant = $this->tenant();
+        DB::transaction(function () use ($tenant, $validated): void {
+            foreach ($validated['weights'] as $weight) {
+                $sourceWeight = trim($weight['source_weight']);
+                WeightTransformation::query()->updateOrCreate(
+                    ['tenant_id' => $tenant->id, 'comparison_key' => $this->weightKey($sourceWeight)],
+                    ['source_weight' => $sourceWeight, 'transformed_weight' => $weight['transformed_weight'], 'is_active' => true],
+                );
+            }
+        });
+
+        return redirect()->route('provider-payments.courier-movements.review-parameters')
+            ->with('status', count($validated['weights']).' pesos transformados y guardados. Revisa los pendientes restantes antes de cargar.');
     }
 
     public function update(Request $request, WeightTransformation $weight): RedirectResponse

@@ -5,10 +5,16 @@ namespace App\Modules\ProviderPayments\Http\Controllers;
 use App\Models\Client;
 use App\Models\CourierImportError;
 use App\Models\CourierMovement;
+use App\Models\CourierPaymentMovement;
+use App\Models\CourierStatus;
 use App\Models\Coverage;
+use App\Models\MaestroPago;
 use App\Models\Tenant;
 use App\Models\WeightTransformation;
 use App\Modules\ProviderPayments\ParameterReview;
+use App\Modules\ProviderPayments\Services\CourierSourcePartitioner;
+use App\Modules\ProviderPayments\Services\PaidTrackingReport;
+use App\Modules\ProviderPayments\Services\RealWeightSynchronizer;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use OpenSpout\Reader\CSV\Options as CsvOptions;
 use OpenSpout\Reader\CSV\Reader as CsvReader;
@@ -26,12 +33,39 @@ use Throwable;
 
 class CourierMovementImportController
 {
-    public function validateFile(Request $request): View
+    public function index(Request $request): View
+    {
+        $tenantId = Tenant::query()->where('code', '4N')->firstOrFail()->id;
+        $periods = CourierMovement::query()->where('tenant_id', $tenantId)
+            ->where('nombre_proceso', 'like', '______-%')
+            ->selectRaw('SUBSTR(nombre_proceso, 1, 6) AS periodo')->distinct()->orderByDesc('periodo')->pluck('periodo');
+        $period = (string) $request->query('period', $periods->first() ?? '');
+        if (! $periods->contains($period)) {
+            $period = $periods->first() ?? '';
+        }
+        $processes = ['Variable' => 'Variables', 'Lanas' => 'Lanas', 'Retornos' => 'Retornos', 'Peumo' => 'Peumo'];
+        $processNames = array_map(fn (string $process): string => $period.'-'.$process, array_keys($processes));
+        $sourceCounts = $period === '' ? collect() : CourierMovement::query()->where('tenant_id', $tenantId)
+            ->whereIn('nombre_proceso', $processNames)
+            ->selectRaw('nombre_proceso, COUNT(*) AS total')->groupBy('nombre_proceso')->pluck('total', 'nombre_proceso');
+        $paymentCounts = $period === '' ? collect() : CourierPaymentMovement::query()->where('tenant_id', $tenantId)
+            ->where('periodo', $period)
+            ->whereIn('nombre_proceso', array_merge(array_keys($processes), $processNames))
+            ->selectRaw('nombre_proceso, COUNT(*) AS total')->groupBy('nombre_proceso')->pluck('total', 'nombre_proceso');
+
+        return view('provider-payments::courier-movements-upload', [
+            'processType' => 'consolidado', 'processTitle' => 'Bases Courier',
+            'periods' => $periods, 'period' => $period, 'processes' => $processes,
+            'sourceCounts' => $sourceCounts, 'paymentCounts' => $paymentCounts,
+        ]);
+    }
+
+    public function validateFile(Request $request, CourierSourcePartitioner $partitioner): View
     {
         $validated = $request->validate(
             [
                 'file' => ['required', 'file', 'extensions:xlsx,csv', 'mimetypes:text/plain,text/csv,application/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip', 'max:102400'],
-                'process_type' => ['nullable', Rule::in(['variables', 'lanas', 'retornos'])],
+                'process_type' => ['nullable', Rule::in(['variables', 'lanas', 'retornos', 'consolidado'])],
             ],
             [
                 'file.required' => 'Archivo con problema: debes seleccionar un archivo. Formato recomendado: CSV UTF-8 con extensión .csv. También se admite Excel .xlsx.',
@@ -41,7 +75,9 @@ class CourierMovementImportController
             ],
         );
         $file = $validated['file'];
+        $request->session()->forget('courier_import_last_result');
         $processType = $validated['process_type'] ?? 'variables';
+        $tenantId = $processType === 'consolidado' ? Tenant::query()->where('code', '4N')->firstOrFail()->id : null;
         $batchId = (string) Str::uuid();
         $extension = strtolower($file->getClientOriginalExtension());
         $storedPath = $file->storeAs('courier-imports', $batchId.'.'.$extension, 'local');
@@ -56,6 +92,8 @@ class CourierMovementImportController
             $missingTracking = 0;
             $invalidDate = 0;
             $missingWeight = 0;
+            $missingPeumoGuide = 0;
+            $discardedUnlocatedRoutePickups = 0;
             $normalizedHeaders = [];
             $trackingIndex = null;
             $weightIndex = null;
@@ -69,7 +107,9 @@ class CourierMovementImportController
             $communeIndex = null;
             $addressIndex = null;
             $recipientNameIndex = null;
+            $dispatchGuideIndex = null;
             $destinationPreview = [];
+            $processCounts = ['Variable' => 0, 'Lanas' => 0, 'Retornos' => 0, 'Peumo' => 0];
 
             foreach ($reader->getSheetIterator() as $sheet) {
                 foreach ($sheet->getRowIterator() as $row) {
@@ -92,6 +132,7 @@ class CourierMovementImportController
                         $communeIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => in_array($header, ['comuna', 'comuna destino', 'comuna de destino', 'destination_commune_name'], true));
                         $addressIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => in_array($header, ['direccion', 'direccion destinatario', 'recipient_address'], true));
                         $recipientNameIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => in_array($header, ['nombre del destinatario', 'recipient_name'], true));
+                        $dispatchGuideIndex = $this->headerIndex($normalizedHeaders, fn (string $header): bool => in_array($header, ['guia de despacho', 'dispatch_guide'], true));
 
                         continue;
                     }
@@ -100,13 +141,27 @@ class CourierMovementImportController
                         continue;
                     }
 
-                    $records++;
                     $rawMerchant = (string) ($merchantIndex === null ? '' : ($values[$merchantIndex] ?? ''));
                     $rawService = (string) ($serviceIndex === null ? '' : ($values[$serviceIndex] ?? ''));
                     $rawCommune = (string) ($communeIndex === null ? '' : ($values[$communeIndex] ?? ''));
                     $rawAddress = (string) ($addressIndex === null ? '' : ($values[$addressIndex] ?? ''));
+                    if ($partitioner->shouldDiscardUnlocatedRoutePickup($rawService, $rawAddress, $rawCommune)) {
+                        $discardedUnlocatedRoutePickups++;
+
+                        continue;
+                    }
+                    $records++;
                     $rawRecipientName = (string) ($recipientNameIndex === null ? '' : ($values[$recipientNameIndex] ?? ''));
-                    [$reviewAddress, $reviewCommune] = $this->destinationValues($processType, $rawAddress, $rawCommune, $rawRecipientName);
+                    $rowProcess = $processType === 'consolidado' ? $partitioner->classify($rawMerchant, $rawRecipientName, $rawService) : $processType;
+                    if ($processType === 'consolidado') {
+                        $processCounts[$this->processSuffix($rowProcess)]++;
+                    }
+                    if ($rowProcess === 'peumo' && ($dispatchGuideIndex === null || trim((string) ($values[$dispatchGuideIndex] ?? '')) === '')) {
+                        $missingPeumoGuide++;
+                    }
+                    [$reviewAddress, $reviewCommune] = $rowProcess === 'lanas' && $processType === 'consolidado'
+                        ? $partitioner->lanasDestination($tenantId, $rawMerchant, $rawService, $rawAddress, $rawCommune)
+                        : $this->destinationValues($rowProcess, $rawAddress, $rawCommune, $rawRecipientName);
                     $rawWeight = (string) ($weightIndex === null ? '' : ($values[$weightIndex] ?? ''));
                     foreach (['clients' => [$rawMerchant], 'services' => [$rawMerchant, $rawService], 'coverages' => [$reviewCommune, $reviewAddress], 'weights' => [$rawWeight]] as $category => $parts) {
                         $key = serialize($parts);
@@ -115,7 +170,7 @@ class CourierMovementImportController
                         }
                         $parameters[$category][$key]['count']++;
                     }
-                    if ($processType === 'retornos') {
+                    if ($rowProcess === 'retornos') {
                         $destinationKey = serialize([$reviewAddress, $reviewCommune]);
                         $destinationPreview[$destinationKey] ??= ['address' => $reviewAddress, 'commune' => $reviewCommune, 'count' => 0];
                         $destinationPreview[$destinationKey]['count']++;
@@ -163,18 +218,22 @@ class CourierMovementImportController
                     'Comerciante' => $merchantIndex === null,
                     'Servicio' => $serviceIndex === null,
                     'Comuna destino' => $communeIndex === null,
-                    'Dirección' => $processType === 'retornos' && $addressIndex === null,
-                    'Nombre del destinatario' => $processType === 'retornos' && $recipientNameIndex === null,
+                    'Dirección' => ($processType === 'retornos' || ($processType === 'consolidado' && $processCounts['Retornos'] > 0)) && $addressIndex === null,
+                    'Nombre del destinatario' => in_array($processType, ['retornos', 'consolidado'], true) && $recipientNameIndex === null,
+                    'Guía de despacho' => $processCounts['Peumo'] > 0 && $dispatchGuideIndex === null,
                     'Peso' => $weightIndex === null,
                 ])),
                 'suggested_year' => (int) substr($suggestedPeriod, 0, 4),
                 'suggested_month' => (int) substr($suggestedPeriod, 4, 2),
                 'process_type' => $processType,
                 'process_suffix' => $this->processSuffix($processType),
+                'process_counts' => $processCounts,
+                'route_pickup_filter_applied' => true,
+                'discarded_unlocated_route_pickups' => $discardedUnlocatedRoutePickups,
             ]);
             $request->session()->forget('courier_review_exclusions');
 
-            return view('provider-payments::courier-movements-summary', ['processType' => $processType, 'validation' => ['file_name' => $file->getClientOriginalName(), 'records' => $records, 'has_tracking' => $trackingIndex !== null, 'has_merchant' => $merchantIndex !== null, 'has_weight' => $weightIndex !== null, 'missing_tracking' => $missingTracking, 'invalid_date' => $invalidDate, 'missing_weight' => $missingWeight, 'merchant_counts' => $merchantCounts, 'status_counts' => $statusCounts, 'destination_preview' => array_values($destinationPreview)]]);
+            return view('provider-payments::courier-movements-summary', ['processType' => $processType, 'validation' => ['file_name' => $file->getClientOriginalName(), 'records' => $records, 'discarded_unlocated_route_pickups' => $discardedUnlocatedRoutePickups, 'has_tracking' => $trackingIndex !== null, 'has_merchant' => $merchantIndex !== null, 'has_weight' => $weightIndex !== null, 'missing_tracking' => $missingTracking, 'invalid_date' => $invalidDate, 'missing_weight' => $missingWeight, 'missing_peumo_guide' => $missingPeumoGuide, 'merchant_counts' => $merchantCounts, 'status_counts' => $statusCounts, 'destination_preview' => array_values($destinationPreview), 'process_counts' => $processCounts]]);
         } catch (Throwable $exception) {
             report($exception);
 
@@ -182,9 +241,13 @@ class CourierMovementImportController
         }
     }
 
-    public function reviewParameters(Request $request, ParameterReview $reviewer): View
+    public function reviewParameters(Request $request, ParameterReview $reviewer, CourierSourcePartitioner $partitioner): View
     {
         $snapshot = $request->session()->get('courier_review');
+        if ($snapshot && ! ($snapshot['route_pickup_filter_applied'] ?? false)) {
+            $snapshot = $this->filterPreviouslyValidatedRoutePickups($snapshot, $partitioner);
+            $request->session()->put('courier_review', $snapshot);
+        }
         if ($snapshot && empty($snapshot['batch_id'])) {
             $snapshot['batch_id'] = (string) Str::uuid();
             $request->session()->put('courier_review', $snapshot);
@@ -217,7 +280,7 @@ class CourierMovementImportController
         ]);
     }
 
-    public function storeMovements(Request $request, ParameterReview $reviewer): View|RedirectResponse
+    public function storeMovements(Request $request, ParameterReview $reviewer, PaidTrackingReport $reports, CourierSourcePartitioner $partitioner, RealWeightSynchronizer $weightSynchronizer): View|RedirectResponse
     {
         $validated = $request->validate([
             'replace_duplicates' => ['nullable', 'boolean'],
@@ -228,11 +291,18 @@ class CourierMovementImportController
         $snapshot = $request->session()->get('courier_review');
         $processType = $snapshot['process_type'] ?? 'variables';
         $processSuffix = $this->processSuffix($processType);
-        $processName = in_array($processType, ['lanas', 'retornos'], true) ? '' : trim((string) ($validated['process_name'] ?? ''));
+        $processName = in_array($processType, ['lanas', 'retornos', 'consolidado'], true) ? '' : trim((string) ($validated['process_name'] ?? ''));
         if ($processName === '') {
             $processName = sprintf('%04d%02d-%s', $validated['process_year'], $validated['process_month'], $processSuffix);
         }
         $tenant = Tenant::query()->where('code', '4N')->where('is_active', true)->firstOrFail();
+        $period = sprintf('%04d%02d', $validated['process_year'], $validated['process_month']);
+        if (! str_starts_with($processName, $period.'-')) {
+            throw ValidationException::withMessages(['process_name' => "El nombre del proceso debe comenzar con {$period}-. Selecciona el mismo mes para la carga."]);
+        }
+        if (DB::table('Cierres_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $period)->exists()) {
+            throw ValidationException::withMessages(['process_year' => "El período {$period} tiene un cierre definitivo y no admite nuevas cargas."]);
+        }
         if (! $snapshot || empty($snapshot['stored_path']) || ! Storage::disk('local')->exists($snapshot['stored_path'])) {
             return redirect()->route($this->uploadRoute($processType))
                 ->withErrors(['file' => 'Debes seleccionar y validar nuevamente el archivo para completar la carga.']);
@@ -250,6 +320,7 @@ class CourierMovementImportController
                 ->withErrors(['import' => 'Todavía existen parámetros pendientes. Corrígelos antes de cargar movimientos.']);
         }
 
+        set_time_limit(900);
         $result = $this->importStoredFile(
             Storage::disk('local')->path($snapshot['stored_path']),
             $snapshot['extension'],
@@ -261,11 +332,36 @@ class CourierMovementImportController
             $processType === 'variables' ? 'Variables' : $processSuffix,
             $processType,
             $request->session()->get('courier_review_exclusions.services', []),
+            $partitioner,
         );
+        $result['weight_sync'] = $weightSynchronizer->syncOpen($tenant->id);
+        $reportToken = $reports->store($result['closed_rows'], $snapshot['file'], $processName);
+        unset($result['closed_rows']);
+        if ($reportToken !== null) {
+            $request->session()->push('paid_tracking_reports', $reportToken);
+        }
         Storage::disk('local')->delete($snapshot['stored_path']);
         $request->session()->forget(['courier_review', 'courier_review_exclusions', 'courier_review_comments', 'courier_review_corrections']);
+        $request->session()->put('courier_import_last_result', [
+            'file_name' => $snapshot['file'],
+            'process_name' => $processName,
+            'loaded' => $result['created'] + $result['replaced'],
+            'closed' => $result['closed'],
+            'closed_period' => $result['closed_period'],
+            'excluded' => $result['excluded'] + $result['invalid'],
+            'weight_updated' => $result['weight_sync']['updated'],
+            'report_token' => $reportToken,
+        ]);
 
-        return view('provider-payments::courier-movements-import-result', ['result' => $result, 'fileName' => $snapshot['file'], 'processName' => $processName]);
+        return view('provider-payments::courier-movements-import-result', ['result' => $result, 'fileName' => $snapshot['file'], 'processName' => $processName, 'processType' => $processType, 'reportToken' => $reportToken]);
+    }
+
+    public function downloadPaidReport(Request $request, string $token, PaidTrackingReport $reports): StreamedResponse
+    {
+        abort_unless(in_array($token, $request->session()->get('paid_tracking_reports', []), true)
+            && Storage::disk('local')->exists('paid-tracking-reports/'.$token.'.json'), 404);
+
+        return $reports->download($token);
     }
 
     public function excludeCoverages(Request $request): RedirectResponse
@@ -278,10 +374,20 @@ class CourierMovementImportController
             'coverage_errors.*.corrected_commune' => ['nullable', 'string', 'max:150'],
         ]);
         $rows = $validated['coverage_errors'] ?? [];
-        $excluded = collect($rows)->filter(fn (array $row): bool => (bool) ($row['exclude'] ?? false))->pluck('source_key')->unique()->values()->all();
-        $comments = collect($rows)->mapWithKeys(fn (array $row): array => [$row['source_key'] => trim((string) ($row['comment'] ?? ''))])->all();
-        $corrections = collect($rows)->filter(fn (array $row): bool => ! ($row['exclude'] ?? false) && filled($row['corrected_commune'] ?? null))
-            ->mapWithKeys(fn (array $row): array => [$row['source_key'] => trim($row['corrected_commune'])])->all();
+        $excluded = array_values(array_unique(array_merge(
+            $request->session()->get('courier_review_exclusions.coverages', []),
+            collect($rows)->filter(fn (array $row): bool => (bool) ($row['exclude'] ?? false))->pluck('source_key')->all(),
+        )));
+        $comments = array_merge(
+            $request->session()->get('courier_review_comments.coverages', []),
+            collect($rows)->mapWithKeys(fn (array $row): array => [$row['source_key'] => trim((string) ($row['comment'] ?? ''))])->all(),
+        );
+        $corrections = array_merge(
+            $request->session()->get('courier_review_corrections.coverages', []),
+            collect($rows)->filter(fn (array $row): bool => ! ($row['exclude'] ?? false) && filled($row['corrected_commune'] ?? null))
+                ->mapWithKeys(fn (array $row): array => [$row['source_key'] => trim($row['corrected_commune'])])->all(),
+        );
+        $corrections = array_diff_key($corrections, array_flip($excluded));
         if ($corrections !== []) {
             $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
             $knownCommunes = Coverage::query()->where('tenant_id', $tenant->id)->where('is_active', true)->pluck('commune_name')
@@ -319,8 +425,14 @@ class CourierMovementImportController
             'service_errors.*.comment' => ['nullable', 'string', 'max:2000'],
         ]);
         $rows = $validated['service_errors'] ?? [];
-        $excluded = collect($rows)->filter(fn (array $row): bool => (bool) ($row['exclude'] ?? false))->pluck('source_key')->unique()->values()->all();
-        $comments = collect($rows)->mapWithKeys(fn (array $row): array => [$row['source_key'] => trim((string) ($row['comment'] ?? ''))])->all();
+        $excluded = array_values(array_unique(array_merge(
+            $request->session()->get('courier_review_exclusions.services', []),
+            collect($rows)->filter(fn (array $row): bool => (bool) ($row['exclude'] ?? false))->pluck('source_key')->all(),
+        )));
+        $comments = array_merge(
+            $request->session()->get('courier_review_comments.services', []),
+            collect($rows)->mapWithKeys(fn (array $row): array => [$row['source_key'] => trim((string) ($row['comment'] ?? ''))])->all(),
+        );
         $request->session()->put('courier_review_exclusions.services', $excluded);
         $request->session()->put('courier_review_comments.services', $comments);
 
@@ -351,6 +463,93 @@ class CourierMovementImportController
             }
             fclose($output);
         }, 'errores_'.$snapshot['batch_id'].'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    private function filterPreviouslyValidatedRoutePickups(array $snapshot, CourierSourcePartitioner $partitioner): array
+    {
+        $path = $snapshot['stored_path'] ?? null;
+        if (! $path || ! Storage::disk('local')->exists($path)) {
+            return $snapshot;
+        }
+
+        $filePath = Storage::disk('local')->path($path);
+        $reader = ($snapshot['extension'] ?? '') === 'csv'
+            ? new CsvReader(new CsvOptions(FIELD_DELIMITER: $this->detectCsvDelimiter($filePath)))
+            : new XlsxReader;
+        $discarded = 0;
+        $discardedByGroup = ['clients' => [], 'services' => [], 'coverages' => [], 'weights' => []];
+        $discardedByProcess = [];
+
+        try {
+            $reader->open($filePath);
+            foreach ($reader->getSheetIterator() as $sheet) {
+                $headers = [];
+                foreach ($sheet->getRowIterator() as $row) {
+                    $values = array_map(fn (mixed $value): string => $this->utf8((string) ($value ?? '')), $row->toArray());
+                    if ($headers === []) {
+                        $headers = array_map(fn (string $header): string => $this->normalizeHeader($header), $values);
+                        $merchantIndex = $this->headerIndex($headers, fn (string $header): bool => in_array($header, ['comerciante', 'merchant_name'], true));
+                        $serviceIndex = $this->headerIndex($headers, fn (string $header): bool => in_array($header, ['servicio', 'service_name'], true));
+                        $communeIndex = $this->headerIndex($headers, fn (string $header): bool => in_array($header, ['comuna', 'comuna destino', 'comuna de destino', 'destination_commune_name'], true));
+                        $addressIndex = $this->headerIndex($headers, fn (string $header): bool => in_array($header, ['direccion', 'direccion destinatario', 'recipient_address'], true));
+                        $recipientIndex = $this->headerIndex($headers, fn (string $header): bool => in_array($header, ['nombre del destinatario', 'recipient_name'], true));
+                        $weightIndex = $this->headerIndex($headers, fn (string $header): bool => in_array($header, ['peso', 'weight_kg'], true));
+
+                        continue;
+                    }
+                    if (count(array_filter($values, fn (string $value): bool => trim($value) !== '')) === 0) {
+                        continue;
+                    }
+
+                    $service = (string) ($serviceIndex === null ? '' : ($values[$serviceIndex] ?? ''));
+                    $address = (string) ($addressIndex === null ? '' : ($values[$addressIndex] ?? ''));
+                    $commune = (string) ($communeIndex === null ? '' : ($values[$communeIndex] ?? ''));
+                    if (! $partitioner->shouldDiscardUnlocatedRoutePickup($service, $address, $commune)) {
+                        continue;
+                    }
+
+                    $discarded++;
+                    $merchant = (string) ($merchantIndex === null ? '' : ($values[$merchantIndex] ?? ''));
+                    $recipient = (string) ($recipientIndex === null ? '' : ($values[$recipientIndex] ?? ''));
+                    $weight = (string) ($weightIndex === null ? '' : ($values[$weightIndex] ?? ''));
+                    $processType = $snapshot['process_type'] ?? 'variables';
+                    $rowProcess = $processType === 'consolidado' ? $partitioner->classify($merchant, $recipient, $service) : $processType;
+                    [$reviewAddress, $reviewCommune] = $this->destinationValues($rowProcess, $address, $commune, $recipient);
+                    foreach (['clients' => [$merchant], 'services' => [$merchant, $service], 'coverages' => [$reviewCommune, $reviewAddress], 'weights' => [$weight]] as $category => $parts) {
+                        $key = serialize($parts);
+                        $discardedByGroup[$category][$key] = ($discardedByGroup[$category][$key] ?? 0) + 1;
+                    }
+                    if ($processType === 'consolidado') {
+                        $process = $this->processSuffix($rowProcess);
+                        $discardedByProcess[$process] = ($discardedByProcess[$process] ?? 0) + 1;
+                    }
+                }
+
+                break;
+            }
+            $reader->close();
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return $snapshot;
+        }
+
+        foreach ($snapshot['groups'] as $category => &$items) {
+            $items = array_values(array_filter(array_map(function (array $item) use ($category, $discardedByGroup): array {
+                $item['count'] = max(0, $item['count'] - ($discardedByGroup[$category][serialize($item['values'])] ?? 0));
+
+                return $item;
+            }, $items), fn (array $item): bool => $item['count'] > 0));
+        }
+        unset($items);
+        foreach ($discardedByProcess as $process => $count) {
+            $snapshot['process_counts'][$process] = max(0, ($snapshot['process_counts'][$process] ?? 0) - $count);
+        }
+        $snapshot['records'] = max(0, ($snapshot['records'] ?? 0) - $discarded);
+        $snapshot['discarded_unlocated_route_pickups'] = $discarded;
+        $snapshot['route_pickup_filter_applied'] = true;
+
+        return $snapshot;
     }
 
     private function syncErrors(array $snapshot, array $groups, int $tenantId, array $excludedCoverages, array $excludedServices): void
@@ -435,8 +634,8 @@ class CourierMovementImportController
         return null;
     }
 
-    /** @return array{created:int,replaced:int,duplicates:int,excluded:int,invalid:int,total:int} */
-    private function importStoredFile(string $path, string $extension, int $tenantId, bool $replaceDuplicates, array $excludedCommunes, array $correctedCommunes, string $processName, string $paymentType, string $processType, array $excludedServices): array
+    /** @return array{created:int,replaced:int,duplicates:int,closed:int,closed_rows:array,excluded:int,discarded_unlocated_route_pickups:int,invalid:int,total:int,created_by_process:array<string,int>} */
+    private function importStoredFile(string $path, string $extension, int $tenantId, bool $replaceDuplicates, array $excludedCommunes, array $correctedCommunes, string $processName, string $paymentType, string $processType, array $excludedServices, CourierSourcePartitioner $partitioner): array
     {
         $reader = $extension === 'csv' ? new CsvReader(new CsvOptions(FIELD_DELIMITER: $this->detectCsvDelimiter($path))) : new XlsxReader;
         $clients = Client::query()->where('tenant_id', $tenantId)->where('is_active', true)->get()
@@ -445,14 +644,16 @@ class CourierMovementImportController
         $excluded = collect($excludedCommunes)->map(fn (string $value): string => $this->comparisonKey($value))->flip();
         $corrections = collect($correctedCommunes)->mapWithKeys(fn (string $commune, string $source): array => [$this->comparisonKey($source) => $commune]);
         $excludedServiceKeys = collect($excludedServices)->map(fn (string $value): string => $this->comparisonKey($value))->flip();
-        $result = ['created' => 0, 'replaced' => 0, 'duplicates' => 0, 'excluded' => 0, 'invalid' => 0, 'total' => 0];
+        $result = ['created' => 0, 'replaced' => 0, 'payment_replaced' => 0, 'duplicates' => 0, 'closed' => 0, 'closed_period' => 0, 'closed_rows' => [], 'excluded' => 0, 'discarded_unlocated_route_pickups' => 0, 'invalid' => 0, 'total' => 0, 'created_by_process' => ['Variable' => 0, 'Lanas' => 0, 'Retornos' => 0, 'Peumo' => 0]];
         $seenTrackings = [];
         $reader->open($path);
         foreach ($reader->getSheetIterator() as $sheet) {
             $headers = [];
             $indexes = [];
             $chunk = [];
+            $sourceRow = 0;
             foreach ($sheet->getRowIterator() as $row) {
+                $sourceRow++;
                 $values = array_map(fn (mixed $value): string => $this->utf8((string) ($value ?? '')), $row->toArray());
                 if ($headers === []) {
                     $headers = array_map(fn (string $header): string => $this->normalizeHeader($header), $values);
@@ -472,16 +673,27 @@ class CourierMovementImportController
 
                     continue;
                 }
+                $commune = trim($this->rowValue($values, $indexes, ['comuna de destino', 'comuna destino', 'comuna']));
+                $address = trim($this->rowValue($values, $indexes, ['direccion']));
+                $recipientName = trim($this->rowValue($values, $indexes, ['nombre del destinatario']));
+                $merchant = trim($this->rowValue($values, $indexes, ['comerciante']));
+                $service = trim($this->rowValue($values, $indexes, ['servicio']));
+                if ($partitioner->shouldDiscardUnlocatedRoutePickup($service, $address, $commune)) {
+                    $result['excluded']++;
+                    $result['discarded_unlocated_route_pickups']++;
+
+                    continue;
+                }
                 if (isset($seenTrackings[$tracking])) {
                     $result['duplicates']++;
 
                     continue;
                 }
                 $seenTrackings[$tracking] = true;
-                $commune = trim($this->rowValue($values, $indexes, ['comuna de destino', 'comuna destino', 'comuna']));
-                $address = trim($this->rowValue($values, $indexes, ['direccion']));
-                $recipientName = trim($this->rowValue($values, $indexes, ['nombre del destinatario']));
-                [$address, $commune] = $this->destinationValues($processType, $address, $commune, $recipientName);
+                $rowProcess = $processType === 'consolidado' ? $partitioner->classify($merchant, $recipientName, $service) : $processType;
+                [$address, $commune] = $rowProcess === 'lanas' && $processType === 'consolidado'
+                    ? $partitioner->lanasDestination($tenantId, $merchant, $service, $address, $commune)
+                    : $this->destinationValues($rowProcess, $address, $commune, $recipientName);
                 $coverageKey = $this->comparisonKey($this->coverageSourceKey($commune, $address));
                 if ($excluded->has($coverageKey) || $excluded->has($this->comparisonKey($commune))) {
                     $result['excluded']++;
@@ -489,8 +701,6 @@ class CourierMovementImportController
                     continue;
                 }
                 $commune = $corrections->get($coverageKey, $commune);
-                $merchant = trim($this->rowValue($values, $indexes, ['comerciante']));
-                $service = trim($this->rowValue($values, $indexes, ['servicio']));
                 if ($excludedServiceKeys->has($this->comparisonKey($merchant.' → '.$service))) {
                     $result['excluded']++;
 
@@ -500,8 +710,12 @@ class CourierMovementImportController
                 $weightSource = trim($this->rowValue($values, $indexes, ['peso']));
                 $weightNumber = $this->number($weightSource) ?? 1;
                 $transformedWeight = (int) ($weights->get($this->weightKey($weightSource))?->transformed_weight ?? 1);
+                $rowProcessName = $processType === 'consolidado' ? substr($processName, 0, 6).'-'.$this->processSuffix($rowProcess) : $processName;
+                $rowPaymentType = $processType === 'consolidado'
+                    ? ($rowProcess === 'variables' ? 'Variables' : $this->processSuffix($rowProcess)) : $paymentType;
                 $now = now();
                 $chunk[] = [
+                    '_source_row' => $sourceRow,
                     'tenant_id' => $tenantId, 'client_id' => $client?->id, 'source_system' => 'Geolize',
                     'fecha' => CourierMovement::fechaFromTrackingNumber($tracking)?->toDateString(), 'tracking_number' => $tracking,
                     'tracking_code' => $this->nullable($this->rowValue($values, $indexes, ['codigo de seguimiento'])),
@@ -509,7 +723,7 @@ class CourierMovementImportController
                     'cost_center' => $this->nullable($this->rowValue($values, $indexes, ['centro de costo'])),
                     'purchase_order' => $this->nullable($this->rowValue($values, $indexes, ['orden de compra'])),
                     'dispatch_guide' => $this->nullable($this->rowValue($values, $indexes, ['guia de despacho'])),
-                    'weight_kg' => $weightNumber, 'peso_real' => null, 'peso_transformado' => $transformedWeight, 'peso_final' => null, 'tipo_pago' => $paymentType, 'nombre_proceso' => $processName,
+                    'weight_kg' => $weightNumber, 'peso_real' => null, 'peso_transformado' => $transformedWeight, 'peso_final' => null, 'tipo_pago' => $rowPaymentType, 'nombre_proceso' => $rowProcessName,
                     'length_cm' => $this->number($this->rowValue($values, $indexes, ['largo'])), 'width_cm' => $this->number($this->rowValue($values, $indexes, ['ancho'])), 'height_cm' => $this->number($this->rowValue($values, $indexes, ['alto'])),
                     'status' => $this->nullable($this->rowValue($values, $indexes, ['estado de entrega', 'estado'])), 'delivery_attempts' => (int) ($this->number($this->rowValue($values, $indexes, ['intentos de entrega'])) ?? 0),
                     'merchant_name' => $this->nullable($merchant), 'service_name' => $this->nullable($service), 'campaign_name' => $this->nullable($this->rowValue($values, $indexes, ['nombre de campana'])),
@@ -521,12 +735,12 @@ class CourierMovementImportController
                     'created_at' => $now, 'updated_at' => $now,
                 ];
                 if (count($chunk) >= 300) {
-                    $this->persistMovementChunk($chunk, $tenantId, $replaceDuplicates, $result);
+                    $this->commitMovementChunk($chunk, $tenantId, $replaceDuplicates, $result);
                     $chunk = [];
                 }
             }
             if ($chunk !== []) {
-                $this->persistMovementChunk($chunk, $tenantId, $replaceDuplicates, $result);
+                $this->commitMovementChunk($chunk, $tenantId, $replaceDuplicates, $result);
             }
             break;
         }
@@ -535,8 +749,44 @@ class CourierMovementImportController
         return $result;
     }
 
+    private function commitMovementChunk(array $rows, int $tenantId, bool $replace, array &$result): void
+    {
+        DB::transaction(function () use ($rows, $tenantId, $replace, &$result): void {
+            $this->persistMovementChunk($rows, $tenantId, $replace, $result);
+        });
+    }
+
     private function persistMovementChunk(array $rows, int $tenantId, bool $replace, array &$result): void
     {
+        $closedTrackings = DB::table('Maestro_Pagos')->where('tenant_id', $tenantId)
+            ->whereIn('seguimiento_paquete', array_map(fn (array $row): string => MaestroPago::trackingKey($row['tracking_number']), $rows))
+            ->get(['seguimiento_paquete', 'periodo', 'nombre_proceso', 'razon_social_proveedor', 'valor'])
+            ->keyBy('seguimiento_paquete');
+        $rows = array_values(array_filter($rows, function (array $row) use ($closedTrackings, &$result): bool {
+            $paid = $closedTrackings->get(MaestroPago::trackingKey($row['tracking_number']));
+            if ($paid !== null) {
+                $result['closed']++;
+                $result['closed_rows'][] = [
+                    'tracking' => $row['tracking_number'],
+                    'source_row' => $row['_source_row'],
+                    'paid_period' => $paid->periodo,
+                    'paid_process' => $paid->nombre_proceso,
+                    'provider' => $paid->razon_social_proveedor,
+                    'amount' => $paid->valor === null ? null : (int) $paid->valor,
+                ];
+
+                return false;
+            }
+
+            return true;
+        }));
+        if ($rows === []) {
+            return;
+        }
+        foreach ($rows as &$row) {
+            unset($row['_source_row']);
+        }
+        unset($row);
         $trackings = array_column($rows, 'tracking_number');
         $realWeights = DB::table('peso_real')->where('tenant_id', $tenantId)
             ->whereIn('seguimiento_paquete', $trackings)->pluck('peso_real', 'seguimiento_paquete');
@@ -546,18 +796,147 @@ class CourierMovementImportController
             $row['peso_final'] = CourierMovement::pesoFinal($row['peso_real'], $row['peso_transformado']);
         }
         unset($row);
-        $existing = DB::table('movimientos_courier')->where('tenant_id', $tenantId)->whereIn('tracking_number', $trackings)->pluck('tracking_number')->flip();
+        $existing = DB::table('movimientos_courier')->where('tenant_id', $tenantId)
+            ->whereIn('tracking_number', $trackings)
+            ->get(['id', 'tracking_number', 'nombre_proceso', 'client_id', 'service_name'])->keyBy('tracking_number');
+        $payments = DB::table('Pago_Movimientos_Courier')->where('tenant_id', $tenantId)
+            ->whereIn('courier_movement_id', $existing->pluck('id'))
+            ->get(['id', 'courier_movement_id', 'periodo', 'tipo_pago', 'nombre_proceso', 'estado_envio',
+                'condicion_pago', 'valor', 'peso_final', 'comuna_destino'])
+            ->filter(fn (object $payment): bool => ! in_array((string) $payment->tipo_pago,
+                ['Especiales', 'Ruta CV', 'Servicios', 'Acuerdos', 'Apoyo Alza', 'Visitas Diarias'], true)
+                && ! in_array(CourierPaymentMovement::withoutPeriodPrefix($payment->nombre_proceso),
+                    ['Especiales', 'Ruta CV', 'Servicios', 'Acuerdos', 'Apoyo', 'Visitas'], true))
+            ->keyBy('courier_movement_id');
+        $closedPeriods = DB::table('Cierres_Pagos')->where('tenant_id', $tenantId)->pluck('periodo')->flip();
         $newRows = array_values(array_filter($rows, fn (array $row): bool => ! $existing->has($row['tracking_number'])));
         $duplicateRows = array_values(array_filter($rows, fn (array $row): bool => $existing->has($row['tracking_number'])));
+        $replaceableRows = array_values(array_filter($duplicateRows, function (array $row) use ($existing, $payments, $replace, $closedPeriods, &$result): bool {
+            $movement = $existing->get($row['tracking_number']);
+            $payment = $payments->get($movement->id);
+            $period = substr((string) $movement->nombre_proceso, 0, 6);
+            if ($closedPeriods->has($period) || ($payment !== null && $closedPeriods->has($payment->periodo))) {
+                $result['closed_period']++;
+
+                return false;
+            }
+
+            return $replace || $payment !== null;
+        }));
         if ($newRows !== []) {
             DB::table('movimientos_courier')->insert($newRows);
             $result['created'] += count($newRows);
+            foreach ($newRows as $row) {
+                $process = substr((string) $row['nombre_proceso'], 7);
+                if (isset($result['created_by_process'][$process])) {
+                    $result['created_by_process'][$process]++;
+                }
+            }
         }
         $result['duplicates'] += count($duplicateRows);
-        if ($replace && $duplicateRows !== []) {
-            DB::table('movimientos_courier')->upsert($duplicateRows, ['tenant_id', 'tracking_number'], array_values(array_diff(array_keys($duplicateRows[0]), ['tenant_id', 'tracking_number', 'created_at'])));
-            $result['replaced'] += count($duplicateRows);
+        if ($replaceableRows !== []) {
+            DB::table('movimientos_courier')->upsert($replaceableRows, ['tenant_id', 'tracking_number'], array_values(array_diff(array_keys($replaceableRows[0]), ['tenant_id', 'tracking_number', 'created_at'])));
+            $result['replaced'] += count($replaceableRows);
+            $result['payment_replaced'] += $this->refreshOpenPayments($replaceableRows, $existing, $payments, $tenantId);
         }
+        $identityGroups = [];
+        foreach (array_merge($newRows, $replaceableRows) as $row) {
+            if (! $realWeights->has($row['tracking_number'])) {
+                continue;
+            }
+            $merchant = trim((string) $row['merchant_name']);
+            $service = trim((string) $row['service_name']);
+            if ($merchant === '' && $service === '') {
+                continue;
+            }
+            $key = serialize([$merchant, $service]);
+            $identityGroups[$key]['merchant'] = $merchant;
+            $identityGroups[$key]['service'] = $service;
+            $identityGroups[$key]['trackings'][] = $row['tracking_number'];
+        }
+        foreach ($identityGroups as $group) {
+            $identity = array_filter([
+                'comerciante' => $group['merchant'], 'servicio' => $group['service'],
+            ], fn (string $value): bool => $value !== '');
+            DB::table('peso_real')->where('tenant_id', $tenantId)
+                ->whereIn('seguimiento_paquete', $group['trackings'])
+                ->update($identity + ['updated_at' => now()]);
+        }
+    }
+
+    /** @param list<array<string, mixed>> $rows */
+    private function refreshOpenPayments(array $rows, $existing, $payments, int $tenantId): int
+    {
+        $clientIds = array_values(array_unique(array_filter(array_column($rows, 'client_id'))));
+        $clients = Client::query()->where('tenant_id', $tenantId)->whereIn('id', $clientIds)->get()->keyBy('id');
+        $externalTrackings = DB::table('envios_externos')->where('tenant_id', $tenantId)
+            ->where('exclude_provider_payment', true)
+            ->whereIn('tracking_number', array_column($rows, 'tracking_number'))
+            ->pluck('tracking_number')->flip();
+        $statuses = CourierStatus::query()->get(['name', 'consider_for_payment'])
+            ->mapWithKeys(fn (CourierStatus $status): array => [mb_strtolower(trim($status->name)) => $status->consider_for_payment]);
+        $updates = [];
+        foreach ($rows as $row) {
+            $movement = $existing->get($row['tracking_number']);
+            $payment = $payments->get($movement->id);
+            if ($payment === null) {
+                continue;
+            }
+            $client = $clients->get($row['client_id']);
+            $newStatus = trim((string) $row['status']);
+            $oldStatus = trim((string) $payment->estado_envio);
+            $newMayPay = $statuses->get(mb_strtolower($newStatus));
+            $oldMayPay = $statuses->get(mb_strtolower($oldStatus));
+            $external = $externalTrackings->has($row['tracking_number']);
+            $newProcess = CourierPaymentMovement::withoutPeriodPrefix((string) $row['nombre_proceso']);
+            $changed = $oldStatus !== $newStatus
+                || (int) $payment->peso_final !== (int) $row['peso_final']
+                || (string) $payment->comuna_destino !== (string) $row['destination_commune_name']
+                || (string) $payment->nombre_proceso !== $newProcess
+                || (string) $movement->service_name !== (string) $row['service_name']
+                || (int) $movement->client_id !== (int) $row['client_id'];
+            $condition = $payment->condicion_pago;
+            $value = $payment->valor;
+            if ($external) {
+                $condition = 'NO';
+                $value = 0;
+            } elseif ($newMayPay === false) {
+                $condition = 'NO';
+                $value = null;
+            } elseif (($oldMayPay === false && $newMayPay === true && $condition === 'NO')
+                || ($changed && $condition === 'SI')) {
+                $condition = null;
+                $value = null;
+            }
+            $updates[] = [
+                'id' => $payment->id,
+                'tenant_id' => $tenantId,
+                'courier_movement_id' => $movement->id,
+                'periodo' => substr((string) $row['nombre_proceso'], 0, 6),
+                'nombre_proceso' => $newProcess,
+                'tipo_pago' => $row['tipo_pago'],
+                'seguimiento_paquete' => $row['tracking_number'],
+                'fecha' => $row['fecha'],
+                'direccion' => $row['recipient_address'],
+                'comuna_destino' => $row['destination_commune_name'],
+                'comerciante_pila' => $client?->source_merchant_name ?? $row['merchant_name'],
+                'rut_cliente' => $client?->tax_id,
+                'razon_social_cliente' => $client?->legal_name,
+                'peso_final' => $row['peso_final'],
+                'estado_envio' => $row['status'],
+                'condicion_pago' => $condition,
+                'valor' => $value,
+                'nombre_repartidor' => $row['courier_name'],
+                'usuario_entrega' => $row['delivery_user_name'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+        if ($updates !== []) {
+            DB::table('Pago_Movimientos_Courier')->upsert($updates, ['id'], array_values(array_diff(array_keys($updates[0]), ['id', 'tenant_id', 'courier_movement_id', 'created_at'])));
+        }
+
+        return count($updates);
     }
 
     private function rowValue(array $values, array $indexes, array $aliases): string
@@ -663,6 +1042,7 @@ class CourierMovementImportController
         return match ($processType) {
             'lanas' => 'Lanas',
             'retornos' => 'Retornos',
+            'peumo' => 'Peumo',
             default => 'Variable',
         };
     }

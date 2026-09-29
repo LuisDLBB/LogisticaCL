@@ -17,7 +17,7 @@ class ExternalShipment extends Model
     protected $fillable = [
         'tenant_id', 'client_id', 'fecha', 'tracking_number', 'external_order_number',
         'external_courier_name', 'destination_locality_name', 'delivery_point', 'client_name_source',
-        'exclude_provider_payment',
+        'exclude_provider_payment', 'observacion',
     ];
 
     protected function casts(): array
