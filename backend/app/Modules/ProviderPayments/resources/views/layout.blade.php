@@ -48,6 +48,7 @@
 </header>
 <div class="shell">
     <aside class="sidebar" aria-label="Menú Pago Proveedores">
+        <a class="nav-link" href="{{ route('portal.home') }}" id="provider-back-link">← Volver</a>
         <a class="nav-link {{ request()->routeIs('provider-payments.dashboard') ? 'active' : '' }}" href="{{ route('provider-payments.dashboard') }}">Resumen</a>
         <details {{ (request()->routeIs('provider-payments.courier-movements.*') && ! request()->routeIs('provider-payments.courier-movements.compile')) || request()->routeIs('provider-payments.maintainers.pesos.reales*') ? 'open' : '' }}>
             <summary class="nav-summary">Carga Movimientos Courier</summary>
@@ -89,6 +90,12 @@
 @include('provider-payments::partials.system-visual-styles')
 @stack('scripts')
 <script>
+document.getElementById('provider-back-link')?.addEventListener('click', event => {
+    if ({{ request()->routeIs('provider-payments.dashboard') ? 'true' : 'false' }}) return;
+    if (window.history.length <= 1) return;
+    event.preventDefault();
+    window.history.back();
+});
 (() => {
     const main = document.querySelector('main.content');
     if (!main || main.querySelector('.page-heading')) return;
