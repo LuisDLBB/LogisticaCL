@@ -3,6 +3,7 @@
 namespace Tests;
 
 use App\Http\Middleware\EnsurePortalAccess;
+use App\Http\Middleware\EnsureProviderPaymentsAdministrator;
 use App\Http\Middleware\RecordUserActivity;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Session\Middleware\AuthenticateSession;
@@ -13,6 +14,6 @@ abstract class ProviderPaymentsWorkflowTestCase extends TestCase
     {
         parent::setUp();
 
-        $this->withoutMiddleware([Authenticate::class, AuthenticateSession::class, EnsurePortalAccess::class, RecordUserActivity::class]);
+        $this->withoutMiddleware([Authenticate::class, AuthenticateSession::class, EnsurePortalAccess::class, EnsureProviderPaymentsAdministrator::class, RecordUserActivity::class]);
     }
 }

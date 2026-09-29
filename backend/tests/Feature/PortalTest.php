@@ -14,9 +14,9 @@ class PortalTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function member(bool $active = true): User
+    private function member(bool $active = true, ?string $profileName = null): User
     {
-        $user = User::factory()->create(['username' => 'portal.luis', 'name' => 'Luis Prueba']);
+        $user = User::factory()->create(['username' => 'portal.luis', 'name' => 'Luis Prueba', 'profile_name' => $profileName]);
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $user->tenants()->attach($tenant->id, ['is_active' => $active, 'role_code' => 'operator']);
 
@@ -152,10 +152,25 @@ class PortalTest extends TestCase
         $this->assertDatabaseCount('user_activities', 1);
     }
 
-    public function test_payments_remains_accessible_to_member_and_records_visit(): void
+    public function test_payments_only_appears_for_administrators_and_records_their_visit(): void
     {
-        $this->actingAs($this->member())->get('/pago-proveedores')->assertOk()->assertSee('Pago Proveedores')->assertSee('Luis Prueba');
+        $this->actingAs($this->member(profileName: 'Administrador'))->get('/inicio')->assertOk()->assertSee('Pago Proveedores');
+        $this->get('/pago-proveedores')->assertOk()->assertSee('Pago Proveedores')->assertSee('Luis Prueba');
+        $this->get('/pago-proveedores/carga-movimientos-courier')->assertOk();
         $this->assertDatabaseHas('user_activities', ['module' => 'Pago Proveedores']);
+    }
+
+    public function test_non_administrator_cannot_see_or_open_any_payments_route(): void
+    {
+        $this->actingAs($this->member(profileName: 'Operaciones'))
+            ->get('/inicio')->assertOk()->assertDontSee('Pago Proveedores');
+
+        $this->get('/pago-proveedores')->assertForbidden();
+        $this->get('/pago-proveedores/carga-movimientos-courier')->assertForbidden();
+        $this->get('/pago-proveedores/carga-movimientos-courier/revisar-parametros')->assertForbidden();
+        $this->get('/pago-proveedores/compilar-movimientos-courier/ordenes-de-compra/resumen.xlsx')->assertForbidden();
+        $this->post('/pago-proveedores/carga-movimientos-courier/cargar')->assertForbidden();
+        $this->assertDatabaseMissing('user_activities', ['module' => 'Pago Proveedores']);
     }
 
     public function test_logout_ends_session_and_records_activity(): void

@@ -18,6 +18,11 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    public function isProviderPaymentsAdministrator(): bool
+    {
+        return mb_strtolower(trim((string) $this->profile_name)) === 'administrador';
+    }
+
     /**
      * Get the attributes that should be cast.
      *
