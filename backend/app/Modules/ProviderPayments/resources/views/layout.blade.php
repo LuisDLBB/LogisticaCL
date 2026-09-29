@@ -12,7 +12,7 @@
         .topbar { position:sticky; top:0; z-index:20; height:76px; display:flex; align-items:center; justify-content:space-between; padding:0 22px; background:var(--navy); color:#fff; }
         .brand { display:flex; align-items:center; gap:12px; color:#fff; text-decoration:none; }
         .brand-mark { width:44px; height:44px; display:grid; place-items:center; border-radius:11px; background:var(--turquoise); color:var(--navy); font-size:20px; font-weight:900; }
-        .brand strong,.brand small { display:block; }.brand strong{font-size:16px}.brand small{margin-top:2px;color:#c9eeee;font-size:12px}.user-area{font-size:13px}.user-area a{margin-left:18px;color:var(--turquoise);text-decoration:none}
+        .brand strong,.brand small { display:block; }.brand strong{font-size:16px}.brand small{margin-top:2px;color:#c9eeee;font-size:12px}.topbar-right{display:flex;align-items:center;gap:12px;margin-left:auto;min-width:0}.user-area{font-size:13px;white-space:nowrap}.user-area a{margin-left:18px;color:var(--turquoise);text-decoration:none}
         .shell { display:grid; grid-template-columns:222px minmax(0,1fr); min-height:calc(100vh - 76px); }
         .sidebar { padding:23px 9px; border-right:1px solid var(--line); background:#fff; }
         .nav-link,.nav-summary { display:block; width:100%; padding:12px 15px; border-radius:9px; color:#26474c; cursor:pointer; font-size:14px; font-weight:700; text-decoration:none; }
@@ -44,7 +44,7 @@
 <body>
 <header class="topbar">
     <a class="brand" href="{{ route('provider-payments.dashboard') }}"><span class="brand-mark">4N</span><span><strong>Pago Proveedores</strong><small>4N Logística · PMBC</small></span></a>
-    <div class="user-area"><a href="{{ route('portal.home') }}">Inicio</a> · <a href="{{ route('portal.profile') }}">{{ auth()->user()?->name }}</a><form method="POST" action="{{ route('logout') }}" style="display:inline">@csrf<button type="submit" style="border:0;background:none;color:inherit;cursor:pointer;font:inherit">Salir</button></form></div>
+    <div class="topbar-right">@yield('topbar-checklist')<div class="user-area"><a href="{{ route('portal.home') }}">Inicio</a> · <a href="{{ route('portal.profile') }}">{{ auth()->user()?->name }}</a><form method="POST" action="{{ route('logout') }}" style="display:inline">@csrf<button type="submit" style="border:0;background:none;color:inherit;cursor:pointer;font:inherit">Salir</button></form></div></div>
 </header>
 <div class="shell">
     <aside class="sidebar" aria-label="Menú Pago Proveedores">

@@ -1019,7 +1019,7 @@ class CourierParameterReviewTest extends ProviderPaymentsWorkflowTestCase
         }
 
         $current = $this->get(route('provider-payments.dashboard', ['period' => '202608']))
-            ->assertOk()->assertSee('Cierre Mes - 202608')->assertSee('Arrastrar lista de procesos');
+            ->assertOk()->assertSee('Cierre Mes - 202608')->assertSee('Mostrar lista de procesos del período 202608');
         $this->assertSame([
             'Variables' => true, 'Lanas' => false, 'Retornos' => false, 'Peumo' => false,
             'Especiales' => true, 'Ruta CV' => false, 'Servicios' => false, 'Acuerdos' => false,
