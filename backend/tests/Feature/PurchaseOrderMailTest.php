@@ -32,7 +32,7 @@ class PurchaseOrderMailTest extends ProviderPaymentsWorkflowTestCase
         $this->payment($tenant->id, $provider, 'TEST-DS-V', 'Acuerdos', 'Fijo Mensual');
         $this->post(route('provider-payments.courier-movements.compile.close'), ['period' => '202609'])
             ->assertSessionHas('status');
-        $this->assertSame(3, DB::table('Maestro_Pagos')->distinct()->count('oc'));
+        $this->assertSame(3, DB::table('PPR_Maestro_Pagos')->distinct()->count('oc'));
 
         $this->get(route('provider-payments.courier-movements.compile.purchase-orders.mail', ['period' => '202609']))
             ->assertOk()->assertSee('DS GROUP SPA')->assertSee('6 archivos')
@@ -49,8 +49,8 @@ class PurchaseOrderMailTest extends ProviderPaymentsWorkflowTestCase
         $this->post(route('provider-payments.courier-movements.compile.purchase-orders.mail.configure'), [
             'period' => '202609', 'password' => 'clave-de-prueba',
         ])->assertSessionHas('status');
-        $this->assertDatabaseHas('purchase_order_mail_settings', ['tenant_id' => $tenant->id, 'username' => 'proveedores@4nlogistica.cl']);
-        $this->assertDatabaseMissing('purchase_order_mail_settings', ['encrypted_password' => 'clave-de-prueba']);
+        $this->assertDatabaseHas('PPR_purchase_order_mail_settings', ['tenant_id' => $tenant->id, 'username' => 'proveedores@4nlogistica.cl']);
+        $this->assertDatabaseMissing('PPR_purchase_order_mail_settings', ['encrypted_password' => 'clave-de-prueba']);
 
         $this->post(route('provider-payments.courier-movements.compile.purchase-orders.mail.test'), ['period' => '202609'])
             ->assertSessionHas('status');
@@ -83,7 +83,7 @@ class PurchaseOrderMailTest extends ProviderPaymentsWorkflowTestCase
                 && $mail->mailSubject === 'Pre-factura servicios 4N Septiembre 2026 - DS GROUP SPA'
                 && $mail->messageText === 'OC 2026090001, 2026090002, 2026090003; plazo 30/09/2026; mes Septiembre 2026';
         });
-        $this->assertDatabaseHas('purchase_order_mailings', [
+        $this->assertDatabaseHas('PPR_purchase_order_mailings', [
             'rut_proveedor' => '77201525-9', 'mode' => 'provider',
             'cc' => 'marcelo@4nlogistica.cl, hansdelabarra@4nlogistica.cl, natalialeyton@4nlogistica.cl, luisdelabarra@4nlogistica.cl',
         ]);

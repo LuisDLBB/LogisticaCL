@@ -13,7 +13,7 @@ class VisitaDiaria extends Model
     /** @use HasFactory<VisitaDiariaFactory> */
     use HasFactory;
 
-    protected $table = 'Visitas_Diarias';
+    protected $table = 'PPR_Visitas_Diarias';
 
     protected $guarded = [];
 

@@ -32,7 +32,7 @@ class OperationalMasterMaintainerController
         $tenant = $this->tenant();
         $data = $request->validate([
             'return_period' => ['nullable', 'date_format:Ym'],
-            'tax_id' => ['required', 'string', 'max:15', Rule::unique('providers')->where('tenant_id', $tenant->id)],
+            'tax_id' => ['required', 'string', 'max:15', Rule::unique('MBA_providers')->where('tenant_id', $tenant->id)],
             'legal_name' => ['required', 'string', 'max:255'], 'operational_name' => ['nullable', 'string', 'max:160'],
             'operator_type' => ['required', 'string', 'max:20'], 'tax_document_type' => ['nullable', 'string', 'max:80'],
             'commercial_address' => ['nullable', 'string', 'max:255'], 'commercial_commune_name' => ['nullable', 'string', 'max:100'],
@@ -43,8 +43,8 @@ class OperationalMasterMaintainerController
             'payment_terms_pmcb' => ['nullable', 'string', 'max:80'],
             'account_holder_name' => ['nullable', 'string', 'max:255'],
             'account_holder_tax_id' => ['nullable', 'string', 'max:20'],
-            'bank_name' => ['nullable', 'string', 'max:100', 'required_with:account_number', Rule::exists('bancos', 'banco')->where('is_active', true)],
-            'account_type' => ['nullable', 'string', 'max:80', 'required_with:account_number', Rule::exists('tipos_cuenta_bancaria', 'tipo_cuenta')->where('is_active', true)],
+            'bank_name' => ['nullable', 'string', 'max:100', 'required_with:account_number', Rule::exists('PPR_bancos', 'banco')->where('is_active', true)],
+            'account_type' => ['nullable', 'string', 'max:80', 'required_with:account_number', Rule::exists('PPR_tipos_cuenta_bancaria', 'tipo_cuenta')->where('is_active', true)],
             'account_number' => ['nullable', 'string', 'max:100', 'required_with:bank_name,account_type'],
         ]);
         [$number, $digit] = $this->rutParts($data['tax_id']);
@@ -84,8 +84,8 @@ class OperationalMasterMaintainerController
             'payment_terms_pmcb' => ['nullable', 'string', 'max:80'],
             'account_holder_name' => ['nullable', 'string', 'max:255'],
             'account_holder_tax_id' => ['nullable', 'string', 'max:20'],
-            'bank_name' => ['nullable', 'string', 'max:100', Rule::exists('bancos', 'banco')->where('is_active', true)],
-            'account_type' => ['nullable', 'string', 'max:80', Rule::exists('tipos_cuenta_bancaria', 'tipo_cuenta')->where('is_active', true)],
+            'bank_name' => ['nullable', 'string', 'max:100', Rule::exists('PPR_bancos', 'banco')->where('is_active', true)],
+            'account_type' => ['nullable', 'string', 'max:80', Rule::exists('PPR_tipos_cuenta_bancaria', 'tipo_cuenta')->where('is_active', true)],
             'account_number' => ['nullable', 'string', 'max:100'],
         ]);
         $provider->update(Arr::except($data, ['bank_name', 'account_type', 'account_number', 'account_holder_name', 'account_holder_tax_id']));
@@ -149,8 +149,8 @@ class OperationalMasterMaintainerController
     public function storeBank(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'banco' => ['required', 'string', 'max:100', Rule::unique('bancos', 'banco')],
-            'codigo_sbif' => ['required', 'integer', 'min:1', 'max:65535', Rule::unique('bancos', 'codigo_sbif')],
+            'banco' => ['required', 'string', 'max:100', Rule::unique('PPR_bancos', 'banco')],
+            'codigo_sbif' => ['required', 'integer', 'min:1', 'max:65535', Rule::unique('PPR_bancos', 'codigo_sbif')],
             'nombre_entidad_financiera' => ['required', 'string', 'max:180'],
             'marcas_productos_asociados' => ['required', 'string', 'max:255'],
         ]);
@@ -162,7 +162,7 @@ class OperationalMasterMaintainerController
     public function updateBank(Request $request, Banco $banco): RedirectResponse
     {
         $banco->update($request->validate([
-            'banco' => ['required', 'string', 'max:100', Rule::unique('bancos', 'banco')->ignore($banco)],
+            'banco' => ['required', 'string', 'max:100', Rule::unique('PPR_bancos', 'banco')->ignore($banco)],
             'nombre_entidad_financiera' => ['required', 'string', 'max:180'],
             'marcas_productos_asociados' => ['required', 'string', 'max:255'],
             'is_active' => ['required', 'boolean'],
@@ -174,7 +174,7 @@ class OperationalMasterMaintainerController
     public function storeBankAccountType(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'tipo_cuenta' => ['required', 'string', 'max:80', Rule::unique('tipos_cuenta_bancaria', 'tipo_cuenta')],
+            'tipo_cuenta' => ['required', 'string', 'max:80', Rule::unique('PPR_tipos_cuenta_bancaria', 'tipo_cuenta')],
         ]);
         TipoCuentaBancaria::query()->create([
             ...$data,
@@ -188,7 +188,7 @@ class OperationalMasterMaintainerController
     public function updateBankAccountType(Request $request, TipoCuentaBancaria $accountType): RedirectResponse
     {
         $accountType->update($request->validate([
-            'tipo_cuenta' => ['required', 'string', 'max:80', Rule::unique('tipos_cuenta_bancaria', 'tipo_cuenta')->ignore($accountType)],
+            'tipo_cuenta' => ['required', 'string', 'max:80', Rule::unique('PPR_tipos_cuenta_bancaria', 'tipo_cuenta')->ignore($accountType)],
             'is_active' => ['required', 'boolean'],
         ]));
 
@@ -204,8 +204,8 @@ class OperationalMasterMaintainerController
     {
         $tenant = $this->tenant();
         $data = $request->validate([
-            'rut_empresa' => ['required', 'string', 'max:15'], 'internal_code' => ['required', 'string', 'max:50', Rule::unique('vehicles')->where('tenant_id', $tenant->id)],
-            'plate' => ['required', 'string', 'max:12', Rule::unique('vehicles')->where('tenant_id', $tenant->id)], 'vehicle_type' => ['required', 'string', 'max:50'],
+            'rut_empresa' => ['required', 'string', 'max:15'], 'internal_code' => ['required', 'string', 'max:50', Rule::unique('MBA_vehicles')->where('tenant_id', $tenant->id)],
+            'plate' => ['required', 'string', 'max:12', Rule::unique('MBA_vehicles')->where('tenant_id', $tenant->id)], 'vehicle_type' => ['required', 'string', 'max:50'],
             'ownership_type' => ['required', 'string', 'max:30'], 'operational_status' => ['required', 'string', 'max:30'],
             'brand' => ['nullable', 'string', 'max:80'], 'model' => ['nullable', 'string', 'max:100'], 'manufacture_year' => ['nullable', 'integer', 'min:1900', 'max:2100'],
         ]);
@@ -234,7 +234,7 @@ class OperationalMasterMaintainerController
 
     public function storeStatus(Request $request): RedirectResponse
     {
-        $data = $request->validate(['name' => ['required', 'string', 'max:100', Rule::unique('estados', 'name')], 'consider_for_payment' => ['required', 'boolean']]);
+        $data = $request->validate(['name' => ['required', 'string', 'max:100', Rule::unique('PPR_estados', 'name')], 'consider_for_payment' => ['required', 'boolean']]);
         CourierStatus::create($data);
 
         return back()->with('status', 'Estado creado correctamente.');

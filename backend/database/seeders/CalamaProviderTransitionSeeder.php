@@ -32,7 +32,7 @@ class CalamaProviderTransitionSeeder extends Seeder
                 ],
             );
 
-            DB::table('coverages')->where('tenant_id', $tenant->id)
+            DB::table('PPR_coverages')->where('tenant_id', $tenant->id)
                 ->whereIn('commune_name', self::COMMUNES)
                 ->update([
                     'provider_id' => $marcelo->id,
@@ -42,8 +42,8 @@ class CalamaProviderTransitionSeeder extends Seeder
                     'updated_at' => now(),
                 ]);
 
-            $clients = DB::table('clients')->where('tenant_id', $tenant->id)->pluck('id', 'tax_id');
-            $services = DB::table('service_types')->pluck('id', 'service_code');
+            $clients = DB::table('MBA_clients')->where('tenant_id', $tenant->id)->pluck('id', 'tax_id');
+            $services = DB::table('PPR_service_types')->pluck('id', 'service_code');
             foreach ($rules as $rule) {
                 foreach ([$victor, $marcelo] as $provider) {
                     $identity = [
@@ -53,7 +53,7 @@ class CalamaProviderTransitionSeeder extends Seeder
                         'service_code' => (int) $rule['IDServicio'],
                         'merchant_name' => $rule['Comerciante'],
                     ];
-                    if ($provider->is($victor) && DB::table('llave_centro_costos')->where($identity)->exists()) {
+                    if ($provider->is($victor) && DB::table('PPR_llave_centro_costos')->where($identity)->exists()) {
                         continue;
                     }
                     $values = [
@@ -69,7 +69,7 @@ class CalamaProviderTransitionSeeder extends Seeder
                         'is_active' => $rule['Activo'] === '1',
                         'updated_at' => now(),
                     ];
-                    DB::table('llave_centro_costos')->updateOrInsert($identity, $values + ['created_at' => now()]);
+                    DB::table('PPR_llave_centro_costos')->updateOrInsert($identity, $values + ['created_at' => now()]);
                 }
             }
         });

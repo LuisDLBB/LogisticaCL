@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 
 class CourierPaymentMovement extends Model
 {
-    protected $table = 'Pago_Movimientos_Courier';
+    protected $table = 'PPR_Pago_Movimientos_Courier';
 
     protected $guarded = [];
 
@@ -23,7 +23,7 @@ class CourierPaymentMovement extends Model
             if ($tracking !== '' && MaestroPago::query()->whereKey($tracking)->exists()) {
                 throw ValidationException::withMessages(['seguimiento_paquete' => "El seguimiento {$tracking} ya está cerrado en Maestro_Pagos."]);
             }
-            if (DB::table('Cierres_Pagos')->where('tenant_id', $payment->tenant_id)->where('periodo', $payment->periodo)->exists()) {
+            if (DB::table('PPR_Cierres_Pagos')->where('tenant_id', $payment->tenant_id)->where('periodo', $payment->periodo)->exists()) {
                 throw ValidationException::withMessages(['periodo' => "El período {$payment->periodo} tiene un cierre definitivo."]);
             }
             $transition = app(CalamaProviderTransition::class);

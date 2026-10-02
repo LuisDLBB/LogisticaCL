@@ -155,18 +155,18 @@ class CostCenterKeyMaintainerController
             'template_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('llave_centro_costos', 'id')->where(fn ($query) => $query->where('tenant_id', $tenant->id)->where('is_active', true)),
+                Rule::exists('PPR_llave_centro_costos', 'id')->where(fn ($query) => $query->where('tenant_id', $tenant->id)->where('is_active', true)),
             ],
             'rows' => ['required_with:template_id', 'array', 'min:1'],
             'rows.*.source_id' => ['required', 'integer', 'distinct'],
             'rows.*.provider_tax_id' => ['nullable', 'string', 'max:15'],
             'rows.*.agent_name' => ['nullable', 'string', 'max:160'],
             'rows.*.payment_status' => ['required', 'string', 'max:20'],
-            'rows.*.cost_center_code' => ['nullable', 'integer', Rule::exists('cost_centers', 'cost_center_code')],
-            'provider_id' => ['nullable', Rule::exists('providers', 'id')->where('tenant_id', $tenant->id)->where('is_active', true)],
+            'rows.*.cost_center_code' => ['nullable', 'integer', Rule::exists('PPR_cost_centers', 'cost_center_code')],
+            'provider_id' => ['nullable', Rule::exists('MBA_providers', 'id')->where('tenant_id', $tenant->id)->where('is_active', true)],
             'agent_name' => ['nullable', 'string', 'max:160'],
             'payment_status' => ['nullable', Rule::in(['SI', 'NO', 'REVISAR'])],
-            'cost_center_code' => ['nullable', 'integer', Rule::exists('cost_centers', 'cost_center_code')],
+            'cost_center_code' => ['nullable', 'integer', Rule::exists('PPR_cost_centers', 'cost_center_code')],
         ]);
 
         $client = Client::query()->where('tenant_id', $tenant->id)->where('is_active', true)
@@ -192,7 +192,7 @@ class CostCenterKeyMaintainerController
                     'name' => trim($validated['service_name']),
                     'is_active' => true,
                 ]);
-                DB::table('client_service_type')->updateOrInsert(
+                DB::table('PPR_client_service_type')->updateOrInsert(
                     ['client_id' => $client->id, 'service_type_id' => $service->id],
                     ['is_active' => true, 'created_at' => now(), 'updated_at' => now()],
                 );
@@ -274,7 +274,7 @@ class CostCenterKeyMaintainerController
                 $key->save();
             }
 
-            DB::table('client_service_type')->updateOrInsert(
+            DB::table('PPR_client_service_type')->updateOrInsert(
                 ['client_id' => $client->id, 'service_type_id' => $service->id],
                 ['is_active' => true, 'created_at' => now(), 'updated_at' => now()],
             );
@@ -309,12 +309,12 @@ class CostCenterKeyMaintainerController
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $validated = $request->validate([
-            'provider_id' => ['required', Rule::exists('providers', 'id')->where('tenant_id', $tenant->id)],
-            'client_id' => ['required', Rule::exists('clients', 'id')->where('tenant_id', $tenant->id)],
-            'service_type_id' => ['required', Rule::exists('service_types', 'id')],
+            'provider_id' => ['required', Rule::exists('MBA_providers', 'id')->where('tenant_id', $tenant->id)],
+            'client_id' => ['required', Rule::exists('MBA_clients', 'id')->where('tenant_id', $tenant->id)],
+            'service_type_id' => ['required', Rule::exists('PPR_service_types', 'id')],
             'return_period' => ['nullable', 'regex:/^\d{6}$/'],
             'agent_name' => ['nullable', 'string', 'max:160'], 'payment_status' => ['required', 'string', 'max:20'],
-            'cost_center_code' => [$request->filled('return_period') ? 'required' : 'nullable', 'integer', Rule::exists('cost_centers', 'cost_center_code')],
+            'cost_center_code' => [$request->filled('return_period') ? 'required' : 'nullable', 'integer', Rule::exists('PPR_cost_centers', 'cost_center_code')],
         ]);
         $provider = Provider::findOrFail($validated['provider_id']);
         $client = Client::findOrFail($validated['client_id']);
@@ -357,8 +357,8 @@ class CostCenterKeyMaintainerController
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $validated = $request->validate([
-            'source_provider_id' => ['required', Rule::exists('providers', 'id')->where('tenant_id', $tenant->id)],
-            'target_provider_id' => ['required', 'different:source_provider_id', Rule::exists('providers', 'id')->where('tenant_id', $tenant->id)->where('is_active', true)],
+            'source_provider_id' => ['required', Rule::exists('MBA_providers', 'id')->where('tenant_id', $tenant->id)],
+            'target_provider_id' => ['required', 'different:source_provider_id', Rule::exists('MBA_providers', 'id')->where('tenant_id', $tenant->id)->where('is_active', true)],
         ]);
         $source = Provider::query()->where('tenant_id', $tenant->id)->findOrFail($validated['source_provider_id']);
         $target = Provider::query()->where('tenant_id', $tenant->id)->findOrFail($validated['target_provider_id']);
@@ -430,7 +430,7 @@ class CostCenterKeyMaintainerController
         $data = $request->validate([
             'return_period' => ['nullable', 'regex:/^\d{6}$/'],
             'agent_name' => ['nullable', 'string', 'max:160'], 'payment_status' => ['required', 'string', 'max:20'],
-            'cost_center_code' => ['nullable', 'integer', Rule::exists('cost_centers', 'cost_center_code')], 'is_active' => ['required', 'boolean'],
+            'cost_center_code' => ['nullable', 'integer', Rule::exists('PPR_cost_centers', 'cost_center_code')], 'is_active' => ['required', 'boolean'],
         ]);
         $returnPeriod = $data['return_period'] ?? null;
         unset($data['return_period']);
@@ -450,10 +450,10 @@ class CostCenterKeyMaintainerController
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $validated = $request->validate([
             'rows' => ['required', 'array', 'min:1', 'max:100'],
-            'rows.*.id' => ['required', 'integer', 'distinct', Rule::exists('llave_centro_costos', 'id')->where('tenant_id', $tenant->id)],
+            'rows.*.id' => ['required', 'integer', 'distinct', Rule::exists('PPR_llave_centro_costos', 'id')->where('tenant_id', $tenant->id)],
             'rows.*.agent_name' => ['nullable', 'string', 'max:160'],
             'rows.*.payment_status' => ['required', 'string', 'max:20'],
-            'rows.*.cost_center_code' => ['nullable', 'integer', Rule::exists('cost_centers', 'cost_center_code')],
+            'rows.*.cost_center_code' => ['nullable', 'integer', Rule::exists('PPR_cost_centers', 'cost_center_code')],
             'rows.*.is_active' => ['required', 'boolean'],
         ]);
 

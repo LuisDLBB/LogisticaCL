@@ -112,7 +112,7 @@ ROWS;
             ];
         }
 
-        DB::table('Proveedores_usuarios_4N')->upsert(
+        DB::table('PPR_Proveedores_usuarios_4N')->upsert(
             $rows,
             ['RutProveedor', 'ComunaMatriz', 'NombreRepartidor'],
             ['NuevoRutProveedor'],

@@ -107,7 +107,7 @@ class PortalTest extends TestCase
     {
         $user = $this->member();
         $this->actingAs($user)->put('/mi-cuenta', ['name' => 'Nombre actualizado', 'email' => 'nuevo@example.com', 'phone' => '+56912345678', 'current_password' => 'password', 'profile_name' => 'admin', 'id' => 999])->assertSessionHas('status');
-        $this->assertDatabaseHas('users', ['id' => $user->id, 'name' => 'Nombre actualizado', 'email' => 'nuevo@example.com', 'phone' => '+56912345678', 'profile_name' => null]);
+        $this->assertDatabaseHas('MBA_users', ['id' => $user->id, 'name' => 'Nombre actualizado', 'email' => 'nuevo@example.com', 'phone' => '+56912345678', 'profile_name' => null]);
         $this->assertDatabaseHas('user_activities', ['user_id' => $user->id, 'action' => 'Datos personales actualizados']);
     }
 
@@ -116,7 +116,7 @@ class PortalTest extends TestCase
         $user = $this->member();
         $other = User::factory()->create();
         $this->actingAs($user)->put('/mi-cuenta', ['name' => 'Cambio', 'email' => $other->email, 'current_password' => 'wrong'])->assertSessionHasErrors(['email', 'current_password']);
-        $this->assertDatabaseHas('users', ['id' => $user->id, 'name' => 'Luis Prueba']);
+        $this->assertDatabaseHas('MBA_users', ['id' => $user->id, 'name' => 'Luis Prueba']);
     }
 
     public function test_password_change_hashes_password_and_removes_other_sessions(): void

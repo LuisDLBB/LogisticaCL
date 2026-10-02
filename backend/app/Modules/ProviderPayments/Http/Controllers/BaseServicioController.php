@@ -41,7 +41,7 @@ class BaseServicioController
             SUM(CASE WHEN provider_id IS NULL THEN 1 ELSE 0 END) AS missing_providers,
             SUM(CASE WHEN client_id IS NOT NULL AND provider_id IS NOT NULL THEN 1 ELSE 0 END) AS complete,
             SUM(CASE WHEN closed_at IS NOT NULL THEN 1 ELSE 0 END) AS closed_count')->first();
-        $monthClosed = $period !== '' && DB::table('Cierres_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $period)->exists();
+        $monthClosed = $period !== '' && DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $period)->exists();
         $isClosed = $monthClosed || ((int) $summary->total > 0 && (int) $summary->closed_count === (int) $summary->total);
         if (! $request->has('estado') && (int) $summary->missing_clients + (int) $summary->missing_providers === 0) {
             $status = 'todos';
@@ -85,8 +85,8 @@ class BaseServicioController
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $validated = $request->validate([
             'rows' => ['required', 'array', 'min:1', 'max:50'],
-            'rows.*.client_id' => ['present', 'nullable', 'integer', Rule::exists('clients', 'id')->where('tenant_id', $tenant->id)],
-            'rows.*.provider_id' => ['present', 'nullable', 'integer', Rule::exists('providers', 'id')->where('tenant_id', $tenant->id)],
+            'rows.*.client_id' => ['present', 'nullable', 'integer', Rule::exists('MBA_clients', 'id')->where('tenant_id', $tenant->id)],
+            'rows.*.provider_id' => ['present', 'nullable', 'integer', Rule::exists('MBA_providers', 'id')->where('tenant_id', $tenant->id)],
             'rows.*.fecha_carga' => ['sometimes', 'required', 'date_format:Y-m-d'],
             'rows.*.zona' => ['sometimes', 'required', 'string', 'max:20'],
             'rows.*.direccion' => ['sometimes', 'required', 'string', 'max:2000'],

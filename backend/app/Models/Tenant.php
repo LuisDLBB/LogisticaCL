@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tenant extends Model
 {
+    protected $table = 'MBA_tenants';
+
     /** @use HasFactory<TenantFactory> */
     use HasFactory;
 
@@ -43,7 +45,7 @@ class Tenant extends Model
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'tenant_users')
+        return $this->belongsToMany(User::class, 'MBA_tenant_users')
             ->withPivot(['rut_empresa', 'role_code', 'is_active'])
             ->withTimestamps();
     }

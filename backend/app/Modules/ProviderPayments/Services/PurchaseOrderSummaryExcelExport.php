@@ -16,7 +16,7 @@ class PurchaseOrderSummaryExcelExport
 {
     public function download(int $tenantId, string $period): StreamedResponse
     {
-        abort_unless(DB::table('Cierres_Pagos')->where('tenant_id', $tenantId)
+        abort_unless(DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenantId)
             ->where('periodo', $period)->exists(), 404);
 
         $orders = $this->orders($tenantId, $period);
@@ -109,7 +109,7 @@ class PurchaseOrderSummaryExcelExport
     private function orders(int $tenantId, string $period): array
     {
         $grouped = [];
-        $payments = DB::table('Maestro_Pagos')->where('tenant_id', $tenantId)
+        $payments = DB::table('PPR_Maestro_Pagos')->where('tenant_id', $tenantId)
             ->where('periodo', $period)
             ->select('oc', 'rut_proveedor', 'razon_social_proveedor', 'nombre_operacional',
                 'empresa_mandante', 'tipo_documento', 'provider_id', 'valor', 'valor_final_total')

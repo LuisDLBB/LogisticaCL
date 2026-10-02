@@ -27,7 +27,7 @@ class ApoyoAlzaCalculator
                 throw ValidationException::withMessages(['periodo' => 'El período de Apoyo Alza está cerrado. Reábrelo con la clave maestra antes de recalcular.']);
             }
             $sourceNames = ['Acuerdos', 'Variable', 'Ruta CV'];
-            $sourceGroups = DB::table('Pago_Movimientos_Courier')
+            $sourceGroups = DB::table('PPR_Pago_Movimientos_Courier')
                 ->where('tenant_id', $tenantId)->where('periodo', $period)->where('condicion_pago', 'SI')
                 ->whereIn('nombre_proceso', $sourceNames)
                 ->selectRaw('nombre_proceso, rut_proveedor, service_name, COUNT(*) AS registros,

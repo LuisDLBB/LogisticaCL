@@ -98,7 +98,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
             'provider_id' => $claudio->id, 'password' => 'test-master-key',
         ])->assertSessionHas('status');
 
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'id' => $payment->id, 'seguimiento_paquete' => $movement->tracking_number,
             'provider_id' => $claudio->id, 'razon_social_proveedor' => $claudio->legal_name,
             'rut_proveedor' => $claudio->tax_id, 'nombre_operacional' => $claudio->operational_name,
@@ -112,7 +112,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
 
         $this->post(route('provider-payments.courier-movements.compile.close'), ['period' => '202608'])
             ->assertSessionHas('status');
-        $this->assertDatabaseHas('Maestro_Pagos', [
+        $this->assertDatabaseHas('PPR_Maestro_Pagos', [
             'seguimiento_paquete' => $movement->tracking_number,
             'rut_proveedor' => $claudio->tax_id, 'tipo_documento' => 'Boleta de Honorarios',
             'empresa_mandante' => '4N', 'valor' => 30000,
@@ -156,8 +156,8 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
             unlink($path);
         }
 
-        $this->assertDatabaseCount('courier_special_payments', 1);
-        $this->assertDatabaseMissing('courier_special_payments', ['codigo_seguimiento' => 'PAID-001']);
+        $this->assertDatabaseCount('PPR_courier_special_payments', 1);
+        $this->assertDatabaseMissing('PPR_courier_special_payments', ['codigo_seguimiento' => 'PAID-001']);
         $this->get(route('provider-payments.courier-movements.especiales', ['periodo' => '202609-Especiales']))
             ->assertOk()->assertSee('Exportar registros ya pagados en Excel');
         $token = session('paid_tracking_reports')[0];
@@ -198,7 +198,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
         }
 
         $this->assertSame('202608-Especiales', $special->fresh()->periodo);
-        $this->assertDatabaseCount('courier_special_payments', 1);
+        $this->assertDatabaseCount('PPR_courier_special_payments', 1);
     }
 
     public function test_master_key_reopens_a_closed_special_period_and_removes_its_synthetic_payment(): void
@@ -226,8 +226,8 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
         ])->assertRedirect(route('provider-payments.courier-movements.especiales', ['periodo' => $period]));
 
         $this->assertNull($special->fresh()->finalized_at);
-        $this->assertDatabaseMissing('Pago_Movimientos_Courier', ['id' => $payment->id]);
-        $this->assertDatabaseMissing('movimientos_courier', ['id' => $movement->id]);
+        $this->assertDatabaseMissing('PPR_Pago_Movimientos_Courier', ['id' => $payment->id]);
+        $this->assertDatabaseMissing('PPR_movimientos_courier', ['id' => $movement->id]);
         $this->get(route('provider-payments.courier-movements.especiales', ['periodo' => $period]))
             ->assertOk()->assertSee('Grabar datos · Finalizar proceso')->assertDontSee('Reabrir período');
     }
@@ -265,7 +265,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
             'periodo' => '202608-Especiales', 'password' => 'test-master-key',
         ])->assertSessionHas('status');
 
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'id' => $payment->id, 'nombre_proceso' => 'Variable', 'zona' => 'RM', 'valor' => 100,
         ]);
     }
@@ -284,8 +284,8 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
             ])->assertRedirect(route('provider-payments.courier-movements.especiales'));
 
             $this->assertSame(2, CourierSpecialPayment::query()->count());
-            $this->assertDatabaseHas('courier_special_payments', ['periodo' => '202608-Especiales', 'fecha' => '2026-07-29', 'monto' => 33000]);
-            $this->assertDatabaseHas('courier_special_payments', ['periodo' => '202608-Especiales', 'monto' => 4167]);
+            $this->assertDatabaseHas('PPR_courier_special_payments', ['periodo' => '202608-Especiales', 'fecha' => '2026-07-29', 'monto' => 33000]);
+            $this->assertDatabaseHas('PPR_courier_special_payments', ['periodo' => '202608-Especiales', 'monto' => 4167]);
             $this->get(route('provider-payments.courier-movements.especiales'))
                 ->assertOk()->assertSee('202608-Especiales')->assertDontSee('202607-Especiales');
 
@@ -348,7 +348,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
         ])->assertRedirect(route('provider-payments.courier-movements.especiales', ['periodo' => '202608-Especiales']))
             ->assertSessionHas('status', 'Pago especial actualizado.');
 
-        $this->assertDatabaseHas('courier_special_payments', [
+        $this->assertDatabaseHas('PPR_courier_special_payments', [
             'id' => $payment->id,
             'periodo' => '202608-Especiales',
             'agente' => 'Agente corregido',
@@ -370,7 +370,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
             'agente' => 'Agente', 'zona_tipo' => 'REG', 'localidad' => 'Temuco', 'monto' => -1,
         ])->assertSessionHasErrors('monto');
 
-        $this->assertDatabaseHas('courier_special_payments', ['id' => $payment->id, 'monto' => 9000]);
+        $this->assertDatabaseHas('PPR_courier_special_payments', ['id' => $payment->id, 'monto' => 9000]);
     }
 
     public function test_a_payment_from_another_tenant_cannot_be_corrected(): void
@@ -382,7 +382,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
             'agente' => 'Agente', 'zona_tipo' => 'REG', 'localidad' => 'Temuco', 'monto' => 25000,
         ])->assertNotFound();
 
-        $this->assertDatabaseHas('courier_special_payments', ['id' => $payment->id, 'monto' => 9000]);
+        $this->assertDatabaseHas('PPR_courier_special_payments', ['id' => $payment->id, 'monto' => 9000]);
     }
 
     public function test_search_filters_loaded_payments_without_changing_the_period(): void
@@ -456,7 +456,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
                 && $associations[$payment->id]['client']['id'] === $client->id
                 && $associations[$payment->id]['client']['uncertain'] === true);
 
-        $this->assertDatabaseHas('courier_special_payments', [
+        $this->assertDatabaseHas('PPR_courier_special_payments', [
             'id' => $payment->id, 'provider_id' => null, 'client_id' => null,
         ]);
 
@@ -466,7 +466,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
             'cliente' => 'ZM', 'monto' => 25000, 'provider_id' => $alternative->id, 'client_id' => $client->id,
         ])->assertSessionHas('status', 'Pago especial actualizado.');
 
-        $this->assertDatabaseHas('courier_special_payments', [
+        $this->assertDatabaseHas('PPR_courier_special_payments', [
             'id' => $payment->id, 'provider_id' => $alternative->id, 'client_id' => $client->id,
         ]);
     }
@@ -481,7 +481,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
             'provider_id' => $foreignProvider->id,
         ])->assertSessionHasErrors('provider_id');
 
-        $this->assertDatabaseHas('courier_special_payments', ['id' => $payment->id, 'provider_id' => null]);
+        $this->assertDatabaseHas('PPR_courier_special_payments', ['id' => $payment->id, 'provider_id' => null]);
     }
 
     public function test_tracking_code_assigns_client_and_service_on_import(): void
@@ -508,7 +508,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
                 'period_month' => '2026-08',
             ])->assertRedirect();
 
-            $this->assertDatabaseHas('courier_special_payments', [
+            $this->assertDatabaseHas('PPR_courier_special_payments', [
                 'codigo_seguimiento' => $trackingCode,
                 'cliente' => 'Texto original distinto',
                 'client_id' => $client->id,
@@ -537,7 +537,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
             'provider_id' => $provider->id, 'client_id' => $client->id, 'service_type_id' => $service->id,
         ])->assertSessionHas('status', 'Proveedor, cliente y servicio asociados al pago especial.');
 
-        $this->assertDatabaseHas('courier_special_payments', [
+        $this->assertDatabaseHas('PPR_courier_special_payments', [
             'id' => $payment->id, 'agente' => 'Operador original', 'cliente' => 'Texto cliente original',
             'provider_id' => $provider->id, 'client_id' => $client->id, 'service_type_id' => $service->id,
         ]);
@@ -566,15 +566,15 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
         ])->assertRedirect(route('provider-payments.courier-movements.especiales', ['periodo' => '202608-Especiales']))
             ->assertSessionHas('status', '2 pagos especiales guardados.');
 
-        $this->assertDatabaseHas('courier_special_payments', [
+        $this->assertDatabaseHas('PPR_courier_special_payments', [
             'id' => $first->id, 'provider_id' => $provider->id,
             'client_id' => $client->id, 'service_type_id' => $service->id,
         ]);
-        $this->assertDatabaseHas('courier_special_payments', [
+        $this->assertDatabaseHas('PPR_courier_special_payments', [
             'id' => $second->id, 'provider_id' => $provider->id,
             'client_id' => null, 'service_type_id' => $service->id,
         ]);
-        $this->assertDatabaseHas('courier_special_payments', [
+        $this->assertDatabaseHas('PPR_courier_special_payments', [
             'id' => $untouched->id, 'provider_id' => null, 'client_id' => null,
         ]);
     }
@@ -591,7 +591,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
             'rows' => [['id' => $payment->id, 'provider_id' => '', 'client_id' => '', 'service_type_id' => '']],
         ])->assertSessionHasErrors('rows');
 
-        $this->assertDatabaseHas('courier_special_payments', [
+        $this->assertDatabaseHas('PPR_courier_special_payments', [
             'id' => $payment->id, 'periodo' => '202607-Especiales', 'client_id' => null,
         ]);
     }
@@ -609,7 +609,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
             'rows' => [['id' => $payment->id, 'provider_id' => $foreignProvider->id, 'client_id' => '', 'service_type_id' => '']],
         ])->assertSessionHasErrors('rows.0.provider_id');
 
-        $this->assertDatabaseHas('courier_special_payments', ['id' => $payment->id, 'provider_id' => null]);
+        $this->assertDatabaseHas('PPR_courier_special_payments', ['id' => $payment->id, 'provider_id' => null]);
     }
 
     public function test_ambiguous_tracking_code_does_not_assign_a_service(): void
@@ -631,7 +631,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
         $this->artisan('courier-special:sync-tracking', ['period' => '202608-Especiales'])
             ->assertSuccessful();
 
-        $this->assertDatabaseHas('courier_special_payments', [
+        $this->assertDatabaseHas('PPR_courier_special_payments', [
             'id' => $payment->id, 'client_id' => null, 'service_type_id' => null,
         ]);
     }
@@ -683,28 +683,28 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
         ])->assertRedirect(route('provider-payments.courier-movements.especiales', ['periodo' => '202608-Especiales']))
             ->assertSessionHas('status', 'Proceso finalizado: 1 movimientos actualizados y 1 creados.');
 
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'id' => $existingPayment->id, 'periodo' => '202608',
             'nombre_proceso' => 'Especiales', 'client_id' => $client->id,
             'provider_id' => $provider->id, 'service_type_id' => $service->id,
             'service_code' => 96, 'service_name' => $service->name,
             'condicion_pago' => 'SI', 'valor' => 10000,
         ]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'seguimiento_paquete' => 'ESP-20260824-0003', 'periodo' => '202608',
             'nombre_proceso' => 'Especiales', 'comuna_matriz' => 'Concepción',
             'peso_final' => 1, 'valor' => 5000,
         ]);
         $synthetic = CourierPaymentMovement::query()->where('seguimiento_paquete', 'ESP-20260824-0003')->firstOrFail();
         $this->assertSame('Operador Concepcion / Centro / Entrega especial / Jefa', $synthetic->direccion);
-        $this->assertDatabaseHas('movimientos_courier', [
+        $this->assertDatabaseHas('PPR_movimientos_courier', [
             'id' => $synthetic->courier_movement_id, 'tracking_number' => 'ESP-20260824-0003',
             'client_id' => $client->id, 'service_name' => $service->name, 'peso_final' => 1,
         ]);
-        $this->assertDatabaseHas('courier_special_payments', [
+        $this->assertDatabaseHas('PPR_courier_special_payments', [
             'id' => $matched->id, 'finalized_tracking_number' => $existingMovement->tracking_number,
         ]);
-        $this->assertDatabaseHas('courier_special_payments', [
+        $this->assertDatabaseHas('PPR_courier_special_payments', [
             'id' => $new->id, 'finalized_tracking_number' => 'ESP-20260824-0003',
         ]);
 
@@ -721,7 +721,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
         $this->post(route('provider-payments.courier-movements.especiales.reopen'), [
             'periodo' => '202608-Especiales', 'password' => 'incorrecta',
         ])->assertSessionHasErrors('password');
-        $this->assertDatabaseHas('courier_special_payments', ['id' => $matched->id, 'periodo' => '202608-Especiales']);
+        $this->assertDatabaseHas('PPR_courier_special_payments', ['id' => $matched->id, 'periodo' => '202608-Especiales']);
 
         $this->post(route('provider-payments.courier-movements.especiales.finalize'), [
             'periodo' => '202608-Especiales',
@@ -729,8 +729,8 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
         $this->assertSame(2, CourierPaymentMovement::query()->where('tenant_id', $tenant->id)->count());
 
         app(CourierPaymentAssigner::class)->assign($tenant->id, '202608');
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['id' => $existingPayment->id, 'valor' => 10000]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['id' => $synthetic->id, 'valor' => 5000]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['id' => $existingPayment->id, 'valor' => 10000]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['id' => $synthetic->id, 'valor' => 5000]);
 
         config()->set('provider-payments.process_deletion_key', 'test-master-key');
         $snapshot = $matched->fresh()->payment_before_finalization;
@@ -738,32 +738,32 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
         $this->delete(route('provider-payments.movements.processes.destroy'), [
             'process_name' => '202608-Especiales', 'password' => 'test-master-key',
         ])->assertSessionHasErrors('process_name');
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['id' => $existingPayment->id, 'valor' => 10000]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['id' => $synthetic->id, 'valor' => 5000]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['id' => $existingPayment->id, 'valor' => 10000]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['id' => $synthetic->id, 'valor' => 5000]);
         $matched->update(['payment_before_finalization' => $snapshot]);
 
         $this->delete(route('provider-payments.movements.processes.destroy'), [
             'process_name' => '202608-Variable', 'password' => 'test-master-key',
         ])->assertSessionHasErrors('process_name');
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['id' => $existingPayment->id, 'valor' => 10000]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['id' => $existingPayment->id, 'valor' => 10000]);
 
         $this->delete(route('provider-payments.movements.processes.destroy'), [
             'process_name' => '202608-Especiales', 'password' => 'test-master-key',
         ])->assertRedirect(route('provider-payments.dashboard', ['period' => '202608']))
             ->assertSessionHas('status', 'Especiales revertidos. Movimientos nuevos eliminados: 1. Pagos anteriores restaurados: 1.');
 
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'id' => $existingPayment->id, 'nombre_proceso' => 'Variable',
             'tipo_pago' => 'Variables', 'condicion_pago' => 'NO', 'valor' => 2345,
         ]);
-        $this->assertDatabaseMissing('Pago_Movimientos_Courier', ['id' => $synthetic->id]);
-        $this->assertDatabaseMissing('movimientos_courier', ['id' => $synthetic->courier_movement_id]);
-        $this->assertDatabaseHas('movimientos_courier', ['id' => $existingMovement->id]);
-        $this->assertDatabaseHas('courier_special_payments', [
+        $this->assertDatabaseMissing('PPR_Pago_Movimientos_Courier', ['id' => $synthetic->id]);
+        $this->assertDatabaseMissing('PPR_movimientos_courier', ['id' => $synthetic->courier_movement_id]);
+        $this->assertDatabaseHas('PPR_movimientos_courier', ['id' => $existingMovement->id]);
+        $this->assertDatabaseHas('PPR_courier_special_payments', [
             'id' => $matched->id, 'finalized_at' => null,
             'finalized_tracking_number' => null, 'payment_before_finalization' => null,
         ]);
-        $this->assertDatabaseHas('courier_special_payments', [
+        $this->assertDatabaseHas('PPR_courier_special_payments', [
             'id' => $new->id, 'finalized_at' => null, 'finalized_tracking_number' => null,
         ]);
     }
@@ -824,12 +824,12 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
             'periodo' => '202608-Especiales',
         ])->assertSessionHas('status', 'Proceso finalizado: 1 movimientos actualizados y 1 creados.');
 
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'id' => $existingPayment->id, 'provider_id' => $selectedProvider->id,
             'rut_proveedor' => $selectedProvider->tax_id, 'comuna_matriz' => '4N Temuco',
             'valor' => 30000, 'condicion_pago' => 'SI',
         ]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'provider_id' => $selectedProvider->id, 'rut_proveedor' => $selectedProvider->tax_id,
             'comuna_matriz' => '4N Temuco', 'valor' => 9000,
             'tipo_pago' => 'Especiales', 'nombre_proceso' => 'Especiales',
@@ -872,7 +872,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
             'periodo' => '202608-Especiales',
         ])->assertSessionHas('status', 'Proceso finalizado: 1 movimientos actualizados y 0 creados.');
 
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'id' => $payment->id, 'provider_id' => $provider->id,
             'comuna_matriz' => 'Matriz San Fernando', 'zona' => 'Regiones', 'valor' => 40000,
         ]);
@@ -883,7 +883,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
             'periodo' => '202608-Especiales', 'password' => 'test-master-key',
         ])->assertSessionHas('status');
 
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'id' => $payment->id, 'nombre_proceso' => 'Variable',
             'comuna_matriz' => '4N RM', 'zona' => 'RM', 'valor' => 100,
         ]);
@@ -914,7 +914,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
         $this->post(route('provider-payments.courier-movements.especiales.finalize'), [
             'periodo' => '202608-Especiales',
         ])->assertSessionHasErrors('periodo');
-        $this->assertDatabaseHas('courier_special_payments', ['id' => $first->id, 'finalized_at' => null]);
+        $this->assertDatabaseHas('PPR_courier_special_payments', ['id' => $first->id, 'finalized_at' => null]);
         $this->assertSame(0, CourierPaymentMovement::query()->where('tenant_id', $tenant->id)->count());
         $this->assertSame(0, CourierMovement::query()->where('tenant_id', $tenant->id)
             ->where('source_system', 'Especiales')->count());
@@ -929,7 +929,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
 
         $this->delete(route('provider-payments.courier-movements.especiales.destroy', $payment))
             ->assertSessionHas('status', 'Pago especial eliminado.');
-        $this->assertDatabaseMissing('courier_special_payments', ['id' => $payment->id]);
+        $this->assertDatabaseMissing('PPR_courier_special_payments', ['id' => $payment->id]);
     }
 
     public function test_a_finalized_special_payment_cannot_be_deleted_from_the_upload_screen(): void
@@ -942,7 +942,7 @@ class CourierSpecialPaymentTest extends ProviderPaymentsWorkflowTestCase
 
         $this->delete(route('provider-payments.courier-movements.especiales.destroy', $payment))
             ->assertSessionHasErrors('payment');
-        $this->assertDatabaseHas('courier_special_payments', ['id' => $payment->id]);
+        $this->assertDatabaseHas('PPR_courier_special_payments', ['id' => $payment->id]);
     }
 
     /** @param array<int, array<int, mixed>> $data */

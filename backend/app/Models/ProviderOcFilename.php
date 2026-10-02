@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProviderOcFilename extends Model
 {
+    protected $table = 'PPR_provider_oc_filenames';
+
     /** @use HasFactory<ProviderOcFilenameFactory> */
     use HasFactory;
 

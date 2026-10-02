@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Client extends Model
 {
+    protected $table = 'MBA_clients';
+
     protected $fillable = [
         'tenant_id',
         'tax_id',
@@ -48,7 +50,7 @@ class Client extends Model
 
     public function serviceTypes(): BelongsToMany
     {
-        return $this->belongsToMany(ServiceType::class, 'client_service_type')
+        return $this->belongsToMany(ServiceType::class, 'PPR_client_service_type')
             ->withPivot('is_active')
             ->withTimestamps();
     }

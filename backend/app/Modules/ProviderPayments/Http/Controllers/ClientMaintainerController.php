@@ -50,7 +50,7 @@ class ClientMaintainerController
             'template_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('clients', 'id')->where(fn ($query) => $query->where('tenant_id', $tenant->id)->where('is_active', true)),
+                Rule::exists('MBA_clients', 'id')->where(fn ($query) => $query->where('tenant_id', $tenant->id)->where('is_active', true)),
             ],
         ]);
 

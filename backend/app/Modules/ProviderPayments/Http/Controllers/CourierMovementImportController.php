@@ -300,7 +300,7 @@ class CourierMovementImportController
         if (! str_starts_with($processName, $period.'-')) {
             throw ValidationException::withMessages(['process_name' => "El nombre del proceso debe comenzar con {$period}-. Selecciona el mismo mes para la carga."]);
         }
-        if (DB::table('Cierres_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $period)->exists()) {
+        if (DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $period)->exists()) {
             throw ValidationException::withMessages(['process_year' => "El período {$period} tiene un cierre definitivo y no admite nuevas cargas."]);
         }
         if (! $snapshot || empty($snapshot['stored_path']) || ! Storage::disk('local')->exists($snapshot['stored_path'])) {
@@ -758,7 +758,7 @@ class CourierMovementImportController
 
     private function persistMovementChunk(array $rows, int $tenantId, bool $replace, array &$result): void
     {
-        $closedTrackings = DB::table('Maestro_Pagos')->where('tenant_id', $tenantId)
+        $closedTrackings = DB::table('PPR_Maestro_Pagos')->where('tenant_id', $tenantId)
             ->whereIn('seguimiento_paquete', array_map(fn (array $row): string => MaestroPago::trackingKey($row['tracking_number']), $rows))
             ->get(['seguimiento_paquete', 'periodo', 'nombre_proceso', 'razon_social_proveedor', 'valor'])
             ->keyBy('seguimiento_paquete');
@@ -788,7 +788,7 @@ class CourierMovementImportController
         }
         unset($row);
         $trackings = array_column($rows, 'tracking_number');
-        $realWeights = DB::table('peso_real')->where('tenant_id', $tenantId)
+        $realWeights = DB::table('PPR_peso_real')->where('tenant_id', $tenantId)
             ->whereIn('seguimiento_paquete', $trackings)->pluck('peso_real', 'seguimiento_paquete');
         foreach ($rows as &$row) {
             $realWeight = $realWeights->get($row['tracking_number']);
@@ -796,10 +796,10 @@ class CourierMovementImportController
             $row['peso_final'] = CourierMovement::pesoFinal($row['peso_real'], $row['peso_transformado']);
         }
         unset($row);
-        $existing = DB::table('movimientos_courier')->where('tenant_id', $tenantId)
+        $existing = DB::table('PPR_movimientos_courier')->where('tenant_id', $tenantId)
             ->whereIn('tracking_number', $trackings)
             ->get(['id', 'tracking_number', 'nombre_proceso', 'client_id', 'service_name'])->keyBy('tracking_number');
-        $payments = DB::table('Pago_Movimientos_Courier')->where('tenant_id', $tenantId)
+        $payments = DB::table('PPR_Pago_Movimientos_Courier')->where('tenant_id', $tenantId)
             ->whereIn('courier_movement_id', $existing->pluck('id'))
             ->get(['id', 'courier_movement_id', 'periodo', 'tipo_pago', 'nombre_proceso', 'estado_envio',
                 'condicion_pago', 'valor', 'peso_final', 'comuna_destino'])
@@ -808,7 +808,7 @@ class CourierMovementImportController
                 && ! in_array(CourierPaymentMovement::withoutPeriodPrefix($payment->nombre_proceso),
                     ['Especiales', 'Ruta CV', 'Servicios', 'Acuerdos', 'Apoyo', 'Visitas'], true))
             ->keyBy('courier_movement_id');
-        $closedPeriods = DB::table('Cierres_Pagos')->where('tenant_id', $tenantId)->pluck('periodo')->flip();
+        $closedPeriods = DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenantId)->pluck('periodo')->flip();
         $newRows = array_values(array_filter($rows, fn (array $row): bool => ! $existing->has($row['tracking_number'])));
         $duplicateRows = array_values(array_filter($rows, fn (array $row): bool => $existing->has($row['tracking_number'])));
         $replaceableRows = array_values(array_filter($duplicateRows, function (array $row) use ($existing, $payments, $replace, $closedPeriods, &$result): bool {
@@ -824,7 +824,7 @@ class CourierMovementImportController
             return $replace || $payment !== null;
         }));
         if ($newRows !== []) {
-            DB::table('movimientos_courier')->insert($newRows);
+            DB::table('PPR_movimientos_courier')->insert($newRows);
             $result['created'] += count($newRows);
             foreach ($newRows as $row) {
                 $process = substr((string) $row['nombre_proceso'], 7);
@@ -835,7 +835,7 @@ class CourierMovementImportController
         }
         $result['duplicates'] += count($duplicateRows);
         if ($replaceableRows !== []) {
-            DB::table('movimientos_courier')->upsert($replaceableRows, ['tenant_id', 'tracking_number'], array_values(array_diff(array_keys($replaceableRows[0]), ['tenant_id', 'tracking_number', 'created_at'])));
+            DB::table('PPR_movimientos_courier')->upsert($replaceableRows, ['tenant_id', 'tracking_number'], array_values(array_diff(array_keys($replaceableRows[0]), ['tenant_id', 'tracking_number', 'created_at'])));
             $result['replaced'] += count($replaceableRows);
             $result['payment_replaced'] += $this->refreshOpenPayments($replaceableRows, $existing, $payments, $tenantId);
         }
@@ -858,7 +858,7 @@ class CourierMovementImportController
             $identity = array_filter([
                 'comerciante' => $group['merchant'], 'servicio' => $group['service'],
             ], fn (string $value): bool => $value !== '');
-            DB::table('peso_real')->where('tenant_id', $tenantId)
+            DB::table('PPR_peso_real')->where('tenant_id', $tenantId)
                 ->whereIn('seguimiento_paquete', $group['trackings'])
                 ->update($identity + ['updated_at' => now()]);
         }
@@ -869,7 +869,7 @@ class CourierMovementImportController
     {
         $clientIds = array_values(array_unique(array_filter(array_column($rows, 'client_id'))));
         $clients = Client::query()->where('tenant_id', $tenantId)->whereIn('id', $clientIds)->get()->keyBy('id');
-        $externalTrackings = DB::table('envios_externos')->where('tenant_id', $tenantId)
+        $externalTrackings = DB::table('PPR_envios_externos')->where('tenant_id', $tenantId)
             ->where('exclude_provider_payment', true)
             ->whereIn('tracking_number', array_column($rows, 'tracking_number'))
             ->pluck('tracking_number')->flip();
@@ -933,7 +933,7 @@ class CourierMovementImportController
             ];
         }
         if ($updates !== []) {
-            DB::table('Pago_Movimientos_Courier')->upsert($updates, ['id'], array_values(array_diff(array_keys($updates[0]), ['id', 'tenant_id', 'courier_movement_id', 'created_at'])));
+            DB::table('PPR_Pago_Movimientos_Courier')->upsert($updates, ['id'], array_values(array_diff(array_keys($updates[0]), ['id', 'tenant_id', 'courier_movement_id', 'created_at'])));
         }
 
         return count($updates);

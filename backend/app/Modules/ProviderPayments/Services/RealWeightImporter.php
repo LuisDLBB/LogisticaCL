@@ -119,7 +119,7 @@ class RealWeightImporter
                 foreach (['created', 'updated', 'paid', 'closed', 'unmatched'] as $counter) {
                     $result[$counter] = 0;
                 }
-                $closedPeriods = DB::table('Cierres_Pagos')->where('tenant_id', $tenantId)
+                $closedPeriods = DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenantId)
                     ->pluck('periodo')->flip();
                 $batch = [];
 
@@ -261,12 +261,12 @@ class RealWeightImporter
     private function saveBatch(array $batch, int $tenantId, Collection $closedPeriods, array &$result): void
     {
         $trackings = array_column($batch, 'seguimiento_paquete');
-        $existing = DB::table('peso_real')->where('tenant_id', $tenantId)
+        $existing = DB::table('PPR_peso_real')->where('tenant_id', $tenantId)
             ->whereIn('seguimiento_paquete', $trackings)->get()->keyBy('seguimiento_paquete');
-        $movements = DB::table('movimientos_courier')->where('tenant_id', $tenantId)
+        $movements = DB::table('PPR_movimientos_courier')->where('tenant_id', $tenantId)
             ->whereIn('tracking_number', $trackings)->get(['tracking_number', 'merchant_name', 'service_name', 'nombre_proceso'])
             ->keyBy('tracking_number');
-        $paid = DB::table('Maestro_Pagos')->where('tenant_id', $tenantId)
+        $paid = DB::table('PPR_Maestro_Pagos')->where('tenant_id', $tenantId)
             ->whereIn('seguimiento_paquete', $trackings)
             ->pluck('seguimiento_paquete')->flip();
         $rows = [];
@@ -309,7 +309,7 @@ class RealWeightImporter
         }
 
         if ($rows !== []) {
-            DB::table('peso_real')->upsert($rows, ['tenant_id', 'seguimiento_paquete'], [
+            DB::table('PPR_peso_real')->upsert($rows, ['tenant_id', 'seguimiento_paquete'], [
                 'codigo_seguimiento', 'peso_real', 'talla', 'fecha_proceso', 'cliente_origen', 'operario',
                 'observacion', 'guia_cliente', 'comerciante', 'servicio', 'updated_at',
             ]);

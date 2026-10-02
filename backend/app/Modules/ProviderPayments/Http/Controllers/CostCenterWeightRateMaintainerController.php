@@ -36,7 +36,7 @@ class CostCenterWeightRateMaintainerController
     public function store(Request $request): RedirectResponse
     {
         $rules = [
-            'cost_center_code' => ['required', 'integer', Rule::exists('cost_centers', 'cost_center_code')->where('is_active', true)],
+            'cost_center_code' => ['required', 'integer', Rule::exists('PPR_cost_centers', 'cost_center_code')->where('is_active', true)],
             'values' => ['required', 'array', 'size:20'],
         ];
         foreach (range(1, 20) as $weight) {

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class AcuerdoServiceRule extends Model
 {
+    protected $table = 'PPR_acuerdo_service_rules';
+
     /** @use HasFactory<AcuerdoServiceRuleFactory> */
     use HasFactory;
 

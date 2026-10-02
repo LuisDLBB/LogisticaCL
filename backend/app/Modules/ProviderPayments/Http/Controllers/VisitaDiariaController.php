@@ -79,7 +79,7 @@ class VisitaDiariaController
                 $dayLabels[$day] = [1 => 'Lun', 2 => 'Mar', 3 => 'Mié', 4 => 'Jue', 5 => 'Vie', 6 => 'Sáb', 7 => 'Dom'][$date->dayOfWeekIso].' '.$date->format('d/m');
             }
         }
-        $monthClosed = $period !== '' && DB::table('Cierres_Pagos')->where('tenant_id', $tenantId)->where('periodo', $period)->exists();
+        $monthClosed = $period !== '' && DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenantId)->where('periodo', $period)->exists();
         $isClosed = $monthClosed || ((int) ($summary->cantidad ?? 0) > 0 && (int) $summary->cantidad === (int) $summary->cerrados);
 
         return view('provider-payments::visitas-diarias', compact('periods', 'period', 'rows', 'summary', 'filteredTotal',
@@ -122,9 +122,9 @@ class VisitaDiariaController
         $period = (string) $request->input('periodo');
         $data = $request->validate([
             'periodo' => ['required', 'date_format:Ym'], 'rows' => ['required', 'array', 'min:1'],
-            'rows.*.id' => ['required', 'integer', 'distinct', Rule::exists('Visitas_Diarias', 'id')->where('tenant_id', $tenantId)->where('periodo', $period)],
-            'rows.*.provider_id' => ['nullable', 'integer', Rule::exists('providers', 'id')->where('tenant_id', $tenantId)],
-            'rows.*.client_id' => ['nullable', 'integer', Rule::exists('clients', 'id')->where('tenant_id', $tenantId)],
+            'rows.*.id' => ['required', 'integer', 'distinct', Rule::exists('PPR_Visitas_Diarias', 'id')->where('tenant_id', $tenantId)->where('periodo', $period)],
+            'rows.*.provider_id' => ['nullable', 'integer', Rule::exists('MBA_providers', 'id')->where('tenant_id', $tenantId)],
+            'rows.*.client_id' => ['nullable', 'integer', Rule::exists('MBA_clients', 'id')->where('tenant_id', $tenantId)],
             'rows.*.agente_original' => ['nullable', 'string', 'max:255'],
             'rows.*.local' => ['required', 'string', 'max:100'], 'rows.*.nombre_local' => ['required', 'string', 'max:255'],
             'rows.*.direccion' => ['required', 'string', 'max:255'], 'rows.*.comuna' => ['required', 'string', 'max:160'],
@@ -173,8 +173,8 @@ class VisitaDiariaController
         $tenantId = Tenant::query()->where('code', '4N')->firstOrFail()->id;
         $data = $request->validate([
             'periodo' => ['required', 'date_format:Ym'],
-            'provider_id' => ['required', 'integer', Rule::exists('providers', 'id')->where('tenant_id', $tenantId)],
-            'client_id' => ['required', 'integer', Rule::exists('clients', 'id')->where('tenant_id', $tenantId)],
+            'provider_id' => ['required', 'integer', Rule::exists('MBA_providers', 'id')->where('tenant_id', $tenantId)],
+            'client_id' => ['required', 'integer', Rule::exists('MBA_clients', 'id')->where('tenant_id', $tenantId)],
             'agente_original' => ['nullable', 'string', 'max:255'], 'local' => ['required', 'string', 'max:100'],
             'nombre_local' => ['required', 'string', 'max:255'], 'direccion' => ['required', 'string', 'max:255'],
             'comuna' => ['required', 'string', 'max:160'], 'frecuencia' => ['required', 'string', 'max:80'],

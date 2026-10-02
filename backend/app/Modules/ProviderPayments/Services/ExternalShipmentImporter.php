@@ -30,7 +30,7 @@ class ExternalShipmentImporter
             $duplicateIds = $this->duplicateIds($path);
             $reader->open($path);
             DB::transaction(function () use ($reader, $tenantId, $duplicateIds, &$result, &$headersRead, &$batch, &$line, &$recordsSeen): void {
-                $closedPeriods = DB::table('Cierres_Pagos')->where('tenant_id', $tenantId)->pluck('periodo')->flip();
+                $closedPeriods = DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenantId)->pluck('periodo')->flip();
                 foreach ($reader->getSheetIterator() as $sheet) {
                     foreach ($sheet->getRowIterator() as $row) {
                         $line++;
@@ -116,13 +116,13 @@ class ExternalShipmentImporter
     private function saveBatch(array $batch, int $tenantId, Collection $closedPeriods, array &$result): void
     {
         $trackings = array_column($batch, 'tracking_number');
-        $existing = DB::table('envios_externos')->where('tenant_id', $tenantId)
+        $existing = DB::table('PPR_envios_externos')->where('tenant_id', $tenantId)
             ->whereIn('tracking_number', $trackings)->get()->keyBy('tracking_number');
-        $paid = DB::table('Maestro_Pagos')->where('tenant_id', $tenantId)
+        $paid = DB::table('PPR_Maestro_Pagos')->where('tenant_id', $tenantId)
             ->whereIn('seguimiento_paquete', $trackings)
             ->get(['seguimiento_paquete', 'periodo', 'nombre_proceso', 'razon_social_proveedor',
                 'rut_proveedor', 'valor', 'oc', 'empresa_mandante', 'zona'])->keyBy('seguimiento_paquete');
-        $paymentPeriods = DB::table('Pago_Movimientos_Courier')->where('tenant_id', $tenantId)
+        $paymentPeriods = DB::table('PPR_Pago_Movimientos_Courier')->where('tenant_id', $tenantId)
             ->whereIn('seguimiento_paquete', $trackings)->get(['seguimiento_paquete', 'periodo'])
             ->groupBy('seguimiento_paquete');
         $rows = [];
@@ -162,12 +162,12 @@ class ExternalShipmentImporter
             $result[$old === null ? 'created' : 'updated']++;
         }
         if ($rows !== []) {
-            DB::table('envios_externos')->upsert($rows, ['tenant_id', 'tracking_number'], [
+            DB::table('PPR_envios_externos')->upsert($rows, ['tenant_id', 'tracking_number'], [
                 'fecha', 'external_order_number', 'external_courier_name', 'destination_locality_name',
                 'delivery_point', 'client_name_source', 'observacion', 'exclude_provider_payment', 'updated_at',
             ]);
         }
-        $result['payments_excluded'] += DB::table('Pago_Movimientos_Courier')->where('tenant_id', $tenantId)
+        $result['payments_excluded'] += DB::table('PPR_Pago_Movimientos_Courier')->where('tenant_id', $tenantId)
             ->whereIn('seguimiento_paquete', $eligibleTrackings)
             ->whereNotIn('periodo', $closedPeriods->keys()->all())
             ->where(fn ($query) => $query->whereNull('condicion_pago')->orWhere('condicion_pago', '<>', 'NO')

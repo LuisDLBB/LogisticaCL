@@ -43,7 +43,7 @@ class ApoyoAlzaController
             SUM(CASE WHEN estado_calculo = ? THEN 1 ELSE 0 END) AS no_pagar,
             SUM(CASE WHEN closed_at IS NOT NULL THEN 1 ELSE 0 END) AS cerrados,
             COALESCE(SUM(monto_apoyo), 0) AS monto', ['calculado', 'no_pagar'])->first();
-        $monthClosed = $period !== '' && DB::table('Cierres_Pagos')->where('tenant_id', $tenantId)->where('periodo', $period)->exists();
+        $monthClosed = $period !== '' && DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenantId)->where('periodo', $period)->exists();
         $isClosed = $monthClosed || ((int) $summary->registros > 0 && (int) $summary->cerrados === (int) $summary->registros);
         $rows = (clone $base)
             ->when($process !== '', fn ($query) => $query->where('proceso_base', $process))
@@ -103,7 +103,7 @@ class ApoyoAlzaController
         $validated = $request->validate([
             'periodo' => ['required', 'date_format:Ym'],
             'rows' => ['required', 'array', 'min:1', 'max:25'],
-            'rows.*.provider_id' => ['present', 'nullable', 'integer', Rule::exists('providers', 'id')->where('tenant_id', $tenantId)],
+            'rows.*.provider_id' => ['present', 'nullable', 'integer', Rule::exists('MBA_providers', 'id')->where('tenant_id', $tenantId)],
             'rows.*.servicio_acuerdo' => ['nullable', 'string', 'max:160'],
             'rows.*.porcentaje' => ['nullable', 'numeric', 'between:0,100'],
             'rows.*.monto_dia' => ['nullable', 'integer', 'min:0'],

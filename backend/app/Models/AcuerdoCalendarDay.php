@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class AcuerdoCalendarDay extends Model
 {
+    protected $table = 'PPR_acuerdo_calendar_days';
+
     /** @use HasFactory<AcuerdoCalendarDayFactory> */
     use HasFactory;
 

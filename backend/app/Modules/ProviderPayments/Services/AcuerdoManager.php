@@ -27,7 +27,7 @@ class AcuerdoManager
                 'es_feriado' => in_array($date, $holidays, true), 'created_at' => now(), 'updated_at' => now(),
             ];
         }
-        DB::table('acuerdo_calendar_days')->insert($rows);
+        DB::table('PPR_acuerdo_calendar_days')->insert($rows);
     }
 
     public function generate(int $tenantId, string $period): int

@@ -39,8 +39,8 @@ class PaidExternalShipmentReport
 
     public function countExisting(int $tenantId): int
     {
-        return DB::table('envios_externos as e')
-            ->join('Maestro_Pagos as m', function ($join): void {
+        return DB::table('PPR_envios_externos as e')
+            ->join('PPR_Maestro_Pagos as m', function ($join): void {
                 $join->on('m.seguimiento_paquete', '=', 'e.tracking_number')
                     ->on('m.tenant_id', '=', 'e.tenant_id');
             })
@@ -49,8 +49,8 @@ class PaidExternalShipmentReport
 
     public function downloadExisting(int $tenantId): StreamedResponse
     {
-        $rows = DB::table('envios_externos as e')
-            ->join('Maestro_Pagos as m', function ($join): void {
+        $rows = DB::table('PPR_envios_externos as e')
+            ->join('PPR_Maestro_Pagos as m', function ($join): void {
                 $join->on('m.seguimiento_paquete', '=', 'e.tracking_number')
                     ->on('m.tenant_id', '=', 'e.tenant_id');
             })

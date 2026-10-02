@@ -11,6 +11,7 @@ use App\Models\RutaCvFrequency;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -317,7 +318,7 @@ class RutaCvTest extends ProviderPaymentsWorkflowTestCase
             'operator_type' => 'Courier',
         ])->assertRedirect(route('provider-payments.courier-movements.rutas-cv', ['periodo' => '202609']))
             ->assertSessionHas('status');
-        $this->assertDatabaseHas('providers', [
+        $this->assertDatabaseHas('MBA_providers', [
             'tenant_id' => $tenant->id, 'tax_id' => '11942383-K', 'operational_name' => 'Proveedor nuevo',
         ]);
     }
@@ -339,7 +340,17 @@ class RutaCvTest extends ProviderPaymentsWorkflowTestCase
         $closed = RutaCv::factory()->create(array_merge($attributes, ['closed_at' => now()]));
         $reviewed = RutaCv::factory()->create(array_merge($attributes, ['dias' => [2], 'total_mensual' => 35000]));
 
-        (require database_path('migrations/2026_09_28_205059_repair_ruta_cv_slash_frequencies.php'))->up();
+        $originalTables = ['PPR_ruta_cv_frequencies', 'PPR_Rutas_CV', 'PPR_Cierres_Pagos'];
+        foreach ($originalTables as $table) {
+            Schema::rename($table, substr($table, 4));
+        }
+        try {
+            (require database_path('migrations/2026_09_28_205059_repair_ruta_cv_slash_frequencies.php'))->up();
+        } finally {
+            foreach (array_reverse($originalTables) as $table) {
+                Schema::rename(substr($table, 4), $table);
+            }
+        }
 
         $this->assertSame([1, 3, 5], $frequency->fresh()->weekdays);
         $this->assertSame([2, 4, 7, 9, 11, 14, 16, 18, 21, 23, 25, 28, 30], $open->fresh()->dias);
@@ -376,7 +387,7 @@ class RutaCvTest extends ProviderPaymentsWorkflowTestCase
             ->assertSessionHas('status');
         $this->assertNotNull($daily->fresh()->closed_at);
         $this->assertNotNull($fixed->fresh()->closed_at);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'ruta_cv_id' => $daily->id, 'periodo' => '202608', 'nombre_proceso' => 'Ruta CV',
             'tipo_pago' => 'Ruta CV', 'seguimiento_paquete' => 'RCV-20260801-0008',
             'zona' => 'RM', 'comuna_destino' => 'Santiago', 'rut_cliente' => $client->tax_id,

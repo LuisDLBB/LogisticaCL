@@ -42,7 +42,7 @@ class BaseServicioTest extends ProviderPaymentsWorkflowTestCase
                 'file' => new UploadedFile($path, 'Base_Servicios.xlsx', null, null, true),
             ])->assertRedirect()->assertSessionHas('status');
             $this->assertSame(2, BaseServicio::query()->count());
-            $this->assertDatabaseHas('Base_Servicios', [
+            $this->assertDatabaseHas('PPR_Base_Servicios', [
                 'periodo' => '202608', 'nombre_proceso' => '202608-Servicios', 'fecha_carga' => '2026-07-27',
                 'provider_id' => $provider->id, 'rut_proveedor' => $provider->tax_id, 'client_id' => null,
             ]);
@@ -92,7 +92,7 @@ class BaseServicioTest extends ProviderPaymentsWorkflowTestCase
             $this->post(route('provider-payments.courier-movements.servicios.store'), [
                 'file' => new UploadedFile($path, 'Base_Servicios.csv', 'text/csv', null, true),
             ])->assertRedirect();
-            $this->assertDatabaseHas('Base_Servicios', [
+            $this->assertDatabaseHas('PPR_Base_Servicios', [
                 'periodo' => '202609', 'nombre_proceso' => '202609-Servicios', 'fecha_carga' => '2026-07-27',
                 'client_id' => $client->id, 'provider_id' => $provider->id,
             ]);
@@ -123,7 +123,7 @@ class BaseServicioTest extends ProviderPaymentsWorkflowTestCase
             $this->assertSame($marcelo->tax_id, $row->rut_proveedor);
             $this->get(route('provider-payments.courier-movements.servicios', ['periodo' => '202609']))
                 ->assertOk()->assertSee($victor->tax_id)->assertSee($marcelo->operational_name);
-            $this->assertDatabaseCount('Maestro_Pagos', 0);
+            $this->assertDatabaseCount('PPR_Maestro_Pagos', 0);
         } finally {
             @unlink($path);
         }
@@ -209,7 +209,7 @@ class BaseServicioTest extends ProviderPaymentsWorkflowTestCase
         $this->assertNotNull($first->fresh()->closed_at);
         $this->assertNotNull($second->fresh()->closed_at);
         $service = ServiceType::query()->where('service_code', 0)->firstOrFail();
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'base_servicio_id' => $first->id, 'periodo' => '202608', 'nombre_proceso' => 'Servicios',
             'tipo_pago' => 'Servicios', 'seguimiento_paquete' => 'SVC-20260727-0008',
             'zona' => 'RM', 'comuna_matriz' => null, 'comuna_destino' => 'Santiago', 'comerciante_pila' => 'Cliente Pila',

@@ -15,13 +15,13 @@ class PurchaseOrderDocument
     /** @return array<string, mixed> */
     public function load(int $tenantId, string $oc): array
     {
-        $rows = DB::table('Maestro_Pagos')->where('tenant_id', $tenantId)
+        $rows = DB::table('PPR_Maestro_Pagos')->where('tenant_id', $tenantId)
             ->where('oc', $oc)->orderBy('nombre_proceso')->orderBy('service_name')
             ->orderBy('fecha')->orderBy('seguimiento_paquete')->get();
         abort_if($rows->isEmpty(), 404);
 
         $first = $rows->first();
-        abort_unless(DB::table('Cierres_Pagos')->where('tenant_id', $tenantId)
+        abort_unless(DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenantId)
             ->where('periodo', $first->periodo)->exists(), 404);
 
         $companies = $rows->map(fn (object $row): string => $this->companyCode((string) $row->empresa_mandante))->unique();

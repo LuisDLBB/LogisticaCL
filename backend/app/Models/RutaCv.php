@@ -13,7 +13,7 @@ class RutaCv extends Model
     /** @use HasFactory<RutaCvFactory> */
     use HasFactory;
 
-    protected $table = 'Rutas_CV';
+    protected $table = 'PPR_Rutas_CV';
 
     protected $fillable = [
         'tenant_id', 'periodo', 'route_key', 'proceso', 'zona', 'servicio', 'frecuencia',

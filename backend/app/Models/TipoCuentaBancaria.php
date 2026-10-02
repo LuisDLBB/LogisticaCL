@@ -11,7 +11,7 @@ class TipoCuentaBancaria extends Model
     /** @use HasFactory<TipoCuentaBancariaFactory> */
     use HasFactory;
 
-    protected $table = 'tipos_cuenta_bancaria';
+    protected $table = 'PPR_tipos_cuenta_bancaria';
 
     protected $primaryKey = 'id_tipo_cuenta';
 

@@ -67,8 +67,8 @@ class CourierMovementCompileController
         }
         $loadedProcesses = $period === '' ? collect() : (clone $base)->where('periodo', $period)
             ->selectRaw('nombre_proceso, COUNT(*) AS total')->groupBy('nombre_proceso')->orderBy('nombre_proceso')->get();
-        $closure = $period === '' ? null : DB::table('Cierres_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $period)->first();
-        $purchaseOrders = $closure === null ? collect() : DB::table('Maestro_Pagos')
+        $closure = $period === '' ? null : DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $period)->first();
+        $purchaseOrders = $closure === null ? collect() : DB::table('PPR_Maestro_Pagos')
             ->where('tenant_id', $tenant->id)->where('periodo', $period)
             ->selectRaw('oc, MIN(zona) AS zona, MIN(razon_social_proveedor) AS razon_social_proveedor, MIN(rut_proveedor) AS rut_proveedor, MIN(empresa_mandante) AS empresa_mandante, COUNT(*) AS registros, COALESCE(SUM(valor), 0) AS total, COALESCE(SUM(valor_impuesto), 0) AS total_impuesto, COALESCE(SUM(valor_final_total), 0) AS total_final')
             ->groupBy('oc')->orderBy('oc')->get()
@@ -97,7 +97,7 @@ class CourierMovementCompileController
         $result = $closing->close($tenant->id, $period);
 
         return redirect()->route('provider-payments.courier-movements.compile', ['period' => $period])
-            ->with('status', sprintf('Período %s cerrado definitivamente. %s pagos SI guardados en Maestro_Pagos por $ %s.',
+            ->with('status', sprintf('Período %s cerrado definitivamente. %s pagos SI guardados en PPR_Maestro_Pagos por $ %s.',
                 $period, number_format($result['registros'], 0, ',', '.'), number_format($result['total'], 0, ',', '.')));
     }
 
@@ -113,9 +113,9 @@ class CourierMovementCompileController
     {
         $period = $request->validate(['period' => ['required', 'regex:/^\d{6}$/']])['period'];
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
-        $closed = DB::table('Cierres_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $period)->exists();
+        $closed = DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $period)->exists();
         $assigned = $closed ? [] : $assigner->forPeriod($tenant->id, $period);
-        $rows = DB::table($closed ? 'Maestro_Pagos' : 'Pago_Movimientos_Courier')
+        $rows = DB::table($closed ? 'PPR_Maestro_Pagos' : 'PPR_Pago_Movimientos_Courier')
             ->where('tenant_id', $tenant->id)->where('periodo', $period);
         if (! $closed) {
             $rows->whereRaw('UPPER(TRIM(condicion_pago)) = ?', ['SI']);
@@ -260,8 +260,8 @@ class CourierMovementCompileController
             return [$option => $processName.' ('.number_format($paymentProcessCounts[$processName] ?? 0, 0, ',', '.').')'];
         });
         $filterOptions = ['process' => $processOptions];
-        $serviceOptionsQuery = DB::table('Pago_Movimientos_Courier as payments')
-            ->join('movimientos_courier as movements', 'movements.id', '=', 'payments.courier_movement_id')
+        $serviceOptionsQuery = DB::table('PPR_Pago_Movimientos_Courier as payments')
+            ->join('PPR_movimientos_courier as movements', 'movements.id', '=', 'payments.courier_movement_id')
             ->where('payments.tenant_id', $tenant->id)->where('payments.periodo', $period);
         foreach (self::WORK_FILTER_COLUMNS as $activeFilter => $activeColumn) {
             if (($filters[$activeFilter] ?? '') !== '') {
@@ -366,12 +366,12 @@ class CourierMovementCompileController
             'page' => ['nullable', 'integer', 'min:1'],
             'assign_payments' => ['nullable', 'boolean'],
             'rows' => ['required', 'array', 'min:1', 'max:100'],
-            'rows.*.id' => ['nullable', 'integer', 'distinct', Rule::exists('llave_centro_costos', 'id')->where('tenant_id', $tenant->id)],
+            'rows.*.id' => ['nullable', 'integer', 'distinct', Rule::exists('PPR_llave_centro_costos', 'id')->where('tenant_id', $tenant->id)],
             'rows.*.create' => ['nullable', 'boolean'],
             'rows.*.provider_tax_id' => ['nullable', 'string', 'max:15'],
             'rows.*.client_tax_id' => ['nullable', 'string', 'max:15'],
             'rows.*.service_code' => ['nullable', 'integer'],
-            'rows.*.cost_center_code' => ['required', 'integer', Rule::exists('cost_centers', 'cost_center_code')],
+            'rows.*.cost_center_code' => ['required', 'integer', Rule::exists('PPR_cost_centers', 'cost_center_code')],
             'rows.*.payment_status' => ['required', 'in:SI,NO,REVISAR'],
             'rows.*.is_active' => ['required', 'boolean'],
         ]);
@@ -501,8 +501,8 @@ class CourierMovementCompileController
 
     private function keyReviewGroups(int $tenantId, string $period)
     {
-        $groups = DB::table('Pago_Movimientos_Courier as payments')
-            ->join('movimientos_courier as movements', 'movements.id', '=', 'payments.courier_movement_id')
+        $groups = DB::table('PPR_Pago_Movimientos_Courier as payments')
+            ->join('PPR_movimientos_courier as movements', 'movements.id', '=', 'payments.courier_movement_id')
             ->where('payments.tenant_id', $tenantId)->where('payments.periodo', $period)
             ->whereNotIn('payments.tipo_pago', ['Especiales', 'Ruta CV', 'Servicios', 'Acuerdos', 'Apoyo Alza', 'Visitas Diarias'])
             ->whereNotIn('payments.nombre_proceso', ['Especiales', 'Ruta CV', 'Servicios', 'Acuerdos', 'Apoyo', 'Visitas', 'Peumo'])
@@ -562,7 +562,7 @@ class CourierMovementCompileController
         $validated = $request->validate(['period' => ['required', 'regex:/^\d{6}$/']]);
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         MonthlyPaymentClosingService::assertOpen($tenant->id, $validated['period']);
-        $assignments = DB::table('Proveedores_usuarios_4N')->get()->keyBy(fn ($row): string => $this->assignmentKey(
+        $assignments = DB::table('PPR_Proveedores_usuarios_4N')->get()->keyBy(fn ($row): string => $this->assignmentKey(
             $row->RutProveedor, $row->ComunaMatriz, $row->NombreRepartidor,
         ));
         $providers = Provider::query()->where('tenant_id', $tenant->id)->get()
@@ -601,7 +601,7 @@ class CourierMovementCompileController
                 }
                 foreach ($byProvider as $group) {
                     $provider = $group['provider'];
-                    DB::table('Pago_Movimientos_Courier')->whereIn('id', $group['ids'])->update([
+                    DB::table('PPR_Pago_Movimientos_Courier')->whereIn('id', $group['ids'])->update([
                         'rut_proveedor' => $provider->tax_id,
                         'razon_social_proveedor' => $provider->legal_name,
                         'nombre_operacional' => $provider->operational_name,
@@ -619,7 +619,7 @@ class CourierMovementCompileController
     private function fourNorthSummary(int $tenantId, string $period): array
     {
         $summary = ['actionable' => 0, 'not_applicable' => 0, 'without_user' => 0, 'without_match' => 0];
-        $assignments = DB::table('Proveedores_usuarios_4N')->get()->keyBy(fn ($row): string => $this->assignmentKey(
+        $assignments = DB::table('PPR_Proveedores_usuarios_4N')->get()->keyBy(fn ($row): string => $this->assignmentKey(
             $row->RutProveedor, $row->ComunaMatriz, $row->NombreRepartidor,
         ));
         $providerRuts = Provider::query()->where('tenant_id', $tenantId)->pluck('tax_id')
@@ -727,13 +727,13 @@ class CourierMovementCompileController
             ->with('provider')->get()
             ->groupBy(fn (Coverage $coverage): string => $this->communeKey($coverage->commune_name));
         $providersByRut = Provider::query()->where('tenant_id', $tenant->id)->get()->keyBy('tax_id');
-        $providerAssignments = DB::table('Proveedores_usuarios_4N')
+        $providerAssignments = DB::table('PPR_Proveedores_usuarios_4N')
             ->get()
             ->keyBy(fn ($row): string => $this->assignmentKey($row->RutProveedor, $row->ComunaMatriz, $row->NombreRepartidor));
         $count = 0;
         $pendingProviders = 0;
         CourierMovement::query()->where('tenant_id', $tenant->id)->whereIn('nombre_proceso', $names)
-            ->whereNotIn('id', DB::table('Pago_Movimientos_Courier')
+            ->whereNotIn('id', DB::table('PPR_Pago_Movimientos_Courier')
                 ->where('tenant_id', $tenant->id)
                 ->where(fn ($query) => $query->where('tipo_pago', 'Especiales')
                     ->orWhere('nombre_proceso', 'Especiales')
@@ -743,7 +743,7 @@ class CourierMovementCompileController
                 $now = now();
                 $rows = [];
                 $sourceWeightUpdates = [];
-                $externalTrackings = DB::table('envios_externos')->where('tenant_id', $tenant->id)
+                $externalTrackings = DB::table('PPR_envios_externos')->where('tenant_id', $tenant->id)
                     ->where('exclude_provider_payment', true)
                     ->whereIn('tracking_number', $movements->pluck('tracking_number'))
                     ->pluck('tracking_number')->flip();
@@ -807,21 +807,21 @@ class CourierMovementCompileController
                     ];
                 }
                 foreach ($sourceWeightUpdates as $weight => $ids) {
-                    DB::table('movimientos_courier')->where('tenant_id', $tenant->id)->whereIn('id', $ids)
+                    DB::table('PPR_movimientos_courier')->where('tenant_id', $tenant->id)->whereIn('id', $ids)
                         ->update(['peso_final' => $weight, 'updated_at' => $now]);
                 }
-                DB::table('Pago_Movimientos_Courier')->upsert($rows, ['tenant_id', 'courier_movement_id'], array_keys(array_diff_key($rows[0], array_flip(['tenant_id', 'courier_movement_id', 'created_at', 'condicion_pago']))));
+                DB::table('PPR_Pago_Movimientos_Courier')->upsert($rows, ['tenant_id', 'courier_movement_id'], array_keys(array_diff_key($rows[0], array_flip(['tenant_id', 'courier_movement_id', 'created_at', 'condicion_pago']))));
                 $count += count($rows);
             });
 
-        DB::table('Pago_Movimientos_Courier')->where('tenant_id', $tenant->id)->where('periodo', $period)
-            ->whereIn('seguimiento_paquete', DB::table('envios_externos')->where('tenant_id', $tenant->id)
+        DB::table('PPR_Pago_Movimientos_Courier')->where('tenant_id', $tenant->id)->where('periodo', $period)
+            ->whereIn('seguimiento_paquete', DB::table('PPR_envios_externos')->where('tenant_id', $tenant->id)
                 ->where('exclude_provider_payment', true)->select('tracking_number'))
             ->where(fn ($query) => $query->whereNull('condicion_pago')->orWhere('condicion_pago', '<>', 'NO')
                 ->orWhereNull('valor')->orWhere('valor', '<>', 0))
             ->update(['condicion_pago' => 'NO', 'valor' => 0, 'updated_at' => now()]);
 
-        DB::table('Pago_Movimientos_Courier')->where('tenant_id', $tenant->id)->where('periodo', $period)
+        DB::table('PPR_Pago_Movimientos_Courier')->where('tenant_id', $tenant->id)->where('periodo', $period)
             ->whereNotIn('tipo_pago', ['Especiales', 'Ruta CV', 'Servicios', 'Acuerdos', 'Apoyo Alza', 'Visitas Diarias'])
             ->whereNotIn('nombre_proceso', ['Especiales', 'Ruta CV', 'Servicios', 'Acuerdos', 'Apoyo', 'Visitas'])
             ->where('nombre_proceso', 'not like', '%-Especiales')
@@ -830,7 +830,7 @@ class CourierMovementCompileController
             ->where('nombre_proceso', 'not like', '%-Acuerdos')
             ->where('nombre_proceso', 'not like', '%-Apoyo')
             ->where('nombre_proceso', 'not like', '%-Visitas')
-            ->whereNotIn('seguimiento_paquete', DB::table('envios_externos')->where('tenant_id', $tenant->id)
+            ->whereNotIn('seguimiento_paquete', DB::table('PPR_envios_externos')->where('tenant_id', $tenant->id)
                 ->where('exclude_provider_payment', true)->select('tracking_number'))
             ->whereRaw('LOWER(TRIM(comuna_matriz)) = ?', ['envio externo'])
             ->where(fn ($query) => $query->whereNull('condicion_pago')

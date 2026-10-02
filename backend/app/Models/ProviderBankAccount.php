@@ -11,6 +11,8 @@ use Throwable;
 
 class ProviderBankAccount extends Model
 {
+    protected $table = 'PPR_provider_bank_accounts';
+
     /** @use HasFactory<ProviderBankAccountFactory> */
     use HasFactory;
 

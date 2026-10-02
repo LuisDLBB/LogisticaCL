@@ -42,12 +42,12 @@ class PurchaseOrderMailController
         $period = $request->validate(['period' => ['required', 'regex:/^\d{6}$/']])['period'];
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $this->assertClosed($tenant->id, $period);
-        $orders = DB::table('Maestro_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $period)
+        $orders = DB::table('PPR_Maestro_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $period)
             ->selectRaw('rut_proveedor, MIN(razon_social_proveedor) AS legal_name, MIN(empresa_mandante) AS company, oc')
             ->groupBy('rut_proveedor', 'oc')->orderBy('rut_proveedor')->orderBy('oc')->get();
         $providers = Provider::query()->where('tenant_id', $tenant->id)
             ->whereIn('tax_id', $orders->pluck('rut_proveedor')->unique())->get()->keyBy('tax_id');
-        $sent = DB::table('purchase_order_mailings')->where('tenant_id', $tenant->id)
+        $sent = DB::table('PPR_purchase_order_mailings')->where('tenant_id', $tenant->id)
             ->where('periodo', $period)->where('mode', 'provider')->where('status', 'sent')
             ->pluck('sent_at', 'rut_proveedor');
         $groups = $orders->groupBy('rut_proveedor')->map(function ($rows, $rut) use ($providers, $sent): array {
@@ -71,7 +71,7 @@ class PurchaseOrderMailController
         $missingCount = $groups->filter(fn (array $group): bool => $group['emails'] === [])->count();
         $sentCount = $groups->filter(fn (array $group): bool => (bool) $group['sent_at'])->count();
         $test = $this->testRecord($tenant->id, $period);
-        $configured = DB::table('purchase_order_mail_settings')->where('tenant_id', $tenant->id)->exists();
+        $configured = DB::table('PPR_purchase_order_mail_settings')->where('tenant_id', $tenant->id)->exists();
         $periodDate = CarbonImmutable::createFromFormat('Ymd', $period.'01')->locale('es');
         $periodLabel = Str::ucfirst($periodDate->translatedFormat('F Y'));
         $periodUpper = Str::upper($periodLabel);
@@ -88,12 +88,12 @@ class PurchaseOrderMailController
             'password' => ['required', 'string', 'max:500'],
         ]);
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
-        DB::table('purchase_order_mail_settings')->updateOrInsert(
+        DB::table('PPR_purchase_order_mail_settings')->updateOrInsert(
             ['tenant_id' => $tenant->id],
             ['username' => self::SENDER, 'encrypted_password' => Crypt::encryptString($validated['password']),
                 'updated_at' => now(), 'created_at' => now()],
         );
-        DB::table('purchase_order_mailings')->where('tenant_id', $tenant->id)->where('mode', 'test')
+        DB::table('PPR_purchase_order_mailings')->where('tenant_id', $tenant->id)->where('mode', 'test')
             ->update(['confirmed_at' => null, 'updated_at' => now()]);
 
         return $this->back($validated['period'])->with('status', 'Credencial guardada cifrada. Ya puedes enviar la prueba.');
@@ -118,7 +118,7 @@ class PurchaseOrderMailController
         $this->assertLocal($request);
         $period = $request->validate(['period' => ['required', 'regex:/^\d{6}$/']])['period'];
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
-        $updated = DB::table('purchase_order_mailings')->where('tenant_id', $tenant->id)
+        $updated = DB::table('PPR_purchase_order_mailings')->where('tenant_id', $tenant->id)
             ->where('periodo', $period)->where('rut_proveedor', self::TEST_PROVIDER)
             ->where('mode', 'test')->where('status', 'sent')->update(['confirmed_at' => now(), 'updated_at' => now()]);
         if ($updated === 0) {
@@ -170,7 +170,7 @@ class PurchaseOrderMailController
     {
         $this->assertClosed($tenantId, $period);
         $this->configureMailer($tenantId);
-        $ocs = DB::table('Maestro_Pagos')->where('tenant_id', $tenantId)->where('periodo', $period)
+        $ocs = DB::table('PPR_Maestro_Pagos')->where('tenant_id', $tenantId)->where('periodo', $period)
             ->where('rut_proveedor', $rut)->whereNotNull('oc')->distinct()->orderBy('oc')->pluck('oc')->all();
         if ($ocs === []) {
             throw ValidationException::withMessages(['rut_proveedor' => 'No hay órdenes cerradas para este proveedor y período.']);
@@ -208,7 +208,7 @@ class PurchaseOrderMailController
         }
         $copyRecipients = $mode === 'provider' ? array_values(array_diff(self::COPY_RECIPIENTS, $recipients)) : [];
         $key = ['tenant_id' => $tenantId, 'periodo' => $period, 'rut_proveedor' => $rut, 'mode' => $mode];
-        $existing = DB::table('purchase_order_mailings')->where($key)->first();
+        $existing = DB::table('PPR_purchase_order_mailings')->where($key)->first();
         if ($mode === 'provider' && in_array($existing?->status, ['sent', 'sending'], true)) {
             throw ValidationException::withMessages(['rut_proveedor' => $existing?->status === 'sent'
                 ? 'Este proveedor ya recibió las OC de este período. No se enviará dos veces.'
@@ -222,31 +222,31 @@ class PurchaseOrderMailController
         ];
         if ($mode === 'provider') {
             $claimed = $existing === null
-                ? DB::table('purchase_order_mailings')->insertOrIgnore([...$key, ...$details])
-                : DB::table('purchase_order_mailings')->where($key)->whereIn('status', ['failed', 'failed_smtp_auth'])->update($details);
+                ? DB::table('PPR_purchase_order_mailings')->insertOrIgnore([...$key, ...$details])
+                : DB::table('PPR_purchase_order_mailings')->where($key)->whereIn('status', ['failed', 'failed_smtp_auth'])->update($details);
             if ($claimed !== 1) {
                 throw ValidationException::withMessages(['rut_proveedor' => 'Otro envío acaba de iniciar. Revisa el estado antes de reintentar.']);
             }
         } else {
-            DB::table('purchase_order_mailings')->updateOrInsert($key, $details);
+            DB::table('PPR_purchase_order_mailings')->updateOrInsert($key, $details);
         }
         try {
             Mail::mailer('smtp')->to($recipients)->cc($copyRecipients)->send(new PurchaseOrdersMail($subject, $body, $attachments));
         } catch (Throwable $exception) {
             $smtpDisabled = str_contains(strtolower($exception->getMessage()), 'smtpclientauthentication is disabled');
-            DB::table('purchase_order_mailings')->where($key)->update([
+            DB::table('PPR_purchase_order_mailings')->where($key)->update([
                 'status' => $smtpDisabled ? 'failed_smtp_auth' : 'failed', 'updated_at' => now(),
             ]);
             throw ValidationException::withMessages(['period' => $smtpDisabled
                 ? 'Microsoft 365 rechazó la prueba: SMTP autenticado está desactivado para proveedores@4nlogistica.cl. Un administrador debe habilitar «Authenticated SMTP» para ese buzón antes de reintentar.'
                 : 'No se pudo enviar. Revisa la credencial y la configuración de Microsoft 365.']);
         }
-        DB::table('purchase_order_mailings')->where($key)->update(['status' => 'sent', 'sent_at' => now(), 'updated_at' => now()]);
+        DB::table('PPR_purchase_order_mailings')->where($key)->update(['status' => 'sent', 'sent_at' => now(), 'updated_at' => now()]);
     }
 
     private function configureMailer(int $tenantId): void
     {
-        $setting = DB::table('purchase_order_mail_settings')->where('tenant_id', $tenantId)->first();
+        $setting = DB::table('PPR_purchase_order_mail_settings')->where('tenant_id', $tenantId)->first();
         if ($setting === null) {
             throw ValidationException::withMessages(['period' => 'Configura primero la clave de proveedores@4nlogistica.cl.']);
         }
@@ -259,7 +259,7 @@ class PurchaseOrderMailController
 
     private function assertClosed(int $tenantId, string $period): void
     {
-        if (! DB::table('Cierres_Pagos')->where('tenant_id', $tenantId)->where('periodo', $period)->exists()) {
+        if (! DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenantId)->where('periodo', $period)->exists()) {
             throw ValidationException::withMessages(['period' => 'Las prefacturas solo se envían cuando el período está cerrado.']);
         }
     }
@@ -271,7 +271,7 @@ class PurchaseOrderMailController
 
     private function testRecord(int $tenantId, string $period): ?object
     {
-        return DB::table('purchase_order_mailings')->where('tenant_id', $tenantId)
+        return DB::table('PPR_purchase_order_mailings')->where('tenant_id', $tenantId)
             ->where('periodo', $period)->where('rut_proveedor', self::TEST_PROVIDER)
             ->where('mode', 'test')->first();
     }

@@ -139,7 +139,7 @@ class AcuerdoImporter
                 }
                 $this->manager->createCalendar($tenantId, $period, $holidays);
                 foreach (array_chunk($rows, 250) as $chunk) {
-                    DB::table('acuerdos')->insert($chunk);
+                    DB::table('PPR_acuerdos')->insert($chunk);
                 }
                 $this->manager->recalculate($tenantId, $period);
 

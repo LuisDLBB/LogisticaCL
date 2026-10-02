@@ -47,7 +47,7 @@ class AcuerdoTest extends ProviderPaymentsWorkflowTestCase
         $new = Acuerdo::query()->where('periodo', '202609')->firstOrFail();
         $this->assertSame($marcelo->id, $new->provider_id);
         $this->assertSame($victor->tax_id, $new->rut_proveedor_origen);
-        $this->assertDatabaseCount('Maestro_Pagos', 0);
+        $this->assertDatabaseCount('PPR_Maestro_Pagos', 0);
     }
 
     public function test_close_validates_masters_and_grabs_agreement_amount_without_recalculation(): void

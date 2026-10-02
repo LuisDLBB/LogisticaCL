@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class RealWeight extends Model
 {
-    protected $table = 'peso_real';
+    protected $table = 'PPR_peso_real';
 
     protected $fillable = [
         'tenant_id', 'seguimiento_paquete', 'peso_real', 'talla', 'codigo_seguimiento',

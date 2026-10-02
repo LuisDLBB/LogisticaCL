@@ -45,7 +45,7 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
             $this->post(route('provider-payments.maintainers.pesos.reales.import'), [
                 'file' => new UploadedFile($path, 'Peso_Real.xlsx', null, null, true),
             ])->assertRedirect()->assertSessionHas('status');
-            $this->assertDatabaseHas('peso_real', [
+            $this->assertDatabaseHas('PPR_peso_real', [
                 'seguimiento_paquete' => $tracking, 'peso_real' => 13, 'fecha_proceso' => '2026-07-01',
                 'cliente_origen' => 'Revesderecho Retail', 'comerciante' => 'Revesderecho',
                 'servicio' => 'Servicio Standar', 'operario' => 'JP.Soza', 'guia_cliente' => 'N/A',
@@ -69,7 +69,7 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
         try {
             $this->post(route('provider-payments.maintainers.pesos.reales.import'),
                 ['file' => new UploadedFile($path, 'pesos.xlsx', null, null, true)])->assertSessionHas('status');
-            $this->assertDatabaseHas('peso_real', ['seguimiento_paquete' => $tracking,
+            $this->assertDatabaseHas('PPR_peso_real', ['seguimiento_paquete' => $tracking,
                 'fecha_proceso' => '2026-09-01', 'talla' => 'XL', 'peso_real' => 30]);
         } finally {
             unlink($path);
@@ -94,11 +94,11 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
                 ['file' => new UploadedFile($path, 'pesos.csv', 'text/csv', null, true)])
                 ->assertSessionHas('status', fn (string $status): bool => str_contains($status, '2 nuevos') && str_contains($status, '2 filas con errores omitidas'))
                 ->assertSessionHas('import_issues');
-            $this->assertDatabaseHas('peso_real', ['seguimiento_paquete' => '4N202609010001-001',
+            $this->assertDatabaseHas('PPR_peso_real', ['seguimiento_paquete' => '4N202609010001-001',
                 'fecha_proceso' => '2026-09-02', 'talla' => 'M', 'peso_real' => 6]);
-            $this->assertDatabaseHas('peso_real', ['seguimiento_paquete' => '4N202609010003-003',
+            $this->assertDatabaseHas('PPR_peso_real', ['seguimiento_paquete' => '4N202609010003-003',
                 'talla' => 'Error-Sin peso', 'peso_real' => null]);
-            $this->assertDatabaseMissing('peso_real', ['seguimiento_paquete' => '4N202609010002-002']);
+            $this->assertDatabaseMissing('PPR_peso_real', ['seguimiento_paquete' => '4N202609010002-002']);
             $this->get(route('provider-payments.maintainers.pesos.reales', ['period' => '2026-09']))
                 ->assertOk()->assertSee('Revisar formato de fecha')->assertSee('20/8/20206')
                 ->assertSee('#VALUE!')->assertSee('Texto no reconocido');
@@ -120,7 +120,7 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
             $this->post(route('provider-payments.maintainers.pesos.reales.import'),
                 ['file' => new UploadedFile($path, 'pesos.csv', 'text/csv', null, true)])
                 ->assertSessionHas('status', fn (string $status): bool => str_contains($status, '2 filas con errores omitidas'));
-            $this->assertDatabaseCount('peso_real', 0);
+            $this->assertDatabaseCount('PPR_peso_real', 0);
             $this->get(route('provider-payments.maintainers.pesos.reales'))
                 ->assertOk()->assertSee('20/8/20206')->assertSee('Revisar formato de fecha')->assertSee('2', false);
         } finally {
@@ -148,7 +148,7 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
                 ['file' => new UploadedFile($path, 'pesos.xlsx', null, null, true)])->assertSessionHas('status');
 
             foreach (array_values($values) as $index => $expected) {
-                $this->assertDatabaseHas('peso_real', [
+                $this->assertDatabaseHas('PPR_peso_real', [
                     'tenant_id' => $tenant->id,
                     'seguimiento_paquete' => $rows[$index][1],
                     'peso_real' => $expected,
@@ -177,9 +177,9 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
             $this->post(route('provider-payments.maintainers.pesos.reales.import'),
                 ['file' => new UploadedFile($path, 'pesos.xlsx', null, null, true)])->assertSessionHas('status');
             $this->post(route('provider-payments.maintainers.pesos.reales.sync'))->assertSessionHas('status');
-            $this->assertDatabaseHas('peso_real', ['seguimiento_paquete' => $tracking,
+            $this->assertDatabaseHas('PPR_peso_real', ['seguimiento_paquete' => $tracking,
                 'talla' => 'Error-Pendiente', 'peso_real' => null]);
-            $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => $tracking,
+            $this->assertDatabaseHas('PPR_movimientos_courier', ['tracking_number' => $tracking,
                 'peso_real' => null, 'peso_final' => 12]);
         } finally {
             unlink($path);
@@ -197,10 +197,10 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
         try {
             $this->post(route('provider-payments.maintainers.pesos.reales.import'), ['file' => new UploadedFile($first, 'peso.xlsx', null, null, true)])->assertSessionHas('status');
             $this->post(route('provider-payments.maintainers.pesos.reales.import'), ['file' => new UploadedFile($second, 'peso.xlsx', null, null, true)])->assertSessionHas('status');
-            $this->assertDatabaseHas('peso_real', ['seguimiento_paquete' => $tracking, 'peso_real' => 15, 'operario' => 'Operario 2']);
-            DB::table('Cierres_Pagos')->insert(['tenant_id' => $tenant->id, 'periodo' => '202607', 'registros' => 0, 'total' => 0, 'closed_at' => now()]);
+            $this->assertDatabaseHas('PPR_peso_real', ['seguimiento_paquete' => $tracking, 'peso_real' => 15, 'operario' => 'Operario 2']);
+            DB::table('PPR_Cierres_Pagos')->insert(['tenant_id' => $tenant->id, 'periodo' => '202607', 'registros' => 0, 'total' => 0, 'closed_at' => now()]);
             $this->post(route('provider-payments.maintainers.pesos.reales.import'), ['file' => new UploadedFile($first, 'peso.xlsx', null, null, true)])->assertSessionHas('status', fn (string $status): bool => str_contains($status, '1 de períodos cerrados'));
-            $this->assertDatabaseHas('peso_real', ['seguimiento_paquete' => $tracking, 'peso_real' => 15]);
+            $this->assertDatabaseHas('PPR_peso_real', ['seguimiento_paquete' => $tracking, 'peso_real' => 15]);
         } finally {
             unlink($first);
             unlink($second);
@@ -213,7 +213,7 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
         $tracking = '4N202608017133-616';
         CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => $tracking,
             'nombre_proceso' => '202609-Variable', 'peso_real' => 2, 'peso_transformado' => 4]);
-        DB::table('Cierres_Pagos')->insert(['tenant_id' => $tenant->id, 'periodo' => '202608',
+        DB::table('PPR_Cierres_Pagos')->insert(['tenant_id' => $tenant->id, 'periodo' => '202608',
             'registros' => 0, 'total' => 0, 'closed_at' => now()]);
         $path = $this->workbook(
             ['Fecha', 'Seguimiento_Paquete', 'Codigo_seguimiento', 'Peso_Real', 'Cliente', 'Operario', 'Observacion', 'GuiaCliente'],
@@ -225,7 +225,7 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
                 ['file' => new UploadedFile($path, 'peso.xlsx', null, null, true)])
                 ->assertSessionHas('status', fn (string $status): bool => str_contains($status, '1 nuevos'));
             $this->post(route('provider-payments.maintainers.pesos.reales.sync'))->assertRedirect();
-            $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => $tracking,
+            $this->assertDatabaseHas('PPR_movimientos_courier', ['tracking_number' => $tracking,
                 'nombre_proceso' => '202609-Variable', 'peso_real' => 13, 'peso_final' => 13]);
         } finally {
             unlink($path);
@@ -237,7 +237,7 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
         Storage::fake('local');
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $tracking = '4N202608030001-999';
-        DB::table('Maestro_Pagos')->insert([
+        DB::table('PPR_Maestro_Pagos')->insert([
             'seguimiento_paquete' => $tracking, 'pago_movimiento_id' => 999,
             'tenant_id' => $tenant->id, 'courier_movement_id' => 999,
             'tipo_pago' => 'Variable', 'nombre_proceso' => 'Variable', 'periodo' => '202608',
@@ -280,8 +280,8 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
             $historicalSheet = IOFactory::load($reportPath)->getActiveSheet();
             $this->assertSame($tracking, $historicalSheet->getCell('D2')->getFormattedValue());
             unlink($reportPath);
-            $this->assertDatabaseMissing('peso_real', ['seguimiento_paquete' => $tracking]);
-            $this->assertDatabaseHas('envios_externos', ['tracking_number' => $tracking, 'external_order_number' => '123']);
+            $this->assertDatabaseMissing('PPR_peso_real', ['seguimiento_paquete' => $tracking]);
+            $this->assertDatabaseHas('PPR_envios_externos', ['tracking_number' => $tracking, 'external_order_number' => '123']);
         } finally {
             unlink($weight);
             unlink($external);
@@ -297,12 +297,12 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
             'peso_real' => 8, 'comerciante' => 'Cliente', 'servicio' => 'Servicio']);
         CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => $tracking,
             'nombre_proceso' => '202608-Variable', 'peso_real' => 3, 'peso_transformado' => 5]);
-        DB::table('Cierres_Pagos')->insert(['tenant_id' => $tenant->id, 'periodo' => '202608',
+        DB::table('PPR_Cierres_Pagos')->insert(['tenant_id' => $tenant->id, 'periodo' => '202608',
             'registros' => 0, 'total' => 0, 'closed_at' => now()]);
 
         $this->post(route('provider-payments.maintainers.pesos.reales.sync'))->assertSessionHas('status',
             fn (string $status): bool => str_contains($status, '1 registros pagados o de períodos cerrados quedaron intactos'));
-        $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => $tracking, 'peso_real' => 3, 'peso_final' => 3]);
+        $this->assertDatabaseHas('PPR_movimientos_courier', ['tracking_number' => $tracking, 'peso_real' => 3, 'peso_final' => 3]);
     }
 
     public function test_external_shipment_excel_excludes_existing_and_future_payments(): void
@@ -317,7 +317,7 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
             'seguimiento_paquete' => $existingTracking, 'peso_final' => 1,
             'condicion_pago' => 'SI', 'valor' => 1500,
         ]);
-        DB::table('Cierres_Pagos')->insert(['tenant_id' => $tenant->id, 'periodo' => '202608',
+        DB::table('PPR_Cierres_Pagos')->insert(['tenant_id' => $tenant->id, 'periodo' => '202608',
             'registros' => 0, 'total' => 0, 'closed_at' => now()]);
         $path = $this->workbook(
             ['Fecha', 'ID', 'OS Blue', 'Localidad Destino', 'Punto entrega', 'Cliente', 'Observacion'],
@@ -332,16 +332,16 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
                 'file' => new UploadedFile($path, 'Envios_Externos.xlsx', null, null, true),
             ])->assertRedirect()->assertSessionHas('status',
                 fn (string $status): bool => str_contains($status, 'con período cerrado: 0'));
-            $this->assertDatabaseHas('envios_externos', [
+            $this->assertDatabaseHas('PPR_envios_externos', [
                 'tracking_number' => $existingTracking, 'external_order_number' => '2362906361',
                 'observacion' => 'sale desde Castro', 'exclude_provider_payment' => true,
             ]);
-            $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => $existingTracking, 'condicion_pago' => 'NO', 'valor' => 0]);
+            $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => $existingTracking, 'condicion_pago' => 'NO', 'valor' => 0]);
             CourierMovement::create(['tenant_id' => $tenant->id, 'tracking_number' => $futureTracking, 'nombre_proceso' => '202609-Variable', 'tipo_pago' => 'Variables']);
             $this->post(route('provider-payments.courier-movements.compile.store'), [
                 'period' => '202609', 'processes' => ['Variable'],
             ])->assertRedirect();
-            $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => $futureTracking, 'condicion_pago' => 'NO', 'valor' => 0]);
+            $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => $futureTracking, 'condicion_pago' => 'NO', 'valor' => 0]);
             $this->get(route('provider-payments.courier-movements.externos', ['period' => '2026-08']))
                 ->assertOk()->assertSee('Quemchi')->assertSee('Futaleufu');
         } finally {
@@ -377,9 +377,9 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
                 && str_contains($status, '1 envíos coinciden')
                 && str_contains($status, 'Pagos activos marcados NO y Valor $ 0: 1'));
 
-            $this->assertDatabaseCount('envios_externos', 1);
-            $this->assertDatabaseHas('envios_externos', ['tracking_number' => $tracking, 'fecha' => '2026-09-03']);
-            $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+            $this->assertDatabaseCount('PPR_envios_externos', 1);
+            $this->assertDatabaseHas('PPR_envios_externos', ['tracking_number' => $tracking, 'fecha' => '2026-09-03']);
+            $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
                 'seguimiento_paquete' => $tracking, 'condicion_pago' => 'NO', 'valor' => 0,
             ]);
         } finally {
@@ -416,10 +416,10 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
             ])->assertSessionHas('status', fn (string $status): bool => str_contains($status, '1 nuevos')
                 && str_contains($status, '4 filas con problemas quedaron pendientes'))
                 ->assertSessionHas('external_issue_report_token');
-            $this->assertDatabaseCount('envios_externos', 1);
-            $this->assertDatabaseHas('envios_externos', ['tracking_number' => $validTracking]);
-            $this->assertDatabaseMissing('envios_externos', ['tracking_number' => $tracking]);
-            $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+            $this->assertDatabaseCount('PPR_envios_externos', 1);
+            $this->assertDatabaseHas('PPR_envios_externos', ['tracking_number' => $validTracking]);
+            $this->assertDatabaseMissing('PPR_envios_externos', ['tracking_number' => $tracking]);
+            $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
                 'seguimiento_paquete' => $validTracking, 'condicion_pago' => 'NO', 'valor' => 0,
             ]);
             $token = session('external_issue_report_token');
@@ -449,7 +449,7 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
             'periodo' => '202608', 'nombre_proceso' => 'Variable', 'tipo_pago' => 'Variables',
             'seguimiento_paquete' => $tracking, 'peso_final' => 1, 'condicion_pago' => 'NO',
         ]);
-        DB::table('Cierres_Pagos')->insert(['tenant_id' => $tenant->id, 'periodo' => '202608',
+        DB::table('PPR_Cierres_Pagos')->insert(['tenant_id' => $tenant->id, 'periodo' => '202608',
             'registros' => 0, 'total' => 0, 'closed_at' => now()]);
         $path = $this->workbook(
             ['Fecha', 'ID', 'OS Blue', 'Localidad Destino', 'Punto entrega', 'Cliente', 'Observacion'],
@@ -459,8 +459,8 @@ class WeightAndExternalShipmentImportTest extends ProviderPaymentsWorkflowTestCa
         try {
             $this->post(route('provider-payments.courier-movements.externos.import'), ['file' => new UploadedFile($path, 'externos.xlsx', null, null, true)])
                 ->assertSessionHas('status', fn (string $status): bool => str_contains($status, 'con período cerrado: 1'));
-            $this->assertDatabaseHas('envios_externos', ['tracking_number' => $tracking, 'observacion' => 'Nota histórica']);
-            $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => $tracking, 'condicion_pago' => 'NO', 'valor' => null]);
+            $this->assertDatabaseHas('PPR_envios_externos', ['tracking_number' => $tracking, 'observacion' => 'Nota histórica']);
+            $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => $tracking, 'condicion_pago' => 'NO', 'valor' => null]);
         } finally {
             unlink($path);
         }

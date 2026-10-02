@@ -34,7 +34,7 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
 
         $this->post(route('provider-payments.courier-movements.compile.close'), ['period' => '202611'])
             ->assertSessionHasErrors('period');
-        $this->assertDatabaseMissing('Cierres_Pagos', ['tenant_id' => $tenant->id, 'periodo' => '202611']);
+        $this->assertDatabaseMissing('PPR_Cierres_Pagos', ['tenant_id' => $tenant->id, 'periodo' => '202611']);
     }
 
     public function test_monthly_close_accepts_peumo_movements_paid_as_specials_and_peumo_rows_marked_no(): void
@@ -52,11 +52,11 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
         $this->post(route('provider-payments.courier-movements.compile.close'), ['period' => '202611'])
             ->assertSessionHas('status');
 
-        $this->assertDatabaseHas('Cierres_Pagos', ['tenant_id' => $tenant->id, 'periodo' => '202611', 'registros' => 1]);
-        $this->assertDatabaseHas('Maestro_Pagos', [
+        $this->assertDatabaseHas('PPR_Cierres_Pagos', ['tenant_id' => $tenant->id, 'periodo' => '202611', 'registros' => 1]);
+        $this->assertDatabaseHas('PPR_Maestro_Pagos', [
             'seguimiento_paquete' => 'PEUMO-SPECIAL', 'nombre_proceso' => 'Especiales', 'valor' => 11111,
         ]);
-        $this->assertDatabaseMissing('Maestro_Pagos', ['seguimiento_paquete' => 'PEUMO-NO']);
+        $this->assertDatabaseMissing('PPR_Maestro_Pagos', ['seguimiento_paquete' => 'PEUMO-NO']);
     }
 
     public function test_boleta_rounding_matches_published_sii_examples_for_2026(): void
@@ -81,15 +81,15 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
         $this->post(route('provider-payments.courier-movements.compile.close'), ['period' => '202608'])
             ->assertRedirect()->assertSessionHas('status');
 
-        $this->assertDatabaseHas('Cierres_Pagos', ['tenant_id' => $tenant->id, 'periodo' => '202608', 'registros' => 1, 'total' => 12000]);
-        $this->assertDatabaseHas('Maestro_Pagos', [
+        $this->assertDatabaseHas('PPR_Cierres_Pagos', ['tenant_id' => $tenant->id, 'periodo' => '202608', 'registros' => 1, 'total' => 12000]);
+        $this->assertDatabaseHas('PPR_Maestro_Pagos', [
             'seguimiento_paquete' => 'CLOSE-001', 'pago_movimiento_id' => $paid->id,
             'periodo' => '202608', 'nombre_proceso' => 'Variable', 'condicion_pago' => 'SI', 'valor' => 12000,
             'tipo_documento' => 'Factura', 'empresa_mandante' => '4N', 'oc' => '2026080001',
             'impuesto' => 'IVA', 'valor_impuesto' => 2280, 'valor_final_total' => 14280,
         ]);
-        $this->assertDatabaseMissing('Maestro_Pagos', ['seguimiento_paquete' => 'CLOSE-002']);
-        $this->assertSame($paid->getRawOriginal('direccion'), DB::table('Maestro_Pagos')->where('seguimiento_paquete', 'CLOSE-001')->value('direccion'));
+        $this->assertDatabaseMissing('PPR_Maestro_Pagos', ['seguimiento_paquete' => 'CLOSE-002']);
+        $this->assertSame($paid->getRawOriginal('direccion'), DB::table('PPR_Maestro_Pagos')->where('seguimiento_paquete', 'CLOSE-001')->value('direccion'));
         $this->get(route('provider-payments.courier-movements.compile', ['period' => '202608']))
             ->assertOk()->assertSee('Período 202608 cerrado definitivamente')
             ->assertSee('Ver 1 órdenes de compra asignadas')->assertSee('2026080001')->assertDontSee('Reabrir proceso');
@@ -112,8 +112,8 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
 
         $this->post(route('provider-payments.courier-movements.compile.close'), ['period' => '202608'])
             ->assertSessionHasErrors('period');
-        $this->assertDatabaseCount('Maestro_Pagos', 0);
-        $this->assertDatabaseCount('Cierres_Pagos', 0);
+        $this->assertDatabaseCount('PPR_Maestro_Pagos', 0);
+        $this->assertDatabaseCount('PPR_Cierres_Pagos', 0);
     }
 
     public function test_close_requires_the_supplier_details_needed_for_a_purchase_order(): void
@@ -123,8 +123,8 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
 
         $this->post(route('provider-payments.courier-movements.compile.close'), ['period' => '202608'])
             ->assertSessionHasErrors('period');
-        $this->assertDatabaseCount('Maestro_Pagos', 0);
-        $this->assertDatabaseCount('Cierres_Pagos', 0);
+        $this->assertDatabaseCount('PPR_Maestro_Pagos', 0);
+        $this->assertDatabaseCount('PPR_Cierres_Pagos', 0);
     }
 
     public function test_close_calculates_taxes_for_each_document_type_in_whole_pesos(): void
@@ -153,7 +153,7 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
         $this->get(route('provider-payments.courier-movements.compile.purchase-orders', ['period' => '202608']))
             ->assertOk()->assertSee('$ 3.442');
         foreach ($cases as [$tracking, , , $tax, $percentage, $taxAmount, $finalAmount]) {
-            $row = DB::table('Maestro_Pagos')->where('seguimiento_paquete', $tracking)->first();
+            $row = DB::table('PPR_Maestro_Pagos')->where('seguimiento_paquete', $tracking)->first();
             $this->assertSame($tax, $row->impuesto);
             $this->assertSame($percentage, number_format((float) $row->porcentaje_impuesto, 2, '.', ''));
             $this->assertSame($taxAmount, (int) $row->valor_impuesto);
@@ -169,7 +169,7 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
 
         $this->post(route('provider-payments.courier-movements.compile.close'), ['period' => '202608'])
             ->assertSessionHasErrors('period');
-        $this->assertDatabaseCount('Maestro_Pagos', 0);
+        $this->assertDatabaseCount('PPR_Maestro_Pagos', 0);
     }
 
     public function test_download_requires_a_supplier_filename_and_it_can_be_added_in_providers(): void
@@ -199,15 +199,15 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
     public function test_filename_seed_creates_provisional_suppliers_and_service_aliases(): void
     {
         $this->seed(ProviderOcFilenameSeeder::class);
-        $this->assertDatabaseHas('providers', ['tax_id' => '77235107-0', 'is_active' => false]);
-        $this->assertDatabaseMissing('provider_oc_filenames', ['file_stem' => 'Quincena']);
+        $this->assertDatabaseHas('MBA_providers', ['tax_id' => '77235107-0', 'is_active' => false]);
+        $this->assertDatabaseMissing('PPR_provider_oc_filenames', ['file_stem' => 'Quincena']);
 
         $ds = Provider::query()->where('tax_id', '77201525-9')->firstOrFail();
-        $this->assertDatabaseHas('provider_oc_filenames', [
+        $this->assertDatabaseHas('PPR_provider_oc_filenames', [
             'provider_id' => $ds->id, 'company_code' => '4N',
             'service_scope' => 'Troncal Norte', 'file_stem' => 'DSG_Troncal_Norte',
         ]);
-        $this->assertDatabaseHas('provider_oc_filenames', [
+        $this->assertDatabaseHas('PPR_provider_oc_filenames', [
             'provider_id' => $ds->id, 'company_code' => '4N',
             'service_scope' => 'Troncal V', 'file_stem' => 'DSG_RUTA_V',
         ]);
@@ -242,8 +242,8 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
         $this->post(route('provider-payments.courier-movements.compile.close'), ['period' => '202608'])
             ->assertSessionHas('status');
 
-        $this->assertSame(1, (int) DB::table('Maestro_Pagos')->sum('valor_impuesto'));
-        $this->assertSame(4, (int) DB::table('Maestro_Pagos')->sum('valor_final_total'));
+        $this->assertSame(1, (int) DB::table('PPR_Maestro_Pagos')->sum('valor_impuesto'));
+        $this->assertSame(4, (int) DB::table('PPR_Maestro_Pagos')->sum('valor_final_total'));
         $this->get(route('provider-payments.courier-movements.compile.purchase-orders', ['period' => '202608']))
             ->assertOk()->assertSee(route('provider-payments.courier-movements.compile.purchase-orders.pdf', '2026080001'), false);
 
@@ -318,7 +318,7 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
         $this->post(route('provider-payments.courier-movements.compile.close'), ['period' => '202608'])
             ->assertSessionHas('status');
 
-        $this->assertDatabaseHas('Maestro_Pagos', [
+        $this->assertDatabaseHas('PPR_Maestro_Pagos', [
             'seguimiento_paquete' => 'BOLETA-001', 'valor_impuesto' => 107965,
             'valor_final_total' => 600000,
         ]);
@@ -361,12 +361,12 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
         $this->post(route('provider-payments.courier-movements.compile.close'), ['period' => '202608'])
             ->assertSessionHas('status');
 
-        $orders = DB::table('Maestro_Pagos')->pluck('oc', 'empresa_mandante');
+        $orders = DB::table('PPR_Maestro_Pagos')->pluck('oc', 'empresa_mandante');
         $service = app(PurchaseOrderDocument::class);
         $this->assertSame('Quincena', $service->load($tenant->id, $orders['4N'])['payment_terms']);
         $this->assertSame('Contado', $service->load($tenant->id, $orders['PMCB'])['payment_terms']);
         $this->assertSame('TRANSPORTE BAG SPA', $service->load($tenant->id, $orders['4N'])['proveedor']);
-        $this->assertDatabaseHas('Maestro_Pagos', [
+        $this->assertDatabaseHas('PPR_Maestro_Pagos', [
             'seguimiento_paquete' => 'BAG-4N', 'razon_social_proveedor' => 'TRANSPORTE BAG SPA - CONTADO',
         ]);
         $this->get(route('provider-payments.courier-movements.compile.purchase-orders', ['period' => '202608']))
@@ -426,8 +426,8 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
 
         $this->post(route('provider-payments.courier-movements.compile.close'), ['period' => '202608'])
             ->assertSessionHasErrors('period');
-        $this->assertDatabaseCount('Maestro_Pagos', 0);
-        $this->assertDatabaseCount('Cierres_Pagos', 0);
+        $this->assertDatabaseCount('PPR_Maestro_Pagos', 0);
+        $this->assertDatabaseCount('PPR_Cierres_Pagos', 0);
     }
 
     public function test_close_assigns_purchase_orders_by_supplier_and_the_confirmed_service_exceptions(): void
@@ -473,7 +473,7 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
         $this->get(route('provider-payments.courier-movements.compile.purchase-orders', ['period' => '202608']))
             ->assertOk()->assertSee('Órdenes definitivas guardadas en Maestro_Pagos.');
 
-        $orders = DB::table('Maestro_Pagos')->pluck('oc', 'seguimiento_paquete')->all();
+        $orders = DB::table('PPR_Maestro_Pagos')->pluck('oc', 'seguimiento_paquete')->all();
         $this->assertCount(8, $orders);
         $this->assertSame('2026080001', $orders['OC-DS-GENERAL']);
         $this->assertSame('2026080002', $orders['OC-DS-NORTE']);
@@ -523,7 +523,7 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
         $this->post(route('provider-payments.courier-movements.compile.close'), ['period' => '202609'])
             ->assertSessionHas('status');
 
-        $orders = DB::table('Maestro_Pagos')->pluck('oc', 'seguimiento_paquete')->all();
+        $orders = DB::table('PPR_Maestro_Pagos')->pluck('oc', 'seguimiento_paquete')->all();
         $this->assertCount(5, array_unique($orders));
         $this->assertSame('2026090001', $orders['SEP-DS-GENERAL']);
         $this->assertSame('2026090002', $orders['SEP-DS-NORTE']);
@@ -531,7 +531,7 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
         $this->assertSame('2026090004', $orders['SEP-COLLIO-18']);
         $this->assertSame($orders['SEP-COLLIO-18'], $orders['SEP-COLLIO-LANAS']);
         $this->assertSame('2026090005', $orders['SEP-COLLIO-17']);
-        $this->assertSame('RM', DB::table('Maestro_Pagos')->where('seguimiento_paquete', 'SEP-DS-NORTE')->value('zona'));
+        $this->assertSame('RM', DB::table('PPR_Maestro_Pagos')->where('seguimiento_paquete', 'SEP-DS-NORTE')->value('zona'));
     }
 
     public function test_maestro_blocks_future_raw_imports_and_changes_to_closed_payments(): void
@@ -542,7 +542,7 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
         $otherTenant = Tenant::factory()->create();
 
         try {
-            DB::table('movimientos_courier')->insert([
+            DB::table('PPR_movimientos_courier')->insert([
                 'tenant_id' => $otherTenant->id, 'tracking_number' => ' close-001 ',
                 'nombre_proceso' => '202609-Variable', 'created_at' => now(), 'updated_at' => now(),
             ]);
@@ -552,12 +552,12 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
         }
 
         try {
-            DB::table('Pago_Movimientos_Courier')->where('id', $paid->id)->update(['valor' => 1]);
+            DB::table('PPR_Pago_Movimientos_Courier')->where('id', $paid->id)->update(['valor' => 1]);
             $this->fail('Un pago cerrado no debe modificarse.');
         } catch (QueryException $exception) {
             $this->assertStringContainsString('Maestro_Pagos', $exception->getMessage());
         }
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['id' => $paid->id, 'valor' => 12000]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['id' => $paid->id, 'valor' => 12000]);
     }
 
     public function test_new_csv_import_skips_a_tracking_already_in_maestro(): void
@@ -590,7 +590,7 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
         }
 
         $this->assertSame(1, CourierMovement::query()->where('tenant_id', $tenant->id)->where('tracking_number', 'CLOSE-001')->count());
-        $this->assertDatabaseHas('movimientos_courier', ['tenant_id' => $tenant->id, 'tracking_number' => 'NEW-001']);
+        $this->assertDatabaseHas('PPR_movimientos_courier', ['tenant_id' => $tenant->id, 'tracking_number' => 'NEW-001']);
     }
 
     public function test_new_import_cannot_use_the_name_of_a_closed_period(): void
@@ -608,7 +608,7 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
             'process_year' => 2026, 'process_month' => 9, 'process_name' => '202608-Variable',
         ])->assertSessionHasErrors('process_name');
 
-        $this->assertDatabaseMissing('movimientos_courier', ['tenant_id' => $tenant->id, 'tracking_number' => 'NEW-001']);
+        $this->assertDatabaseMissing('PPR_movimientos_courier', ['tenant_id' => $tenant->id, 'tracking_number' => 'NEW-001']);
     }
 
     public function test_monthly_close_blocks_unfinished_special_rows_too(): void
@@ -628,7 +628,7 @@ class MonthlyPaymentClosingTest extends ProviderPaymentsWorkflowTestCase
             'periodo' => '202608-Especiales',
             'rows' => [['id' => $special->id, 'provider_id' => null, 'client_id' => null, 'service_type_id' => null]],
         ])->assertSessionHasErrors('period');
-        $this->assertDatabaseHas('courier_special_payments', ['id' => $special->id, 'finalized_at' => null]);
+        $this->assertDatabaseHas('PPR_courier_special_payments', ['id' => $special->id, 'finalized_at' => null]);
     }
 
     public function test_purchase_order_summary_excel_sorts_by_payment_terms_and_reconciles_bank_and_tax_amounts(): void

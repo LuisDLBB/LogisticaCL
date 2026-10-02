@@ -11,7 +11,7 @@ class CourierStatus extends Model
     /** @use HasFactory<CourierStatusFactory> */
     use HasFactory;
 
-    protected $table = 'estados';
+    protected $table = 'PPR_estados';
 
     protected $fillable = ['name', 'consider_for_payment'];
 

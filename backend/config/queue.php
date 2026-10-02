@@ -31,6 +31,15 @@ return [
 
     'connections' => [
 
+        'operations' => [
+            'driver' => 'database',
+            'connection' => null,
+            'table' => 'jobs',
+            'queue' => 'operations',
+            'retry_after' => 1500,
+            'after_commit' => true,
+        ],
+
         'sync' => [
             'driver' => 'sync',
         ],

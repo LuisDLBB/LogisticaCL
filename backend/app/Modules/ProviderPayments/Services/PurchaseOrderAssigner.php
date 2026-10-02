@@ -13,7 +13,7 @@ class PurchaseOrderAssigner
     {
         $groups = [];
 
-        DB::table('Pago_Movimientos_Courier')
+        DB::table('PPR_Pago_Movimientos_Courier')
             ->where('tenant_id', $tenantId)
             ->where('periodo', $period)
             ->whereRaw('UPPER(TRIM(condicion_pago)) = ?', ['SI'])
@@ -58,7 +58,7 @@ class PurchaseOrderAssigner
                 <=> [$this->zoneRank($b['zone']), $b['name'], $b['company'], $this->bucketRank($b['bucket']), $right];
         });
 
-        $lastOc = DB::table('Maestro_Pagos')
+        $lastOc = DB::table('PPR_Maestro_Pagos')
             ->where('tenant_id', $tenantId)
             ->where('periodo', $period)
             ->where('oc', 'like', $period.'%')

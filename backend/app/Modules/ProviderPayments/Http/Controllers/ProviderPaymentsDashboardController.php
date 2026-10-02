@@ -33,7 +33,7 @@ class ProviderPaymentsDashboardController
             ->selectRaw('SUBSTR(nombre_proceso, 1, 6) AS period')
             ->where('nombre_proceso', 'like', '______-%')
             ->distinct()->orderByDesc('period')->pluck('period')->all() : [];
-        $latestClosedPeriod = $tenant ? DB::table('Cierres_Pagos')->where('tenant_id', $tenant->id)->max('periodo') : null;
+        $latestClosedPeriod = $tenant ? DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenant->id)->max('periodo') : null;
         if ($latestClosedPeriod !== null && ! in_array($latestClosedPeriod, $periods, true)) {
             $periods[] = $latestClosedPeriod;
             rsort($periods);
@@ -75,7 +75,7 @@ class ProviderPaymentsDashboardController
             });
         $paymentCountsByProcess = $serviceCounts->groupBy('service_name')
             ->map(fn ($processes): int => (int) $processes->sum('total'));
-        $closure = $tenant ? DB::table('Cierres_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $selectedPeriod)->first() : null;
+        $closure = $tenant ? DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $selectedPeriod)->first() : null;
         $monthClosed = $closure !== null;
         $pendingProcessCounts = $tenant && ! $monthClosed ? (clone $movements)
             ->whereNotIn('id', CourierPaymentMovement::query()->where('tenant_id', $tenant->id)
@@ -266,9 +266,9 @@ class ProviderPaymentsDashboardController
                     number_format($result['deleted_movements'], 0, ',', '.'), number_format($result['restored'], 0, ',', '.')));
         }
         [$deletedMovements, $deletedPayments] = DB::transaction(function () use ($tenant, $processName): array {
-            $movementIds = DB::table('movimientos_courier')->select('id')
+            $movementIds = DB::table('PPR_movimientos_courier')->select('id')
                 ->where('tenant_id', $tenant->id)->where('nombre_proceso', $processName);
-            $hasSpecialPayments = DB::table('Pago_Movimientos_Courier')
+            $hasSpecialPayments = DB::table('PPR_Pago_Movimientos_Courier')
                 ->where('tenant_id', $tenant->id)->whereIn('courier_movement_id', $movementIds)
                 ->where(fn ($query) => $query->where('tipo_pago', 'Especiales')
                     ->orWhere('nombre_proceso', 'Especiales')
@@ -276,9 +276,9 @@ class ProviderPaymentsDashboardController
             if ($hasSpecialPayments) {
                 throw ValidationException::withMessages(['process_name' => 'Este proceso tiene pagos Especiales asociados. Revierte Especiales antes de eliminar sus movimientos de origen.']);
             }
-            $deletedPayments = DB::table('Pago_Movimientos_Courier')
+            $deletedPayments = DB::table('PPR_Pago_Movimientos_Courier')
                 ->where('tenant_id', $tenant->id)
-                ->whereIn('courier_movement_id', DB::table('movimientos_courier')
+                ->whereIn('courier_movement_id', DB::table('PPR_movimientos_courier')
                     ->select('id')
                     ->where('tenant_id', $tenant->id)
                     ->where('nombre_proceso', $processName))

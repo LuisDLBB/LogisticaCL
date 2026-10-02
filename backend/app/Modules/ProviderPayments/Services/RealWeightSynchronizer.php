@@ -12,7 +12,7 @@ class RealWeightSynchronizer
     public function syncOpen(int $tenantId): array
     {
         $result = ['updated' => 0, 'without_match' => 0, 'protected' => 0];
-        $closedPeriods = DB::table('Cierres_Pagos')->where('tenant_id', $tenantId)->pluck('periodo')->flip();
+        $closedPeriods = DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenantId)->pluck('periodo')->flip();
         CourierMovement::query()->where('tenant_id', $tenantId)
             ->select(['id', 'tenant_id', 'tracking_number', 'weight_kg', 'peso_real', 'peso_transformado', 'peso_final', 'merchant_name', 'service_name', 'nombre_proceso'])
             ->chunkById(1000, function ($movements) use ($tenantId, $closedPeriods, &$result): void {
@@ -20,7 +20,7 @@ class RealWeightSynchronizer
                 $realWeights = RealWeight::query()->where('tenant_id', $tenantId)
                     ->whereIn('seguimiento_paquete', $trackings)
                     ->get(['seguimiento_paquete', 'peso_real', 'comerciante', 'servicio'])->keyBy('seguimiento_paquete');
-                $paid = DB::table('Maestro_Pagos')->where('tenant_id', $tenantId)
+                $paid = DB::table('PPR_Maestro_Pagos')->where('tenant_id', $tenantId)
                     ->whereIn('seguimiento_paquete', $trackings)
                     ->pluck('seguimiento_paquete')->flip();
                 $updates = [];
@@ -68,15 +68,15 @@ class RealWeightSynchronizer
                     $result['updated']++;
                 }
                 foreach ($identityGroups as $group) {
-                    DB::table('peso_real')->where('tenant_id', $tenantId)
+                    DB::table('PPR_peso_real')->where('tenant_id', $tenantId)
                         ->whereIn('seguimiento_paquete', $group['trackings'])
                         ->update(['comerciante' => $group['merchant'], 'servicio' => $group['service'], 'updated_at' => now()]);
                 }
                 if ($updates !== []) {
-                    DB::table('movimientos_courier')->upsert($updates, ['id'], ['peso_real', 'peso_final', 'updated_at']);
+                    DB::table('PPR_movimientos_courier')->upsert($updates, ['id'], ['peso_real', 'peso_final', 'updated_at']);
                 }
                 foreach ($weightOnlyUpdates as $weight => $ids) {
-                    DB::table('movimientos_courier')->where('tenant_id', $tenantId)->whereIn('id', $ids)
+                    DB::table('PPR_movimientos_courier')->where('tenant_id', $tenantId)->whereIn('id', $ids)
                         ->update(['peso_final' => $weight, 'updated_at' => now()]);
                 }
             });

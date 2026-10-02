@@ -12,7 +12,7 @@ class CostCenterKey extends Model
     /** @use HasFactory<CostCenterKeyFactory> */
     use HasFactory;
 
-    protected $table = 'llave_centro_costos';
+    protected $table = 'PPR_llave_centro_costos';
 
     protected $fillable = [
         'tenant_id', 'provider_id', 'client_id', 'service_type_id', 'provider_tax_id', 'agent_name',
