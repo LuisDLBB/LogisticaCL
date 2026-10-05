@@ -19,7 +19,53 @@ class OperationSetupController extends Controller
 
         $selected = $request->filled('configuration') ? DB::table('Ope_GuiaConfiguraciones')->where(['tenant_id' => $tenant, 'id' => $request->integer('configuration')])->firstOrFail() : null;
 
-        return view('operations::setup', ['selected' => $selected, 'locations' => DB::table('Ope_Ubicaciones')->where('tenant_id', $tenant)->orderBy('name')->get(), 'coverages' => DB::table('PPR_coverages')->where(['tenant_id' => $tenant, 'is_active' => true])->orderBy('commune_name')->get(), 'providers' => DB::table('MBA_providers')->where(['tenant_id' => $tenant, 'is_active' => true])->orderBy('legal_name')->get(['id', 'legal_name', 'operational_name']), 'configurations' => DB::table('Ope_GuiaConfiguraciones as c')->join('PPR_coverages as v', 'v.id', '=', 'c.coverage_id')->join('Ope_Ubicaciones as o', 'o.id', '=', 'c.origin_id')->join('Ope_Ubicaciones as d', 'd.id', '=', 'c.destination_id')->where('c.tenant_id', $tenant)->orderBy('v.commune_name')->orderBy('c.sequence')->select('c.*', 'v.commune_name', 'v.trunk_name', 'v.post_name', 'o.name as origin_name', 'd.name as destination_name')->get()]);
+        $agencyRoutes = DB::table('Ope_Agencias as agency')
+            ->join('Ope_Troncales as trunk', 'trunk.id', '=', 'agency.trunk_id')
+            ->join('Ope_Postas as post', 'post.id', '=', 'agency.post_id')
+            ->leftJoin('Ope_Postas as second_post', 'second_post.id', '=', 'agency.second_post_id')
+            ->where('agency.tenant_id', $tenant)
+            ->orderBy('agency.agency_code')
+            ->select(
+                'agency.agency_code', 'agency.name', 'agency.address', 'agency.commune',
+                'trunk.trunk_code', 'trunk.name as trunk_name',
+                'post.post_code', 'post.name as post_name', 'post.is_active as post_is_active',
+                'second_post.post_code as second_post_code', 'second_post.name as second_post_name',
+            )
+            ->get();
+
+        $coverageCounts = DB::table('PPR_coverages')
+            ->where('tenant_id', $tenant)
+            ->whereNotNull('ID_ComunaMatrizAgencia')
+            ->select('ID_ComunaMatrizAgencia')
+            ->selectRaw('COUNT(*) as total')
+            ->groupBy('ID_ComunaMatrizAgencia')
+            ->pluck('total', 'ID_ComunaMatrizAgencia');
+
+        $trunks = DB::table('Ope_Troncales as trunk')
+            ->leftJoin('Ope_Choferes as driver', 'driver.id', '=', 'trunk.driver_id')
+            ->where('trunk.tenant_id', $tenant)
+            ->orderBy('trunk.trunk_code')
+            ->select('trunk.*', 'driver.rut as driver_rut', 'driver.name as driver_name')
+            ->get();
+
+        $posts = DB::table('Ope_Postas as post')
+            ->leftJoin('Ope_Choferes as driver', 'driver.id', '=', 'post.driver_id')
+            ->where('post.tenant_id', $tenant)
+            ->orderBy('post.post_code')
+            ->select('post.*', 'driver.rut as driver_rut', 'driver.name as driver_name')
+            ->get();
+
+        return view('operations::setup', [
+            'selected' => $selected,
+            'locations' => DB::table('Ope_Ubicaciones')->where('tenant_id', $tenant)->orderBy('name')->get(),
+            'coverages' => DB::table('PPR_coverages')->where(['tenant_id' => $tenant, 'is_active' => true])->orderBy('commune_name')->get(),
+            'providers' => DB::table('MBA_providers')->where(['tenant_id' => $tenant, 'is_active' => true])->orderBy('legal_name')->get(['id', 'legal_name', 'operational_name']),
+            'configurations' => DB::table('Ope_GuiaConfiguraciones as c')->join('PPR_coverages as v', 'v.id', '=', 'c.coverage_id')->join('Ope_Ubicaciones as o', 'o.id', '=', 'c.origin_id')->join('Ope_Ubicaciones as d', 'd.id', '=', 'c.destination_id')->where('c.tenant_id', $tenant)->orderBy('v.commune_name')->orderBy('c.sequence')->select('c.*', 'v.commune_name', 'v.trunk_name', 'v.post_name', 'o.name as origin_name', 'd.name as destination_name')->get(),
+            'agencyRoutes' => $agencyRoutes,
+            'coverageCounts' => $coverageCounts,
+            'trunks' => $trunks,
+            'posts' => $posts,
+        ]);
     }
 
     public function location(Request $request): RedirectResponse
