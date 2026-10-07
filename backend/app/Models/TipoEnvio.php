@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class TipoEnvio extends Model
 {
+    protected $table = 'PPR_tipo_envios';
+
     /** @use HasFactory<TipoEnvioFactory> */
     use HasFactory;
 

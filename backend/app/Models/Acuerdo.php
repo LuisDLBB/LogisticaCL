@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Acuerdo extends Model
 {
+    protected $table = 'PPR_acuerdos';
+
     /** @use HasFactory<AcuerdoFactory> */
     use HasFactory;
 

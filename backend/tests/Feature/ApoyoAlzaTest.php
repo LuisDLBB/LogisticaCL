@@ -327,7 +327,7 @@ class ApoyoAlzaTest extends ProviderPaymentsWorkflowTestCase
         $this->assertSame('no_pagar', $withoutPayment->fresh()->estado_calculo);
         $this->assertSame(0, $withoutPayment->fresh()->monto_apoyo);
         $this->assertNotNull($withoutPayment->fresh()->closed_at);
-        $this->assertDatabaseMissing('Pago_Movimientos_Courier', ['apoyo_alza_id' => $withoutPayment->id]);
+        $this->assertDatabaseMissing('PPR_Pago_Movimientos_Courier', ['apoyo_alza_id' => $withoutPayment->id]);
 
         $this->post(route('provider-payments.courier-movements.apoyo-alza.update'), [
             'periodo' => '202608', 'rows' => [$first->id => ['provider_id' => $provider->id,

@@ -13,7 +13,7 @@ class BaseServicio extends Model
     /** @use HasFactory<BaseServicioFactory> */
     use HasFactory;
 
-    protected $table = 'Base_Servicios';
+    protected $table = 'PPR_Base_Servicios';
 
     protected $guarded = [];
 

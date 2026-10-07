@@ -124,7 +124,7 @@ class ApoyoAlzaImporter
                         'amount' => (int) $existing->sum('monto_apoyo')];
                 }
                 foreach (array_chunk($rows, 250) as $chunk) {
-                    DB::table('apoyo_alzas')->insert($chunk);
+                    DB::table('PPR_apoyo_alzas')->insert($chunk);
                 }
                 $result = $this->calculator->recalculate($tenantId, $period);
 

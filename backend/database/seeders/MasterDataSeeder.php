@@ -16,7 +16,7 @@ class MasterDataSeeder extends Seeder
 
     public function run(): void
     {
-        $this->tenantId = (int) DB::table('tenants')->where('code', '4N')->value('id');
+        $this->tenantId = (int) DB::table('MBA_tenants')->where('code', '4N')->value('id');
         if (! $this->tenantId) {
             return;
         }
@@ -40,11 +40,11 @@ class MasterDataSeeder extends Seeder
             $email = filter_var($sourceEmail, FILTER_VALIDATE_EMAIL)
                 ? strtolower($sourceEmail)
                 : strtolower(trim($row['Rut'])).'@usuarios.4n.local';
-            $existingUser = DB::table('users')->where('email', $email)
+            $existingUser = DB::table('MBA_users')->where('email', $email)
                 ->when(trim($row['Usuario'] ?? '') !== '', fn ($query) => $query->orWhere('username', trim($row['Usuario'])))
                 ->first();
             if (! $existingUser) {
-                DB::table('users')->insertOrIgnore([
+                DB::table('MBA_users')->insertOrIgnore([
                     'email' => $email,
                     'name' => $row['Nombre completo'], 'tax_id' => $row['Rut'], 'username' => $row['Usuario'],
                     'password' => Hash::make((string) $row['Clave Provisoria']), 'area' => $row['Área'],
@@ -53,8 +53,8 @@ class MasterDataSeeder extends Seeder
                     'phone' => $row['Numero Telefono'], 'updated_at' => now(), 'created_at' => now(),
                 ]);
             }
-            $userId = $existingUser?->id ?? DB::table('users')->where('email', $email)->value('id');
-            DB::table('tenant_users')->insertOrIgnore([
+            $userId = $existingUser?->id ?? DB::table('MBA_users')->where('email', $email)->value('id');
+            DB::table('MBA_tenant_users')->insertOrIgnore([
                 'tenant_id' => $this->tenantId, 'user_id' => $userId,
                 'rut_empresa' => $row['RutEmpresa'], 'role_code' => Str::slug($row['Perfil'] ?: 'operator', '_'),
                 'is_active' => true, 'updated_at' => now(), 'created_at' => now(),
@@ -66,7 +66,7 @@ class MasterDataSeeder extends Seeder
     {
         foreach ($this->rows('initial_vehicles.tsv') as $row) {
             $company = trim($row['Empresa'] ?? '');
-            DB::table('vehicles')->updateOrInsert(['tenant_id' => $this->tenantId, 'plate' => $row['Patente']], [
+            DB::table('MBA_vehicles')->updateOrInsert(['tenant_id' => $this->tenantId, 'plate' => $row['Patente']], [
                 'rut_empresa' => $company === 'PMCB' ? '77639015-1' : '77346078-7',
                 'internal_code' => $row['Patente-Consumos'] ?: $row['Patente'], 'vehicle_type' => $row['Tipo'] ?: 'Sin tipo',
                 'ownership_type' => 'Propio', 'operational_status' => $row['Estado'] ?: 'Activa', 'brand' => $row['Marca'],
@@ -86,9 +86,9 @@ class MasterDataSeeder extends Seeder
     {
         foreach ($this->rows('initial_providers.tsv') as $row) {
             [$number, $dv] = $this->rutParts($row['Rut_Proveedor']);
-            $existingProvider = DB::table('providers')->where('tenant_id', $this->tenantId)
+            $existingProvider = DB::table('MBA_providers')->where('tenant_id', $this->tenantId)
                 ->where('tax_id_number', $number)->first(['id', 'contact_email']);
-            DB::table('providers')->updateOrInsert(['tenant_id' => $this->tenantId, 'tax_id_number' => $number], [
+            DB::table('MBA_providers')->updateOrInsert(['tenant_id' => $this->tenantId, 'tax_id_number' => $number], [
                 'tax_id' => strtoupper($row['Rut_Proveedor']), 'tax_id_check_digit' => $dv, 'legal_name' => $row['Razon_Social'],
                 'operational_name' => $row['Operador'], 'operator_type' => $row['TipoOperador'], 'tax_document_type' => $row['Tipo_Documento'],
                 'commercial_address' => $row['DireccionComercial'], 'commercial_commune_name' => $row['ComunaComercial'],
@@ -96,8 +96,8 @@ class MasterDataSeeder extends Seeder
                 'contact_email' => $existingProvider?->contact_email ?? $row['CorreoContacto'],
                 'is_active' => true, 'updated_at' => now(), 'created_at' => now(),
             ]);
-            $providerId = $existingProvider?->id ?? DB::table('providers')->where('tenant_id', $this->tenantId)->where('tax_id_number', $number)->value('id');
-            if (trim($row['Banco'] ?? '') !== '' && ! DB::table('provider_bank_accounts')->where('provider_id', $providerId)->exists()) {
+            $providerId = $existingProvider?->id ?? DB::table('MBA_providers')->where('tenant_id', $this->tenantId)->where('tax_id_number', $number)->value('id');
+            if (trim($row['Banco'] ?? '') !== '' && ! DB::table('PPR_provider_bank_accounts')->where('provider_id', $providerId)->exists()) {
                 ProviderBankAccount::query()->create([
                     'provider_id' => $providerId, 'account_number' => $row['Nro_Cuenta'],
                     'account_holder_name' => $row['Titular_Banco'], 'account_holder_tax_id' => $row['RUT_Titular_Banco'],
@@ -110,15 +110,24 @@ class MasterDataSeeder extends Seeder
 
     private function coverages(): void
     {
+        $agencyIds = collect(json_decode(
+            file_get_contents(database_path('data/coverage_matrix_agency_20261001.json')),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        ))->keyBy(fn (array $coverage): string => $coverage[2].'|'.($coverage[3] ?? ''));
+
         foreach ($this->rows('initial_coverages.tsv') as $row) {
-            $providerId = DB::table('providers')->where('tenant_id', $this->tenantId)->where('tax_id', strtoupper($row['Rut_Proveedor']))->value('id');
-            DB::table('coverages')->updateOrInsert(['tenant_id' => $this->tenantId, 'commune_name' => $row['Comuna'], 'route_code' => $row['Ruta']], [
+            $providerId = DB::table('MBA_providers')->where('tenant_id', $this->tenantId)->where('tax_id', strtoupper($row['Rut_Proveedor']))->value('id');
+            $agency = $agencyIds->get($row['Comuna'].'|'.$row['Ruta']);
+            DB::table('PPR_coverages')->updateOrInsert(['tenant_id' => $this->tenantId, 'commune_name' => $row['Comuna'], 'route_code' => $row['Ruta']], [
                 'provider_id' => $providerId, 'matrix_commune_name' => $row['ComunaMatriz'], 'provider_tax_id' => strtoupper($row['Rut_Proveedor']),
                 'provider_name_source' => $row['NombreProveedor'], 'zone' => ProviderZone::resolve($row['Rut_Proveedor'], $providerId, $row['Zona']), 'return_payment_applies' => strtoupper($row['PAGAR RETORNO']) === 'SI',
                 'return_value' => $this->number($row['VALOR/RETORNO']), 'delivery_frequency' => $row['Frecuencia'], 'delivery_type' => $row['TipoEntrega'],
                 'region_code' => $this->integer($row['Region']), 'consideration_code' => $this->integer($row['Considerar']),
                 'aerial_commune_name' => $row['ComunaAereo'], 'aerial_route_code' => $row['ruta aerea'], 'base_commune_name' => $row['ComunaBase'],
                 'trunk_name' => $row['Troncal'], 'post_name' => $row['Posta'], 'trunk_delivery_order' => $this->integer($row['OrdenEntregaTroncal']),
+                'ID_ComunaMatrizAgencia' => $agency[4] ?? null,
                 'is_active' => true, 'updated_at' => now(), 'created_at' => now(),
             ]);
         }
@@ -126,12 +135,12 @@ class MasterDataSeeder extends Seeder
 
     private function costCenterKeys(): void
     {
-        DB::table('llave_centro_costos')->where('tenant_id', $this->tenantId)->delete();
+        DB::table('PPR_llave_centro_costos')->where('tenant_id', $this->tenantId)->delete();
         $records = [];
         foreach ($this->rows('initial_cost_center_keys.tsv') as $row) {
-            $providerId = DB::table('providers')->where('tenant_id', $this->tenantId)->where('tax_id', strtoupper($row['RutProveedor']))->value('id');
-            $clientId = DB::table('clients')->where('tenant_id', $this->tenantId)->where('tax_id', strtoupper($row['RutCliente']))->value('id');
-            $serviceId = DB::table('service_types')->where('service_code', $this->integer($row['IDServicio']))->value('id');
+            $providerId = DB::table('MBA_providers')->where('tenant_id', $this->tenantId)->where('tax_id', strtoupper($row['RutProveedor']))->value('id');
+            $clientId = DB::table('MBA_clients')->where('tenant_id', $this->tenantId)->where('tax_id', strtoupper($row['RutCliente']))->value('id');
+            $serviceId = DB::table('PPR_service_types')->where('service_code', $this->integer($row['IDServicio']))->value('id');
             $records[] = [
                 'tenant_id' => $this->tenantId, 'key_code' => $row['Llave'],
                 'provider_id' => $providerId, 'client_id' => $clientId, 'service_type_id' => $serviceId,
@@ -142,13 +151,13 @@ class MasterDataSeeder extends Seeder
             ];
         }
         foreach (array_chunk($records, 300) as $chunk) {
-            DB::table('llave_centro_costos')->insert($chunk);
+            DB::table('PPR_llave_centro_costos')->insert($chunk);
         }
     }
 
     private function weightRates(): void
     {
-        DB::table('cost_center_weight_rates')->delete();
+        DB::table('PPR_cost_center_weight_rates')->delete();
         $records = [];
         foreach ($this->rows('initial_weight_rates.tsv') as $row) {
             $records[] = [
@@ -157,16 +166,16 @@ class MasterDataSeeder extends Seeder
             ];
         }
         foreach (array_chunk($records, 300) as $chunk) {
-            DB::table('cost_center_weight_rates')->insert($chunk);
+            DB::table('PPR_cost_center_weight_rates')->insert($chunk);
         }
     }
 
     private function clientServices(): void
     {
-        $clientIds = DB::table('clients')->where('tenant_id', $this->tenantId)->pluck('id');
-        DB::table('client_service_type')->whereIn('client_id', $clientIds)->delete();
+        $clientIds = DB::table('MBA_clients')->where('tenant_id', $this->tenantId)->pluck('id');
+        DB::table('PPR_client_service_type')->whereIn('client_id', $clientIds)->delete();
 
-        $relations = DB::table('llave_centro_costos')
+        $relations = DB::table('PPR_llave_centro_costos')
             ->where('tenant_id', $this->tenantId)
             ->whereNotNull('client_id')
             ->whereNotNull('service_type_id')
@@ -182,20 +191,20 @@ class MasterDataSeeder extends Seeder
             ])->all();
 
         foreach (array_chunk($relations, 300) as $chunk) {
-            DB::table('client_service_type')->insert($chunk);
+            DB::table('PPR_client_service_type')->insert($chunk);
         }
     }
 
     private function externalShipments(): void
     {
-        DB::table('envios_externos')->where('tenant_id', $this->tenantId)->delete();
+        DB::table('PPR_envios_externos')->where('tenant_id', $this->tenantId)->delete();
         $records = [];
         foreach ($this->rows('initial_external_shipments.tsv') as $row) {
             $tracking = trim($row['Seguimiento']);
             if ($tracking === '') {
                 continue;
             }
-            $clientId = DB::table('clients')->where('tenant_id', $this->tenantId)->whereRaw('LOWER(source_merchant_name) = ?', [mb_strtolower($row['Cliente'])])->value('id');
+            $clientId = DB::table('MBA_clients')->where('tenant_id', $this->tenantId)->whereRaw('LOWER(source_merchant_name) = ?', [mb_strtolower($row['Cliente'])])->value('id');
             $records[$tracking] = [
                 'tenant_id' => $this->tenantId, 'tracking_number' => $tracking,
                 'client_id' => $clientId, 'fecha' => $this->date($row['Fecha']), 'external_order_number' => $row['OS Blue'],
@@ -204,13 +213,13 @@ class MasterDataSeeder extends Seeder
             ];
         }
         foreach (array_chunk(array_values($records), 300) as $chunk) {
-            DB::table('envios_externos')->insert($chunk);
+            DB::table('PPR_envios_externos')->insert($chunk);
         }
     }
 
     private function weightTransformations(): void
     {
-        DB::table('weight_transformations')->where('tenant_id', $this->tenantId)->delete();
+        DB::table('PPR_weight_transformations')->where('tenant_id', $this->tenantId)->delete();
         $records = [];
         foreach ($this->rows('initial_weight_transformations.tsv') as $row) {
             $source = trim($row['Peso']);
@@ -225,7 +234,7 @@ class MasterDataSeeder extends Seeder
             ];
         }
         foreach (array_chunk($records, 300) as $chunk) {
-            DB::table('weight_transformations')->insert($chunk);
+            DB::table('PPR_weight_transformations')->insert($chunk);
         }
     }
 

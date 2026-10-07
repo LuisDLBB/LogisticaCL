@@ -53,7 +53,7 @@ class AcuerdoController
         });
         $summary->zonas_pendientes = (clone $base)->get(['provider_id', 'zona'])
             ->filter(fn (Acuerdo $row): bool => ! $row->zona && ! $zoneByProvider->get($row->provider_id))->count();
-        $monthClosed = $period !== '' && DB::table('Cierres_Pagos')->where('tenant_id', $tenantId)->where('periodo', $period)->exists();
+        $monthClosed = $period !== '' && DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenantId)->where('periodo', $period)->exists();
         $isClosed = $monthClosed || ((int) $summary->registros > 0 && (int) $summary->cerrados === (int) $summary->registros);
         $byService = (clone $base)->selectRaw('servicio, COUNT(*) AS registros, SUM(cantidad) AS dias, SUM(total) AS monto')
             ->groupBy('servicio')->orderByDesc('monto')->get();
@@ -190,8 +190,8 @@ class AcuerdoController
         $tenantId = Tenant::query()->where('code', '4N')->firstOrFail()->id;
         $validated = $request->validate([
             'periodo' => ['required', 'date_format:Ym'], 'rows' => ['required', 'array', 'min:1', 'max:25'],
-            'rows.*.provider_id' => ['present', 'nullable', 'integer', Rule::exists('providers', 'id')->where('tenant_id', $tenantId)],
-            'rows.*.client_id' => ['present', 'nullable', 'integer', Rule::exists('clients', 'id')->where('tenant_id', $tenantId)],
+            'rows.*.provider_id' => ['present', 'nullable', 'integer', Rule::exists('MBA_providers', 'id')->where('tenant_id', $tenantId)],
+            'rows.*.client_id' => ['present', 'nullable', 'integer', Rule::exists('MBA_clients', 'id')->where('tenant_id', $tenantId)],
             'rows.*.empresa_mandante' => ['present', 'nullable', 'string', 'max:100'],
             'rows.*.zona' => ['nullable', 'in:RM,Regiones'],
             'rows.*.inasistencias' => ['required', 'integer', 'between:0,366'],
@@ -227,9 +227,9 @@ class AcuerdoController
         $tenantId = Tenant::query()->where('code', '4N')->firstOrFail()->id;
         $validated = $request->validate([
             'periodo' => ['required', 'date_format:Ym'],
-            'provider_id' => ['required', 'integer', Rule::exists('providers', 'id')->where('tenant_id', $tenantId)],
-            'client_id' => ['required', 'integer', Rule::exists('clients', 'id')->where('tenant_id', $tenantId)],
-            'servicio' => ['required', 'string', Rule::exists('acuerdo_service_rules', 'servicio')
+            'provider_id' => ['required', 'integer', Rule::exists('MBA_providers', 'id')->where('tenant_id', $tenantId)],
+            'client_id' => ['required', 'integer', Rule::exists('MBA_clients', 'id')->where('tenant_id', $tenantId)],
+            'servicio' => ['required', 'string', Rule::exists('PPR_acuerdo_service_rules', 'servicio')
                 ->where('tenant_id', $tenantId)->where('periodo', $request->input('periodo'))],
             'costo' => ['required', 'integer', 'min:0'], 'factor' => ['required', 'integer', 'between:1,1000'],
             'inasistencias' => ['required', 'integer', 'between:0,366'],

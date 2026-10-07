@@ -54,7 +54,7 @@ class PeumoPaymentAssigner
                 $rate = $rates->get($payment->id);
                 $value = $index === 0 ? $rate['first'] : $rate['rest'];
                 if ($payment->condicion_pago !== 'SI' || (int) $payment->valor !== $value) {
-                    DB::table('Pago_Movimientos_Courier')->where('id', $payment->id)
+                    DB::table('PPR_Pago_Movimientos_Courier')->where('id', $payment->id)
                         ->update(['condicion_pago' => 'SI', 'valor' => $value, 'updated_at' => now()]);
                 }
                 $result['paid']++;
@@ -79,7 +79,7 @@ class PeumoPaymentAssigner
                 continue;
             }
             if ($payment->condicion_pago === 'SI' || $payment->valor !== null) {
-                DB::table('Pago_Movimientos_Courier')->where('id', $payment->id)
+                DB::table('PPR_Pago_Movimientos_Courier')->where('id', $payment->id)
                     ->update(['condicion_pago' => null, 'valor' => null, 'updated_at' => now()]);
             }
             $result['pending']++;

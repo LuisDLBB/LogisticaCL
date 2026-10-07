@@ -131,7 +131,7 @@ class BaseServicioImporter
             }
             $count = 0;
             foreach (array_chunk($prepared, 250) as $chunk) {
-                $count += DB::table('Base_Servicios')->insertOrIgnore($chunk);
+                $count += DB::table('PPR_Base_Servicios')->insertOrIgnore($chunk);
             }
 
             return $count;

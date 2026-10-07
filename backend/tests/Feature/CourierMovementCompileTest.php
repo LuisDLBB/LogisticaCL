@@ -154,16 +154,16 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
         ])->assertRedirect();
 
         foreach (['Maribel Silva Donoso', 'Maribel Elena Silva Donoso'] as $courier) {
-            $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+            $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
                 'periodo' => '202609', 'nombre_repartidor' => $courier,
                 'rut_proveedor' => $maribel->tax_id, 'razon_social_proveedor' => $maribel->legal_name,
                 'nombre_operacional' => $maribel->operational_name, 'tipo_documento' => 'Factura',
             ]);
         }
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'periodo' => '202609', 'nombre_repartidor' => 'Otro repartidor', 'rut_proveedor' => $dsGroup->tax_id,
         ]);
-        $this->assertDatabaseCount('Maestro_Pagos', 0);
+        $this->assertDatabaseCount('PPR_Maestro_Pagos', 0);
     }
 
     public function test_compilation_assigns_claudio_from_the_4n_temuco_courier_mapping(): void
@@ -184,7 +184,7 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
             'provider_id' => $internal->id, 'provider_tax_id' => $internal->tax_id,
             'provider_name_source' => $internal->legal_name, 'zone' => 'Regiones', 'is_active' => true,
         ]);
-        DB::table('Proveedores_usuarios_4N')->insert([
+        DB::table('PPR_Proveedores_usuarios_4N')->insert([
             'RutProveedor' => $internal->tax_id, 'ComunaMatriz' => '4N Temuco',
             'NombreRepartidor' => 'Claudio Andres Cuevas Aravena', 'NuevoRutProveedor' => $claudio->tax_id,
         ]);
@@ -200,12 +200,12 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
             'period' => '202609', 'processes' => ['Variable'],
         ])->assertRedirect();
 
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'periodo' => '202609', 'nombre_repartidor' => 'Claudio Andres Cuevas Aravena',
             'rut_proveedor' => $claudio->tax_id, 'razon_social_proveedor' => $claudio->legal_name,
             'tipo_documento' => $claudio->tax_document_type,
         ]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'periodo' => '202609', 'nombre_repartidor' => 'Otro repartidor', 'rut_proveedor' => $internal->tax_id,
         ]);
     }
@@ -250,7 +250,7 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
         ])->assertRedirect();
 
         foreach ([$victor, $victor, $victor, $marcelo, $marcelo] as $index => $provider) {
-            $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+            $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
                 'seguimiento_paquete' => '4N202609020001-00'.$index,
                 'rut_proveedor' => $provider->tax_id,
                 'razon_social_proveedor' => $provider->legal_name,
@@ -276,13 +276,13 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
         $this->seed(CalamaProviderTransitionSeeder::class);
         $this->seed(CalamaProviderTransitionSeeder::class);
 
-        $this->assertDatabaseHas('coverages', [
+        $this->assertDatabaseHas('PPR_coverages', [
             'commune_name' => 'Calama', 'provider_tax_id' => '13172671-6',
             'matrix_commune_name' => 'Marcelo Avendaño (Calama)',
         ]);
-        $this->assertSame(88, DB::table('llave_centro_costos')->where('provider_tax_id', '13013180-8')->count());
-        $this->assertSame(88, DB::table('llave_centro_costos')->where('provider_tax_id', '13172671-6')->count());
-        $this->assertDatabaseCount('Maestro_Pagos', 0);
+        $this->assertSame(88, DB::table('PPR_llave_centro_costos')->where('provider_tax_id', '13013180-8')->count());
+        $this->assertSame(88, DB::table('PPR_llave_centro_costos')->where('provider_tax_id', '13172671-6')->count());
+        $this->assertDatabaseCount('PPR_Maestro_Pagos', 0);
     }
 
     public function test_peumo_is_separated_and_its_rate_is_assigned_to_each_package_by_dispatch_guide(): void
@@ -473,7 +473,7 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
         ]);
         $this->assertSame('RM', $coverage->fresh()->zone);
 
-        DB::table('coverages')->where('id', $coverage->id)->update(['zone' => 'Regiones']);
+        DB::table('PPR_coverages')->where('id', $coverage->id)->update(['zone' => 'Regiones']);
         $movement = CourierMovement::query()->create([
             'tenant_id' => $tenant->id, 'tracking_number' => '4N202608010001-999',
             'nombre_proceso' => '202608-Variable', 'tipo_pago' => 'Variable',
@@ -484,7 +484,7 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
             'period' => '202608', 'processes' => ['Variable'],
         ])->assertRedirect();
 
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'courier_movement_id' => $movement->id, 'rut_proveedor' => $provider->tax_id,
             'comuna_matriz' => 'Operador Curacavi', 'zona' => 'RM',
         ]);
@@ -525,7 +525,7 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
         $this->post(route('provider-payments.courier-movements.compile.store'), [
             'period' => '202608', 'processes' => ['Retornos'],
         ])->assertRedirect();
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'courier_movement_id' => $movement->id,
             'tipo_pago' => 'Retornos',
             'nombre_proceso' => 'Retornos',
@@ -552,19 +552,19 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
             'courier_name' => 'Hugo Lopez']);
 
         $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => '202607', 'processes' => ['Variable']])->assertRedirect();
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $movement->id,
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['courier_movement_id' => $movement->id,
             'rut_proveedor' => '0-0', 'razon_social_proveedor' => 'Envio externo', 'condicion_pago' => 'NO', 'valor' => null]);
 
-        DB::table('Pago_Movimientos_Courier')->where('courier_movement_id', $movement->id)
+        DB::table('PPR_Pago_Movimientos_Courier')->where('courier_movement_id', $movement->id)
             ->update(['condicion_pago' => 'SI', 'valor' => 100]);
         $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])->assertRedirect();
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $movement->id,
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['courier_movement_id' => $movement->id,
             'rut_proveedor' => '0-0', 'razon_social_proveedor' => 'Envio externo', 'condicion_pago' => 'NO', 'valor' => null]);
 
-        DB::table('Pago_Movimientos_Courier')->where('courier_movement_id', $movement->id)
+        DB::table('PPR_Pago_Movimientos_Courier')->where('courier_movement_id', $movement->id)
             ->update(['condicion_pago' => 'SI', 'valor' => 100]);
         $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => '202607', 'processes' => ['Variable']])->assertRedirect();
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $movement->id,
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['courier_movement_id' => $movement->id,
             'condicion_pago' => 'NO', 'valor' => null]);
     }
 
@@ -590,8 +590,8 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
         }
 
         $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])->assertRedirect();
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['comuna_matriz' => 'Postman Cargo (Iquique)', 'condicion_pago' => 'SI', 'valor' => 100]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['comuna_matriz' => 'Postman Cargo (Alto Hospicio)', 'condicion_pago' => 'SI', 'valor' => 200]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['comuna_matriz' => 'Postman Cargo (Iquique)', 'condicion_pago' => 'SI', 'valor' => 100]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['comuna_matriz' => 'Postman Cargo (Alto Hospicio)', 'condicion_pago' => 'SI', 'valor' => 200]);
     }
 
     public function test_assign_payments_defaults_missing_lanas_weight_to_one_before_looking_up_minimum_rate(): void
@@ -616,9 +616,9 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
 
         $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])
             ->assertRedirect()->assertSessionHas('status', fn (string $status): bool => str_contains($status, '2 Lanas sin peso ajustadas a 1 kg'));
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'lana_pendiente', 'peso_final' => 1, 'condicion_pago' => 'SI', 'valor' => 100]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'lana_no', 'peso_final' => 1, 'condicion_pago' => 'NO', 'valor' => null]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'variable', 'peso_final' => 1, 'condicion_pago' => 'SI', 'valor' => 100]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => 'lana_pendiente', 'peso_final' => 1, 'condicion_pago' => 'SI', 'valor' => 100]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => 'lana_no', 'peso_final' => 1, 'condicion_pago' => 'NO', 'valor' => null]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => 'variable', 'peso_final' => 1, 'condicion_pago' => 'SI', 'valor' => 100]);
         $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])
             ->assertRedirect()->assertSessionHas('status', fn (string $status): bool => str_contains($status, '0 Lanas sin peso ajustadas a 1 kg'));
     }
@@ -663,10 +663,10 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
 
         app(CourierPaymentAssigner::class)->assign($tenant->id, '202609', '12538127-8');
 
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'rut_proveedor' => '12538127-8', 'condicion_pago' => 'SI', 'valor' => 900,
         ]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'rut_proveedor' => '11111111-1', 'condicion_pago' => null, 'valor' => null,
         ]);
     }
@@ -699,19 +699,19 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
         $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])
             ->assertRedirect()->assertSessionHas('status');
         foreach (['liviano', 'pesado'] as $tracking) {
-            $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => $tracking, 'condicion_pago' => 'SI', 'valor' => 1294]);
+            $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => $tracking, 'condicion_pago' => 'SI', 'valor' => 1294]);
         }
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'no', 'condicion_pago' => 'NO', 'valor' => null]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'protegido', 'condicion_pago' => 'NO', 'valor' => null]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'sin_proveedor', 'condicion_pago' => 'SI', 'valor' => 800]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => 'no', 'condicion_pago' => 'NO', 'valor' => null]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => 'protegido', 'condicion_pago' => 'NO', 'valor' => null]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => 'sin_proveedor', 'condicion_pago' => 'SI', 'valor' => 800]);
         foreach (['ambiguo', 'sin_cobertura'] as $tracking) {
-            $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => $tracking, 'condicion_pago' => null, 'valor' => null]);
+            $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => $tracking, 'condicion_pago' => null, 'valor' => null]);
         }
         Coverage::query()->where('commune_name', 'Viña del Mar')->update(['return_value' => 1500]);
         $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])->assertRedirect();
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'pesado', 'condicion_pago' => 'SI', 'valor' => 1500]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'protegido', 'condicion_pago' => 'NO', 'valor' => null]);
-        $this->assertDatabaseCount('Pago_Movimientos_Courier', 7);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => 'pesado', 'condicion_pago' => 'SI', 'valor' => 1500]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => 'protegido', 'condicion_pago' => 'NO', 'valor' => null]);
+        $this->assertDatabaseCount('PPR_Pago_Movimientos_Courier', 7);
     }
 
     public function test_assign_payments_uses_active_keys_weight_rates_and_additional_kilo_without_overwriting_no(): void
@@ -746,27 +746,27 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
                 'peso_final' => $weight, 'rut_proveedor' => $provider->tax_id, 'rut_cliente' => $client->tax_id,
                 'condicion_pago' => $condition]);
         }
-        DB::table('Pago_Movimientos_Courier')->where('seguimiento_paquete', 'veinte')->update(['peso_final' => 1]);
-        DB::table('movimientos_courier')->where('tracking_number', '4N202607010001-111')->update(['peso_final' => 1]);
+        DB::table('PPR_Pago_Movimientos_Courier')->where('seguimiento_paquete', 'veinte')->update(['peso_final' => 1]);
+        DB::table('PPR_movimientos_courier')->where('tracking_number', '4N202607010001-111')->update(['peso_final' => 1]);
 
         $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))->assertOk()->assertSee('Asignar Pagos');
         $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])
             ->assertRedirect()->assertSessionHas('status');
         foreach (['uno' => 100, 'veinte' => 1000, 'veintitres' => 1150] as $tracking => $value) {
-            $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => $tracking, 'condicion_pago' => 'SI', 'valor' => $value]);
+            $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => $tracking, 'condicion_pago' => 'SI', 'valor' => $value]);
         }
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'no', 'condicion_pago' => 'NO', 'valor' => null]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'veinte', 'peso_final' => 20, 'condicion_pago' => 'SI', 'valor' => 1000]);
-        $this->assertDatabaseHas('movimientos_courier', ['tracking_number' => '4N202607010001-111', 'peso_final' => 20]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'protegido', 'condicion_pago' => 'NO', 'valor' => null]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'sin_llave', 'condicion_pago' => null, 'valor' => null]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'sin_tarifa', 'condicion_pago' => null, 'valor' => null]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => 'no', 'condicion_pago' => 'NO', 'valor' => null]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => 'veinte', 'peso_final' => 20, 'condicion_pago' => 'SI', 'valor' => 1000]);
+        $this->assertDatabaseHas('PPR_movimientos_courier', ['tracking_number' => '4N202607010001-111', 'peso_final' => 20]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => 'protegido', 'condicion_pago' => 'NO', 'valor' => null]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => 'sin_llave', 'condicion_pago' => null, 'valor' => null]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => 'sin_tarifa', 'condicion_pago' => null, 'valor' => null]);
         CostCenterWeightRate::query()->where('cost_center_code', 98)->where('final_weight', 20)->update(['value' => 2000]);
         $this->post(route('provider-payments.courier-movements.compile.payments.assign'), ['period' => '202607'])->assertRedirect();
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'veinte', 'condicion_pago' => 'SI', 'valor' => 2000]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'veintitres', 'condicion_pago' => 'SI', 'valor' => 2150]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => 'protegido', 'condicion_pago' => 'NO', 'valor' => null]);
-        $this->assertDatabaseCount('Pago_Movimientos_Courier', 7);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => 'veinte', 'condicion_pago' => 'SI', 'valor' => 2000]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => 'veintitres', 'condicion_pago' => 'SI', 'valor' => 2150]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => 'protegido', 'condicion_pago' => 'NO', 'valor' => null]);
+        $this->assertDatabaseCount('PPR_Pago_Movimientos_Courier', 7);
     }
 
     public function test_missing_cost_center_key_providers_can_be_reviewed_and_configured_from_work_page(): void
@@ -793,7 +793,7 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
             ->assertSee('Nueva combinación')->assertSee('Guardar y calcular pagos');
         $this->post(route('provider-payments.courier-movements.compile.keys.generate'), ['period' => '202607'])
             ->assertRedirect(route('provider-payments.courier-movements.compile.keys.review', ['period' => '202607']));
-        $this->assertDatabaseHas('llave_centro_costos', ['provider_id' => $missing->id, 'client_id' => $client->id, 'service_type_id' => $service->id, 'agent_name' => 'Operador Sin Llave', 'cost_center_code' => 0, 'payment_status' => 'NO', 'is_active' => false]);
+        $this->assertDatabaseHas('PPR_llave_centro_costos', ['provider_id' => $missing->id, 'client_id' => $client->id, 'service_type_id' => $service->id, 'agent_name' => 'Operador Sin Llave', 'cost_center_code' => 0, 'payment_status' => 'NO', 'is_active' => false]);
         $this->post(route('provider-payments.courier-movements.compile.keys.generate'), ['period' => '202607'])->assertRedirect();
         $this->assertSame(1, CostCenterKey::query()->where('provider_id', $missing->id)->count());
         $draft = CostCenterKey::query()->where('provider_id', $missing->id)->firstOrFail();
@@ -802,13 +802,13 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
         $this->post(route('provider-payments.courier-movements.compile.keys.save'), [
             'period' => '202607', 'rows' => [['id' => $draft->id, 'cost_center_code' => 88, 'payment_status' => 'SI', 'is_active' => 1]],
         ])->assertRedirect(route('provider-payments.courier-movements.compile.keys.review', ['period' => '202607', 'provider' => '', 'page' => 1]));
-        $this->assertDatabaseHas('llave_centro_costos', ['id' => $draft->id, 'cost_center_code' => 88, 'payment_status' => 'SI', 'is_active' => true]);
+        $this->assertDatabaseHas('PPR_llave_centro_costos', ['id' => $draft->id, 'cost_center_code' => 88, 'payment_status' => 'SI', 'is_active' => true]);
         $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))
             ->assertOk()->assertSee('Revisar Inconsistencias Llave CC (0)');
         $this->post(route('provider-payments.courier-movements.compile.keys.save'), [
             'period' => '202607', 'rows' => [['id' => $draft->id, 'cost_center_code' => 88, 'payment_status' => 'NO', 'is_active' => 0]],
         ])->assertRedirect();
-        $this->assertDatabaseHas('llave_centro_costos', ['id' => $draft->id, 'payment_status' => 'NO', 'is_active' => false]);
+        $this->assertDatabaseHas('PPR_llave_centro_costos', ['id' => $draft->id, 'payment_status' => 'NO', 'is_active' => false]);
     }
 
     public function test_new_combinations_can_be_edited_and_paid_without_generating_every_missing_key(): void
@@ -849,19 +849,19 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
             'period' => '202609', 'assign_payments' => 1,
             'rows' => [array_replace($selected, ['cost_center_code' => 0]), $unselected],
         ])->assertSessionHasErrors('rows');
-        $this->assertDatabaseMissing('llave_centro_costos', ['provider_tax_id' => $provider->tax_id]);
+        $this->assertDatabaseMissing('PPR_llave_centro_costos', ['provider_tax_id' => $provider->tax_id]);
 
         $this->post(route('provider-payments.courier-movements.compile.keys.save'), [
             'period' => '202609', 'assign_payments' => 1, 'rows' => [$selected, $unselected],
         ])->assertRedirect()->assertSessionHas('status');
 
-        $this->assertDatabaseHas('llave_centro_costos', ['provider_id' => $provider->id,
+        $this->assertDatabaseHas('PPR_llave_centro_costos', ['provider_id' => $provider->id,
             'client_id' => $client->id, 'service_code' => 901, 'payment_status' => 'SI',
             'cost_center_code' => 901, 'is_active' => true]);
-        $this->assertDatabaseMissing('llave_centro_costos', ['provider_id' => $provider->id, 'service_code' => 902]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => '4N202609010000-111',
+        $this->assertDatabaseMissing('PPR_llave_centro_costos', ['provider_id' => $provider->id, 'service_code' => 902]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => '4N202609010000-111',
             'condicion_pago' => 'SI', 'valor' => 2500]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => '4N202609010001-111',
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => '4N202609010001-111',
             'condicion_pago' => null, 'valor' => null]);
 
         $this->post(route('provider-payments.courier-movements.compile.keys.save'), [
@@ -997,7 +997,7 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '77346078-7', 'tax_id_number' => '77346078', 'tax_id_check_digit' => '7', 'legal_name' => '4N', 'operational_name' => '4N RM', 'operator_type' => 'Courier']);
         Provider::create(['tenant_id' => $tenant->id, 'tax_id' => '78350442-1', 'tax_id_number' => '78350442', 'tax_id_check_digit' => '1', 'legal_name' => 'Nuevo proveedor SPA', 'operational_name' => 'Claudio Operacional', 'operator_type' => 'Courier', 'tax_document_type' => 'Factura']);
-        DB::table('Proveedores_usuarios_4N')->insert([
+        DB::table('PPR_Proveedores_usuarios_4N')->insert([
             ['RutProveedor' => '77346078-7', 'ComunaMatriz' => '4N RM', 'NombreRepartidor' => 'Claudio Gonzalez', 'NuevoRutProveedor' => '78350442-1'],
             ['RutProveedor' => '77346078-7', 'ComunaMatriz' => '4N Temuco', 'NombreRepartidor' => '4N-Demo', 'NuevoRutProveedor' => 'N/A'],
         ]);
@@ -1011,13 +1011,13 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
         $this->post(route('provider-payments.courier-movements.compile.providers-4n.update'), ['period' => '202607'])
             ->assertRedirect()->assertSessionHas('status', '1 proveedores actualizados. 1 con N/A conservados; 0 sin cruce completo.');
 
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'nombre_repartidor' => 'Claudio González', 'rut_proveedor' => '78350442-1', 'razon_social_proveedor' => 'Nuevo proveedor SPA', 'nombre_operacional' => 'Claudio Operacional', 'tipo_documento' => 'Factura']);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'nombre_repartidor' => '4N-Demo', 'rut_proveedor' => '77346078-7']);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202608', 'nombre_repartidor' => 'Claudio González', 'rut_proveedor' => '77346078-7']);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['periodo' => '202607', 'nombre_repartidor' => 'Claudio González', 'rut_proveedor' => '78350442-1', 'razon_social_proveedor' => 'Nuevo proveedor SPA', 'nombre_operacional' => 'Claudio Operacional', 'tipo_documento' => 'Factura']);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['periodo' => '202607', 'nombre_repartidor' => '4N-Demo', 'rut_proveedor' => '77346078-7']);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['periodo' => '202608', 'nombre_repartidor' => 'Claudio González', 'rut_proveedor' => '77346078-7']);
         $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202607']))
             ->assertOk()->assertSee('Proveedores RM y Temuco (0)')->assertSee('1 con N/A')
             ->assertSee('No quedan registros con asignación válida para actualizar.');
-        $this->assertDatabaseCount('movimientos_courier', 3);
+        $this->assertDatabaseCount('PPR_movimientos_courier', 3);
     }
 
     public function test_non_payable_statuses_are_marked_no_without_removing_records(): void
@@ -1035,13 +1035,13 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
             ->assertOk()->assertSee('Marcar condición de pago NO')->assertSee('Anulado: 1')->assertSee('Sin definir');
         $this->post(route('provider-payments.courier-movements.compile.non-payable.mark'), ['period' => '202607'])->assertRedirect();
 
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'estado_envio' => 'Anulado', 'condicion_pago' => 'NO']);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'estado_envio' => 'Entregado', 'condicion_pago' => null]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202608', 'estado_envio' => 'Anulado', 'condicion_pago' => null]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['periodo' => '202607', 'estado_envio' => 'Anulado', 'condicion_pago' => 'NO']);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['periodo' => '202607', 'estado_envio' => 'Entregado', 'condicion_pago' => null]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['periodo' => '202608', 'estado_envio' => 'Anulado', 'condicion_pago' => null]);
         $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => '202607', 'processes' => ['Variable']])->assertRedirect();
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'estado_envio' => 'Anulado', 'condicion_pago' => 'NO']);
-        $this->assertDatabaseCount('Pago_Movimientos_Courier', 3);
-        $this->assertDatabaseCount('movimientos_courier', 3);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['periodo' => '202607', 'estado_envio' => 'Anulado', 'condicion_pago' => 'NO']);
+        $this->assertDatabaseCount('PPR_Pago_Movimientos_Courier', 3);
+        $this->assertDatabaseCount('PPR_movimientos_courier', 3);
     }
 
     public function test_internal_provider_is_marked_no_only_in_selected_period(): void
@@ -1074,11 +1074,11 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
         $this->post(route('provider-payments.courier-movements.compile.internal-provider.mark'), ['period' => '202607'])
             ->assertRedirect()->assertSessionHas('status');
 
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'razon_social_proveedor' => '4 Nortes Logistica SPA', 'condicion_pago' => 'NO']);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202607', 'razon_social_proveedor' => 'Otro proveedor SPA', 'condicion_pago' => null]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['periodo' => '202608', 'razon_social_proveedor' => '4 Nortes Logistica SPA', 'condicion_pago' => null]);
-        $this->assertDatabaseCount('Pago_Movimientos_Courier', 3);
-        $this->assertDatabaseCount('movimientos_courier', 3);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['periodo' => '202607', 'razon_social_proveedor' => '4 Nortes Logistica SPA', 'condicion_pago' => 'NO']);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['periodo' => '202607', 'razon_social_proveedor' => 'Otro proveedor SPA', 'condicion_pago' => null]);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['periodo' => '202608', 'razon_social_proveedor' => '4 Nortes Logistica SPA', 'condicion_pago' => null]);
+        $this->assertDatabaseCount('PPR_Pago_Movimientos_Courier', 3);
+        $this->assertDatabaseCount('PPR_movimientos_courier', 3);
     }
 
     public function test_special_payments_are_excluded_from_work_screen_validations_and_updates(): void
@@ -1104,7 +1104,7 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
         ]);
         $service = ServiceType::factory()->create(['service_code' => 93, 'name' => 'Servicio especial']);
         CourierStatus::query()->updateOrCreate(['name' => 'Anulado'], ['consider_for_payment' => false]);
-        DB::table('Proveedores_usuarios_4N')->insert([
+        DB::table('PPR_Proveedores_usuarios_4N')->insert([
             'RutProveedor' => $internalProvider->tax_id, 'ComunaMatriz' => '4N Temuco',
             'NombreRepartidor' => '4N-Demo', 'NuevoRutProveedor' => '78350442-1',
         ]);
@@ -1154,12 +1154,12 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
             'period' => '202608', 'processes' => ['Variable'],
         ])->assertRedirect();
 
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'id' => $payment->id, 'rut_proveedor' => $internalProvider->tax_id,
             'razon_social_proveedor' => $internalProvider->legal_name,
             'condicion_pago' => 'SI', 'valor' => 9000, 'peso_final' => 1,
         ]);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', [
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', [
             'id' => $legacyPayment->id, 'rut_proveedor' => $internalProvider->tax_id,
             'condicion_pago' => 'SI', 'valor' => 4500,
         ]);
@@ -1181,23 +1181,23 @@ class CourierMovementCompileTest extends ProviderPaymentsWorkflowTestCase
         $this->get(route('provider-payments.courier-movements.compile.work', ['period' => '202608']))->assertOk()->assertSee('Variable')->assertSee('Lanas');
         $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => '202608', 'processes' => ['Variable']])->assertRedirect();
 
-        $this->assertDatabaseCount('Pago_Movimientos_Courier', 2);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['courier_movement_id' => $matched->id, 'zona' => 'Z1', 'comuna_matriz' => 'Valparaíso', 'periodo' => '202608', 'nombre_proceso' => 'Variable', 'seguimiento_paquete' => '4N202608050001-111', 'peso_final' => 8, 'rut_cliente' => '11111111-1', 'rut_proveedor' => '22222222-2', 'empresa_mandante' => '4N']);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['seguimiento_paquete' => '4N202608050003-333', 'zona' => 'RM', 'comuna_matriz' => '4N RM', 'rut_proveedor' => '22222222-2', 'peso_final' => 7]);
+        $this->assertDatabaseCount('PPR_Pago_Movimientos_Courier', 2);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['courier_movement_id' => $matched->id, 'zona' => 'Z1', 'comuna_matriz' => 'Valparaíso', 'periodo' => '202608', 'nombre_proceso' => 'Variable', 'seguimiento_paquete' => '4N202608050001-111', 'peso_final' => 8, 'rut_cliente' => '11111111-1', 'rut_proveedor' => '22222222-2', 'empresa_mandante' => '4N']);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['seguimiento_paquete' => '4N202608050003-333', 'zona' => 'RM', 'comuna_matriz' => '4N RM', 'rut_proveedor' => '22222222-2', 'peso_final' => 7]);
         $this->assertSame('Calle 1', CourierPaymentMovement::query()->where('courier_movement_id', $matched->id)->firstOrFail()->direccion);
         $this->assertSame(8, $matched->fresh()->peso_real);
         $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => '202608', 'processes' => ['Variable']])->assertRedirect();
-        $this->assertDatabaseCount('Pago_Movimientos_Courier', 2);
+        $this->assertDatabaseCount('PPR_Pago_Movimientos_Courier', 2);
         $this->post(route('provider-payments.courier-movements.compile.store'), ['period' => '202608', 'processes' => ['Lanas']])->assertRedirect();
         $this->get(route('provider-payments.courier-movements.compile', ['period' => '202608']))
             ->assertOk()->assertSee('<strong>202608-Variable</strong>', false)->assertSee('<strong>202608-Lanas</strong>', false)->assertSee('Eliminar proceso');
         config()->set('provider-payments.process_deletion_key', 'test-master-key');
         $this->delete(route('provider-payments.courier-movements.compile.destroy'), ['period' => '202608', 'process' => 'Variable'])
             ->assertSessionHasErrors('password');
-        $this->assertDatabaseCount('Pago_Movimientos_Courier', 3);
+        $this->assertDatabaseCount('PPR_Pago_Movimientos_Courier', 3);
         $this->delete(route('provider-payments.courier-movements.compile.destroy'), ['period' => '202608', 'process' => 'Variable', 'password' => 'test-master-key'])->assertRedirect();
-        $this->assertDatabaseCount('Pago_Movimientos_Courier', 1);
-        $this->assertDatabaseHas('Pago_Movimientos_Courier', ['nombre_proceso' => 'Lanas', 'periodo' => '202608']);
-        $this->assertDatabaseCount('movimientos_courier', 3);
+        $this->assertDatabaseCount('PPR_Pago_Movimientos_Courier', 1);
+        $this->assertDatabaseHas('PPR_Pago_Movimientos_Courier', ['nombre_proceso' => 'Lanas', 'periodo' => '202608']);
+        $this->assertDatabaseCount('PPR_movimientos_courier', 3);
     }
 }

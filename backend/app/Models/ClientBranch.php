@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ClientBranch extends Model
 {
+    protected $table = 'PPR_client_branches';
+
     protected $fillable = [
         'client_id',
         'code',

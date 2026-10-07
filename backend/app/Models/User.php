@@ -15,6 +15,8 @@ use Illuminate\Notifications\Notifiable;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
+    protected $table = 'MBA_users';
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
@@ -38,7 +40,7 @@ class User extends Authenticatable
 
     public function tenants(): BelongsToMany
     {
-        return $this->belongsToMany(Tenant::class, 'tenant_users')
+        return $this->belongsToMany(Tenant::class, 'MBA_tenant_users')
             ->withPivot(['rut_empresa', 'role_code', 'is_active'])
             ->withTimestamps();
     }

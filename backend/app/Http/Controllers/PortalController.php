@@ -33,7 +33,7 @@ class PortalController extends Controller
             $query->whereRaw('LOWER(username) = ?', [$identifier])->orWhereRaw('LOWER(email) = ?', [$identifier]);
         })->limit(2)->get();
         $user = $candidates->count() === 1 ? $candidates->first() : null;
-        if (! $user || ! Hash::check($data['password'], $user->password) || ! $user->tenants()->where('code', '4N')->where('tenants.is_active', true)->wherePivot('is_active', true)->exists()) {
+        if (! $user || ! Hash::check($data['password'], $user->password) || ! $user->tenants()->where('code', '4N')->where('MBA_tenants.is_active', true)->wherePivot('is_active', true)->exists()) {
             RateLimiter::hit($key, 60);
             throw ValidationException::withMessages(['username' => 'Usuario o contraseña incorrectos, o acceso no habilitado.']);
         }
@@ -56,8 +56,12 @@ class PortalController extends Controller
         ]);
     }
 
-    public function module(string $module): View
+    public function module(string $module): View|RedirectResponse
     {
+        if ($module === 'operaciones') {
+            return redirect()->route('operations.dashboard');
+        }
+
         $modules = ['comercial' => 'Comercial', 'post-venta' => 'Post Venta', 'flota' => 'Flota', 'operaciones' => 'Operaciones', 'finanzas' => 'Finanzas'];
         abort_unless(isset($modules[$module]), 404);
 
@@ -74,7 +78,7 @@ class PortalController extends Controller
         $user = $request->user();
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'email' => ['required', 'email', 'max:255', Rule::unique('MBA_users')->ignore($user->id)],
             'phone' => ['nullable', 'string', 'max:40'],
             'current_password' => ['required', 'current_password'],
         ], ['current_password.current_password' => 'La contraseña actual no es correcta.', 'current_password.required' => 'Confirma tu contraseña actual para guardar.', 'email.unique' => 'Ese correo ya está en uso.']);

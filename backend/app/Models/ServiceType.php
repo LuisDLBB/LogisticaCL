@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class ServiceType extends Model
 {
+    protected $table = 'PPR_service_types';
+
     /** @use HasFactory<ServiceTypeFactory> */
     use HasFactory;
 
@@ -21,7 +23,7 @@ class ServiceType extends Model
 
     public function clients(): BelongsToMany
     {
-        return $this->belongsToMany(Client::class, 'client_service_type')
+        return $this->belongsToMany(Client::class, 'PPR_client_service_type')
             ->withPivot('is_active')
             ->withTimestamps();
     }

@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CostCenterWeightRate extends Model
 {
+    protected $table = 'PPR_cost_center_weight_rates';
+
     /** @use HasFactory<CostCenterWeightRateFactory> */
     use HasFactory;
 

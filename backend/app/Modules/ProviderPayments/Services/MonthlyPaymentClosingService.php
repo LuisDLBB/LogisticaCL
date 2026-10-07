@@ -16,7 +16,7 @@ class MonthlyPaymentClosingService
 
     public static function assertOpen(int $tenantId, string $period): void
     {
-        if (DB::table('Cierres_Pagos')->where('tenant_id', $tenantId)->where('periodo', $period)->exists()) {
+        if (DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenantId)->where('periodo', $period)->exists()) {
             throw ValidationException::withMessages(['period' => "El período {$period} tiene un cierre definitivo y no admite cambios."]);
         }
     }
@@ -27,20 +27,20 @@ class MonthlyPaymentClosingService
         return DB::transaction(function () use ($tenantId, $period): array {
             self::assertOpen($tenantId, $period);
 
-            DB::table('Pago_Movimientos_Courier')->where('tenant_id', $tenantId)->where('periodo', $period)
-                ->whereIn('seguimiento_paquete', DB::table('envios_externos')->where('tenant_id', $tenantId)
+            DB::table('PPR_Pago_Movimientos_Courier')->where('tenant_id', $tenantId)->where('periodo', $period)
+                ->whereIn('seguimiento_paquete', DB::table('PPR_envios_externos')->where('tenant_id', $tenantId)
                     ->where('exclude_provider_payment', true)->select('tracking_number'))
                 ->where(fn ($query) => $query->whereNull('condicion_pago')->orWhere('condicion_pago', '<>', 'NO')
                     ->orWhereNull('valor')->orWhere('valor', '<>', 0))
                 ->update(['condicion_pago' => 'NO', 'valor' => 0, 'updated_at' => now()]);
 
             $this->peumo->assign($tenantId, $period);
-            $sourcePeumo = DB::table('movimientos_courier')->where('tenant_id', $tenantId)
+            $sourcePeumo = DB::table('PPR_movimientos_courier')->where('tenant_id', $tenantId)
                 ->where('nombre_proceso', $period.'-Peumo');
-            $workedMovementIds = DB::table('Pago_Movimientos_Courier')->where('tenant_id', $tenantId)
+            $workedMovementIds = DB::table('PPR_Pago_Movimientos_Courier')->where('tenant_id', $tenantId)
                 ->where('periodo', $period)->select('courier_movement_id');
             $uncompiledPeumo = (clone $sourcePeumo)->whereNotIn('id', $workedMovementIds)->exists();
-            $unresolvedPeumo = DB::table('Pago_Movimientos_Courier')->where('tenant_id', $tenantId)
+            $unresolvedPeumo = DB::table('PPR_Pago_Movimientos_Courier')->where('tenant_id', $tenantId)
                 ->where('periodo', $period)
                 ->where(fn ($query) => $query->where('nombre_proceso', 'Peumo')
                     ->orWhereIn('courier_movement_id', (clone $sourcePeumo)->select('id')))
@@ -49,7 +49,7 @@ class MonthlyPaymentClosingService
                 throw ValidationException::withMessages(['period' => 'Peumo tiene movimientos sin compilar o con condición de pago pendiente. Revísalos antes del cierre definitivo.']);
             }
 
-            $payments = DB::table('Pago_Movimientos_Courier')
+            $payments = DB::table('PPR_Pago_Movimientos_Courier')
                 ->where('tenant_id', $tenantId)->where('periodo', $period);
             if ((clone $payments)->count() === 0) {
                 throw ValidationException::withMessages(['period' => "El período {$period} no tiene pagos trabajados para cerrar."]);
@@ -97,16 +97,16 @@ class MonthlyPaymentClosingService
                         $total += (int) ($payment->valor ?? 0);
                     }
 
-                    $conflict = DB::table('Maestro_Pagos')->whereIn('seguimiento_paquete', array_column($snapshots, 'seguimiento_paquete'))
+                    $conflict = DB::table('PPR_Maestro_Pagos')->whereIn('seguimiento_paquete', array_column($snapshots, 'seguimiento_paquete'))
                         ->value('seguimiento_paquete');
                     if ($conflict !== null) {
                         throw ValidationException::withMessages(['period' => "El seguimiento {$conflict} ya está en Maestro_Pagos. No se cerró el período."]);
                     }
-                    DB::table('Maestro_Pagos')->insert($snapshots);
+                    DB::table('PPR_Maestro_Pagos')->insert($snapshots);
                     $count += count($snapshots);
                 });
 
-            DB::table('Cierres_Pagos')->insert([
+            DB::table('PPR_Cierres_Pagos')->insert([
                 'tenant_id' => $tenantId,
                 'periodo' => $period,
                 'registros' => $count,

@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CourierSpecialPayment extends Model
 {
+    protected $table = 'PPR_courier_special_payments';
+
     /** @use HasFactory<CourierSpecialPaymentFactory> */
     use HasFactory;
 

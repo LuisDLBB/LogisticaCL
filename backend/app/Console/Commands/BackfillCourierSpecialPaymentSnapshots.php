@@ -34,7 +34,10 @@ class BackfillCourierSpecialPaymentSnapshots extends Command
 
         try {
             $backup = new PDO('sqlite:'.$backupPath, null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-            $query = $backup->prepare('SELECT * FROM Pago_Movimientos_Courier WHERE tenant_id = ? AND seguimiento_paquete = ?');
+            $backupTable = $backup->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'PPR_Pago_Movimientos_Courier'")->fetchColumn()
+                ? 'PPR_Pago_Movimientos_Courier'
+                : 'Pago_Movimientos_Courier';
+            $query = $backup->prepare("SELECT * FROM {$backupTable} WHERE tenant_id = ? AND seguimiento_paquete = ?");
             $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
             $specials = CourierSpecialPayment::query()->where('tenant_id', $tenant->id)
                 ->where('periodo', $period)->whereNotNull('finalized_at')

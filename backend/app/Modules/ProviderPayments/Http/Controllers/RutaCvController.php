@@ -42,7 +42,7 @@ class RutaCvController
         $frequencies = RutaCvFrequency::query()->where('tenant_id', $tenant->id)->orderBy('name')->get();
         $unmatched = $routes->whereNull('provider_id')->count();
         $total = $routes->sum('total_mensual');
-        $monthClosed = $selectedPeriod !== '' && DB::table('Cierres_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $selectedPeriod)->exists();
+        $monthClosed = $selectedPeriod !== '' && DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenant->id)->where('periodo', $selectedPeriod)->exists();
         $isClosed = $monthClosed || ($routes->isNotEmpty() && $routes->every(fn (RutaCv $route): bool => $route->closed_at !== null));
         $daysInMonth = 31;
         $firstWeekdayOffset = 0;
@@ -89,7 +89,7 @@ class RutaCvController
         $validated = $request->validate([
             'periodo_month' => ['required', 'date_format:Y-m'],
             'exclude_route_ids' => ['sometimes', 'array'],
-            'exclude_route_ids.*' => ['integer', 'distinct', Rule::exists('Rutas_CV', 'id')->where('tenant_id', $tenant->id)],
+            'exclude_route_ids.*' => ['integer', 'distinct', Rule::exists('PPR_Rutas_CV', 'id')->where('tenant_id', $tenant->id)],
         ]);
         $period = str_replace('-', '', $validated['periodo_month']);
         $result = $manager->generate($tenant->id, $period, array_map('intval', $validated['exclude_route_ids'] ?? []));
@@ -133,12 +133,12 @@ class RutaCvController
         }
         $validated = $request->validate([
             'periodo' => ['required', 'date_format:Ym'],
-            'delete_route_id' => ['nullable', 'integer', Rule::exists('Rutas_CV', 'id')->where('tenant_id', $tenant->id)->where('periodo', $period)],
+            'delete_route_id' => ['nullable', 'integer', Rule::exists('PPR_Rutas_CV', 'id')->where('tenant_id', $tenant->id)->where('periodo', $period)],
             'rows' => $deleteRouteId === null ? ['required', 'array', 'min:1'] : ['present', 'array'],
-            'rows.*.id' => ['required', 'integer', 'distinct', Rule::exists('Rutas_CV', 'id')->where('tenant_id', $tenant->id)->where('periodo', $period)],
-            'rows.*.provider_id' => ['nullable', 'integer', Rule::exists('providers', 'id')->where('tenant_id', $tenant->id)],
+            'rows.*.id' => ['required', 'integer', 'distinct', Rule::exists('PPR_Rutas_CV', 'id')->where('tenant_id', $tenant->id)->where('periodo', $period)],
+            'rows.*.provider_id' => ['nullable', 'integer', Rule::exists('MBA_providers', 'id')->where('tenant_id', $tenant->id)],
             'rows.*.zona' => ['required', 'string', 'max:40'],
-            'rows.*.frecuencia' => ['required', 'string', Rule::exists('ruta_cv_frequencies', 'name')->where('tenant_id', $tenant->id)],
+            'rows.*.frecuencia' => ['required', 'string', Rule::exists('PPR_ruta_cv_frequencies', 'name')->where('tenant_id', $tenant->id)],
             'rows.*.facturador' => ['required', 'string', 'max:255'],
             'rows.*.usuario' => ['required', 'string', 'max:255'],
             'rows.*.detalle_ruta' => ['required', 'string', 'max:255'],
@@ -218,13 +218,13 @@ class RutaCvController
         $validated = $request->validate([
             'periodo' => ['required', 'date_format:Ym'],
             'zona' => ['required', 'string', 'max:40'],
-            'frecuencia' => ['required', 'string', Rule::exists('ruta_cv_frequencies', 'name')->where('tenant_id', $tenant->id)],
+            'frecuencia' => ['required', 'string', Rule::exists('PPR_ruta_cv_frequencies', 'name')->where('tenant_id', $tenant->id)],
             'facturador' => ['required', 'string', 'max:255'],
             'usuario' => ['required', 'string', 'max:255'],
             'detalle_ruta' => ['required', 'string', 'max:255'],
             'comuna' => ['required', 'string', 'max:160'],
             'valor' => ['required', 'integer', 'min:0'],
-            'provider_id' => ['nullable', 'integer', Rule::exists('providers', 'id')->where('tenant_id', $tenant->id)],
+            'provider_id' => ['nullable', 'integer', Rule::exists('MBA_providers', 'id')->where('tenant_id', $tenant->id)],
             'tipo_cobro' => ['required', Rule::in(['diario', 'fijo'])],
             'monto_fijo' => ['nullable', 'integer', 'min:0'],
         ]);

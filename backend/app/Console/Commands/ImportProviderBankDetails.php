@@ -156,7 +156,7 @@ class ImportProviderBankDetails extends Command
                         if (isset($accountChanges['account_number'])) {
                             $accountChanges['account_number'] = Crypt::encryptString($accountChanges['account_number']);
                         }
-                        DB::table('provider_bank_accounts')->where('id', $account->id)->update([...$accountChanges, 'updated_at' => now()]);
+                        DB::table('PPR_provider_bank_accounts')->where('id', $account->id)->update([...$accountChanges, 'updated_at' => now()]);
                     } else {
                         $provider->bankAccounts()->create($desiredAccount);
                     }

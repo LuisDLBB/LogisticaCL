@@ -51,7 +51,7 @@ class CourierSpecialPaymentRollback
                     }
                     $previous['zona'] = ProviderZone::resolve($previous['rut_proveedor'] ?? null, $previous['provider_id'] ?? null, $previous['zona'] ?? null);
                     $previous['nombre_proceso'] = CourierPaymentMovement::withoutPeriodPrefix($previous['nombre_proceso'] ?? null);
-                    DB::table('Pago_Movimientos_Courier')->where('tenant_id', $tenantId)
+                    DB::table('PPR_Pago_Movimientos_Courier')->where('tenant_id', $tenantId)
                         ->where('id', $payment->id)
                         ->update(Arr::except($previous, ['id', 'tenant_id', 'courier_movement_id', 'created_at']));
                     $result['restored']++;

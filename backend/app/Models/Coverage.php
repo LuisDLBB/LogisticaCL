@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Coverage extends Model
 {
+    protected $table = 'PPR_coverages';
+
     /** @use HasFactory<CoverageFactory> */
     use HasFactory;
 
@@ -18,7 +20,7 @@ class Coverage extends Model
         'provider_tax_id', 'provider_name_source', 'zone', 'return_payment_applies', 'return_value',
         'delivery_frequency', 'delivery_type', 'region_code', 'route_code', 'consideration_code',
         'aerial_commune_name', 'aerial_route_code', 'base_commune_name', 'trunk_name', 'post_name',
-        'trunk_delivery_order', 'effective_from', 'effective_to', 'is_active',
+        'trunk_delivery_order', 'effective_from', 'effective_to', 'is_active', 'ID_ComunaMatrizAgencia',
     ];
 
     protected static function booted(): void
@@ -36,6 +38,7 @@ class Coverage extends Model
             'effective_from' => 'date',
             'effective_to' => 'date',
             'is_active' => 'boolean',
+            'ID_ComunaMatrizAgencia' => 'integer',
         ];
     }
 

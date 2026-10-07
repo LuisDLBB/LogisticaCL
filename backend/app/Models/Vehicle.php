@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Vehicle extends Model
 {
+    protected $table = 'MBA_vehicles';
+
     protected $fillable = [
         'tenant_id',
         'rut_empresa',

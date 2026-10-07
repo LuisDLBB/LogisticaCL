@@ -10,7 +10,7 @@ class ProviderPaymentTermsSeeder extends Seeder
 {
     public function run(): void
     {
-        $tenantId = DB::table('tenants')->where('code', '4N')->value('id');
+        $tenantId = DB::table('MBA_tenants')->where('code', '4N')->value('id');
         if ($tenantId === null) {
             throw new RuntimeException('No existe la empresa 4N para asociar condiciones de pago.');
         }
@@ -75,7 +75,7 @@ class ProviderPaymentTermsSeeder extends Seeder
         foreach ($termsByRut as $rut => $terms) {
             $normalisedRut = preg_replace('/[^0-9K]/', '', strtoupper($rut));
             $number = substr($normalisedRut, 0, -1);
-            $provider = DB::table('providers')->where('tenant_id', $tenantId)
+            $provider = DB::table('MBA_providers')->where('tenant_id', $tenantId)
                 ->where('tax_id_number', $number)->first(['id', 'payment_terms', 'payment_terms_pmcb']);
             if ($provider === null) {
                 throw new RuntimeException("No existe el proveedor {$rut} para registrar su condición de pago.");
@@ -88,7 +88,7 @@ class ProviderPaymentTermsSeeder extends Seeder
                 $changes['payment_terms_pmcb'] = 'Contado';
             }
             if ($changes !== []) {
-                DB::table('providers')->where('id', $provider->id)->update($changes + ['updated_at' => now()]);
+                DB::table('MBA_providers')->where('id', $provider->id)->update($changes + ['updated_at' => now()]);
             }
         }
     }

@@ -24,7 +24,7 @@ class CourierWorkedConsolidatedExport
             'tipo_documento',
             'empresa_mandante',
         ];
-        $rows = DB::table('Pago_Movimientos_Courier')
+        $rows = DB::table('PPR_Pago_Movimientos_Courier')
             ->where('tenant_id', $tenantId)
             ->where('periodo', $period)
             ->where('condicion_pago', 'SI')

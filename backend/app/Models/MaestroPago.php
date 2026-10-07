@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class MaestroPago extends Model
 {
-    protected $table = 'Maestro_Pagos';
+    protected $table = 'PPR_Maestro_Pagos';
 
     protected $primaryKey = 'seguimiento_paquete';
 

@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CostCenter extends Model
 {
+    protected $table = 'PPR_cost_centers';
+
     /** @use HasFactory<CostCenterFactory> */
     use HasFactory;
 

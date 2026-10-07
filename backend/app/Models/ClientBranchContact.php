@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ClientBranchContact extends Model
 {
+    protected $table = 'PPR_client_branch_contacts';
+
     protected $fillable = [
         'client_branch_id',
         'name',

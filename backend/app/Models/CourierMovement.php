@@ -14,7 +14,7 @@ class CourierMovement extends Model
     /** @use HasFactory<CourierMovementFactory> */
     use HasFactory;
 
-    protected $table = 'movimientos_courier';
+    protected $table = 'PPR_movimientos_courier';
 
     protected $fillable = [
         'tenant_id', 'client_id', 'source_system', 'fecha', 'tracking_number', 'tracking_code', 'external_code',

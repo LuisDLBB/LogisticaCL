@@ -15,7 +15,7 @@ class RecordUserActivity
         if ($response->getStatusCode() >= 400 || $request->session()->has('errors') || $request->isMethod('HEAD')) {
             return $response;
         }
-        $module = $request->routeIs('provider-payments.*') ? 'Pago Proveedores' : ['comercial' => 'Comercial', 'post-venta' => 'Post Venta', 'flota' => 'Flota', 'operaciones' => 'Operaciones', 'finanzas' => 'Finanzas'][$request->route('module')] ?? 'Inicio';
+        $module = $request->routeIs('provider-payments.*') ? 'Pago Proveedores' : ($request->routeIs('operations.*') ? 'Operaciones' : ['comercial' => 'Comercial', 'post-venta' => 'Post Venta', 'flota' => 'Flota', 'operaciones' => 'Operaciones', 'finanzas' => 'Finanzas'][$request->route('module')] ?? 'Inicio');
         $action = $request->isMethod('GET') ? 'Consulta de '.$module : 'Acción realizada en '.$module;
         DB::table('user_activities')->insert([
             'user_id' => $request->user()->id, 'tenant_id' => $request->attributes->get('portal_tenant')->id,

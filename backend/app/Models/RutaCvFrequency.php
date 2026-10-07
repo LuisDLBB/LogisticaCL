@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class RutaCvFrequency extends Model
 {
+    protected $table = 'PPR_ruta_cv_frequencies';
+
     /** @use HasFactory<RutaCvFrequencyFactory> */
     use HasFactory;
 

@@ -117,19 +117,19 @@ class CourierSpecialPaymentImporter
         }
 
         [$imported, $reassigned] = DB::transaction(function () use ($rows, $tenantId, $hash, $period): array {
-            $closedPeriods = DB::table('Cierres_Pagos')->where('tenant_id', $tenantId)->pluck('periodo')
+            $closedPeriods = DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenantId)->pluck('periodo')
                 ->map(fn (string $closedPeriod): string => $closedPeriod.'-Especiales');
-            if ($closedPeriods->isNotEmpty() && DB::table('courier_special_payments')
+            if ($closedPeriods->isNotEmpty() && DB::table('PPR_courier_special_payments')
                 ->where('tenant_id', $tenantId)->where('hash_archivo', $hash)->whereNull('finalized_at')
                 ->whereIn('periodo', $closedPeriods)->exists()) {
                 throw ValidationException::withMessages(['file' => 'Este archivo ya tiene registros en un período cerrado. No se pueden trasladar a otro mes.']);
             }
-            $reassigned = DB::table('courier_special_payments')
+            $reassigned = DB::table('PPR_courier_special_payments')
                 ->where('tenant_id', $tenantId)->where('hash_archivo', $hash)->whereNull('finalized_at')->where('periodo', '!=', $period)
                 ->update(['periodo' => $period, 'updated_at' => now()]);
             $count = 0;
             foreach (array_chunk($rows, 500) as $chunk) {
-                $count += DB::table('courier_special_payments')->insertOrIgnore($chunk);
+                $count += DB::table('PPR_courier_special_payments')->insertOrIgnore($chunk);
             }
 
             return [$count, $reassigned];

@@ -12,7 +12,7 @@ class ExternalShipment extends Model
     /** @use HasFactory<ExternalShipmentFactory> */
     use HasFactory;
 
-    protected $table = 'envios_externos';
+    protected $table = 'PPR_envios_externos';
 
     protected $fillable = [
         'tenant_id', 'client_id', 'fecha', 'tracking_number', 'external_order_number',

@@ -14,14 +14,14 @@ class TipoEnvioTest extends TestCase
     {
         $this->seed(TipoEnvioSeeder::class);
 
-        $this->assertDatabaseCount('tipo_envios', 3);
-        $this->assertDatabaseHas('tipo_envios', [
+        $this->assertDatabaseCount('PPR_tipo_envios', 3);
+        $this->assertDatabaseHas('PPR_tipo_envios', [
             'tipo_envio' => 'B2C',
             'glosa' => 'Business to Business',
             'detalle' => 'Venta al consumidor final con foco en volumen',
             'ejemplo' => 'Conversión, logística, servicio y devoluciones',
         ]);
-        $this->assertDatabaseHas('tipo_envios', ['tipo_envio' => 'B2B']);
-        $this->assertDatabaseHas('tipo_envios', ['tipo_envio' => 'D2C']);
+        $this->assertDatabaseHas('PPR_tipo_envios', ['tipo_envio' => 'B2B']);
+        $this->assertDatabaseHas('PPR_tipo_envios', ['tipo_envio' => 'D2C']);
     }
 }

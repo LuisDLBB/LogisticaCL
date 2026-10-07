@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ApoyoAlza extends Model
 {
+    protected $table = 'PPR_apoyo_alzas';
+
     /** @use HasFactory<ApoyoAlzaFactory> */
     use HasFactory;
 

@@ -30,7 +30,7 @@ class ClientBranchMaintainerController
             'address' => ['required', 'string', 'max:255'], 'commune_name' => ['required', 'string', 'max:100'],
             'region_name' => ['nullable', 'string', 'max:100'], 'service_schedule' => ['nullable', 'string', 'max:255'],
         ]);
-        $request->validate(['code' => [Rule::unique('client_branches')->where('client_id', $data['client_id'])]]);
+        $request->validate(['code' => [Rule::unique('PPR_client_branches')->where('client_id', $data['client_id'])]]);
         ClientBranch::create([...$data, 'is_active' => true]);
 
         return back()->with('status', 'Sucursal creada correctamente.');

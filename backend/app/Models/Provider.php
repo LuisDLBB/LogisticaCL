@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Provider extends Model
 {
+    protected $table = 'MBA_providers';
+
     /** @use HasFactory<ProviderFactory> */
     use HasFactory;
 

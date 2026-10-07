@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class WeightTransformation extends Model
 {
+    protected $table = 'PPR_weight_transformations';
+
     protected $fillable = ['tenant_id', 'source_weight', 'comparison_key', 'transformed_weight', 'is_active'];
 
     public static function integerPart(string $value): ?int

@@ -81,12 +81,12 @@ class CourierSpecialPaymentController
         $finalizedCount = CourierSpecialPayment::query()->where('tenant_id', $tenant->id)
             ->where('periodo', $selectedPeriod)->whereNotNull('finalized_at')->count();
         $periodTotal = (int) ($periods->firstWhere('periodo', $selectedPeriod)?->total ?? 0);
-        $monthClosed = $selectedPeriod !== '' && DB::table('Cierres_Pagos')
+        $monthClosed = $selectedPeriod !== '' && DB::table('PPR_Cierres_Pagos')
             ->where('tenant_id', $tenant->id)->where('periodo', substr($selectedPeriod, 0, 6))->exists();
         $isClosed = $monthClosed || ($periodTotal > 0 && $finalizedCount === $periodTotal);
         $closedPeriods = $periods->filter(fn ($period): bool => (int) $period->total > 0 && (int) $period->total === (int) $period->finalized_total)
             ->pluck('periodo')->values()->all();
-        $monthlyClosures = DB::table('Cierres_Pagos')->where('tenant_id', $tenant->id)->pluck('periodo')
+        $monthlyClosures = DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenant->id)->pluck('periodo')
             ->map(fn (string $period): string => $period.'-Especiales')->all();
         $closedPeriods = array_values(array_unique(array_merge($closedPeriods, $monthlyClosures)));
 
@@ -132,8 +132,8 @@ class CourierSpecialPaymentController
             'cliente' => ['nullable', 'string', 'max:255'],
             'descripcion' => ['nullable', 'string'],
             'monto' => ['required', 'integer', 'min:0', 'max:4294967295'],
-            'provider_id' => ['nullable', 'integer', Rule::exists('providers', 'id')->where('tenant_id', $tenant->id)],
-            'client_id' => ['nullable', 'integer', Rule::exists('clients', 'id')->where('tenant_id', $tenant->id)],
+            'provider_id' => ['nullable', 'integer', Rule::exists('MBA_providers', 'id')->where('tenant_id', $tenant->id)],
+            'client_id' => ['nullable', 'integer', Rule::exists('MBA_clients', 'id')->where('tenant_id', $tenant->id)],
             'return_q' => ['nullable', 'string', 'max:100'],
             'return_page' => ['nullable', 'integer', 'min:1'],
         ]);
@@ -167,9 +167,9 @@ class CourierSpecialPaymentController
             ->where('tenant_id', $tenant->id)->findOrFail($payment);
         $this->assertEditable($specialPayment);
         $validated = $request->validate([
-            'provider_id' => ['nullable', 'integer', Rule::exists('providers', 'id')->where('tenant_id', $tenant->id)],
-            'client_id' => ['nullable', 'integer', Rule::exists('clients', 'id')->where('tenant_id', $tenant->id)],
-            'service_type_id' => ['nullable', 'integer', Rule::exists('service_types', 'id')],
+            'provider_id' => ['nullable', 'integer', Rule::exists('MBA_providers', 'id')->where('tenant_id', $tenant->id)],
+            'client_id' => ['nullable', 'integer', Rule::exists('MBA_clients', 'id')->where('tenant_id', $tenant->id)],
+            'service_type_id' => ['nullable', 'integer', Rule::exists('PPR_service_types', 'id')],
             'return_q' => ['nullable', 'string', 'max:100'],
             'return_page' => ['nullable', 'integer', 'min:1'],
         ]);
@@ -194,11 +194,11 @@ class CourierSpecialPaymentController
         $validated = $request->validate([
             'periodo' => ['required', 'string', 'regex:/^\d{6}-Especiales$/'],
             'rows' => ['required', 'array', 'min:1', 'max:100'],
-            'rows.*.id' => ['required', 'integer', 'distinct', Rule::exists('courier_special_payments', 'id')
+            'rows.*.id' => ['required', 'integer', 'distinct', Rule::exists('PPR_courier_special_payments', 'id')
                 ->where('tenant_id', $tenant->id)],
-            'rows.*.provider_id' => ['present', 'nullable', 'integer', Rule::exists('providers', 'id')->where('tenant_id', $tenant->id)],
-            'rows.*.client_id' => ['present', 'nullable', 'integer', Rule::exists('clients', 'id')->where('tenant_id', $tenant->id)],
-            'rows.*.service_type_id' => ['present', 'nullable', 'integer', Rule::exists('service_types', 'id')],
+            'rows.*.provider_id' => ['present', 'nullable', 'integer', Rule::exists('MBA_providers', 'id')->where('tenant_id', $tenant->id)],
+            'rows.*.client_id' => ['present', 'nullable', 'integer', Rule::exists('MBA_clients', 'id')->where('tenant_id', $tenant->id)],
+            'rows.*.service_type_id' => ['present', 'nullable', 'integer', Rule::exists('PPR_service_types', 'id')],
             'return_q' => ['nullable', 'string', 'max:100'],
             'return_page' => ['nullable', 'integer', 'min:1'],
         ]);
@@ -267,7 +267,7 @@ class CourierSpecialPaymentController
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $validated = $request->validate([
-            'provider_id' => ['required', 'integer', Rule::exists('providers', 'id')->where('tenant_id', $tenant->id)],
+            'provider_id' => ['required', 'integer', Rule::exists('MBA_providers', 'id')->where('tenant_id', $tenant->id)],
             'return_q' => ['nullable', 'string', 'max:100'],
             'return_page' => ['nullable', 'integer', 'min:1'],
         ]);
