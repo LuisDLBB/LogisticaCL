@@ -68,4 +68,272 @@ class OperationsTransportCatalogTest extends TestCase
             ->assertSee('Concepcion')
             ->assertSee('Troncal Sur (Chillan-Concepcion)');
     }
+
+    public function test_post_origins_have_airport_defaults_and_other_posts_can_be_edited_by_a_supervisor(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $airports = [
+            1 => 'Aeropuerto Andrés Sabella Gálvez',
+            2 => 'Aeropuerto Chacalluta',
+            3 => 'Aeródromo El Loa',
+            4 => 'Aeropuerto Diego Aracena',
+            5 => 'Aeropuerto Mataveri',
+            6 => 'Aeródromo Balmaceda',
+            7 => 'Aeropuerto Presidente Carlos Ibáñez del Campo',
+        ];
+        foreach ($airports as $code => $address) {
+            $this->assertDatabaseHas('Ope_Postas', ['tenant_id' => $tenant->id, 'post_code' => $code, 'origin_address' => $address]);
+        }
+
+        $post = DB::table('Ope_Postas')->where(['tenant_id' => $tenant->id, 'post_code' => 9])->firstOrFail();
+        $operator = User::factory()->create(['profile_name' => 'Operario']);
+        $operator->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $this->actingAs($operator)->get('/operaciones/origenes-postas')->assertOk()->assertSee('Aeropuerto Chacalluta');
+        $this->put('/operaciones/origenes-postas/'.$post->id, [
+            'origin_address' => 'Terminal Concepción', 'origin_commune' => 'Concepción',
+        ])->assertForbidden();
+
+        $supervisor = User::factory()->create(['profile_name' => 'Supervisor']);
+        $supervisor->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $this->actingAs($supervisor)->put('/operaciones/origenes-postas/'.$post->id, [
+            'origin_address' => 'Terminal Concepción', 'origin_commune' => 'Concepción',
+        ])->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('Ope_Postas', ['id' => $post->id, 'origin_address' => 'Terminal Concepción', 'origin_commune' => 'Concepción']);
+        $this->assertDatabaseHas('Ope_Auditoria', ['tenant_id' => $tenant->id, 'entity' => 'posta', 'entity_id' => $post->id, 'action' => 'Actualizar origen de posta']);
+    }
+
+    public function test_administrator_can_edit_trunk_and_second_post_transport_from_the_submenu(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $user = User::factory()->create(['profile_name' => 'Administrador']);
+        $user->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $this->actingAs($user);
+
+        $trunk = DB::table('Ope_Troncales')->where(['tenant_id' => $tenant->id, 'trunk_code' => 5])->firstOrFail();
+        $post = DB::table('Ope_Postas')->where(['tenant_id' => $tenant->id, 'post_code' => 9])->firstOrFail();
+        $this->get('/operaciones/transporte')->assertOk()->assertSee('Posta 1 y Posta 2')->assertSee('Troncal V Region');
+        $internalDriver = User::factory()->create(['name' => 'Chofer Interno', 'tax_id' => '11111111-1']);
+        $internalDriver->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $this->get('/operaciones/transporte?type=troncal&record='.$trunk->id)
+            ->assertOk()
+            ->assertSee('id="ope-transport-dialog"', false)
+            ->assertSee('list="ope-plate-options"', false)
+            ->assertSee('Chofer Interno · 11111111-1');
+
+        $this->put("/operaciones/transporte/troncal/{$trunk->id}", [
+            'plate' => 'AB-CD-12', 'driver_rut' => '12.345.678-5', 'driver_name' => 'Nuevo Chofer Troncal',
+        ])->assertSessionHasNoErrors()->assertRedirect(route('operations.transport').'#troncales');
+
+        $updatedTrunk = DB::table('Ope_Troncales')->where('id', $trunk->id)->firstOrFail();
+        $this->assertSame('ABCD12', $updatedTrunk->plate);
+        $this->assertDatabaseHas('Ope_Choferes', ['id' => $updatedTrunk->driver_id, 'tenant_id' => $tenant->id, 'rut' => '12345678-5', 'name' => 'Nuevo Chofer Troncal']);
+        $this->assertDatabaseHas('Ope_Troncales', ['tenant_id' => $tenant->id, 'trunk_code' => 6, 'plate' => 'TJGR16']);
+        foreach ([13, 14, 15, 16, 17] as $firstPostCode) {
+            $this->assertDatabaseHas('Ope_Postas', ['tenant_id' => $tenant->id, 'post_code' => $firstPostCode, 'plate' => 'ABCD12', 'driver_id' => $updatedTrunk->driver_id]);
+        }
+
+        $this->put("/operaciones/transporte/posta/{$post->id}", [
+            'plate' => 'EFGH34', 'driver_rut' => '12345678-5', 'driver_name' => 'Nuevo Chofer Troncal',
+        ])->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('Ope_Postas', ['id' => $post->id, 'plate' => 'EFGH34', 'driver_id' => $updatedTrunk->driver_id]);
+        $this->assertDatabaseHas('Ope_Agencias', ['tenant_id' => $tenant->id, 'agency_code' => 15, 'second_post_id' => $post->id]);
+        $this->get('/operaciones/transporte?type=posta&record='.$post->id)
+            ->assertOk()
+            ->assertSee('<option value="EFGH34"', false)
+            ->assertSee('Nuevo Chofer Troncal · 12345678-5');
+        $this->assertDatabaseHas('Ope_Auditoria', ['tenant_id' => $tenant->id, 'entity' => 'posta', 'entity_id' => $post->id, 'action' => 'Actualizar transporte']);
+    }
+
+    public function test_transport_changes_require_a_supervisor_and_valid_driver_identity(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $post = DB::table('Ope_Postas')->where(['tenant_id' => $tenant->id, 'post_code' => 9])->firstOrFail();
+        $operator = User::factory()->create(['profile_name' => 'Operario']);
+        $operator->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $this->actingAs($operator)->get('/operaciones/transporte')->assertOk()->assertDontSee('Guardar transporte');
+        $this->put("/operaciones/transporte/posta/{$post->id}", ['plate' => 'ABCD12'])->assertForbidden();
+
+        $supervisor = User::factory()->create(['profile_name' => 'Supervisor']);
+        $supervisor->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $this->actingAs($supervisor)->put("/operaciones/transporte/posta/{$post->id}", [
+            'plate' => 'PLLP96', 'driver_rut' => '12345678-0', 'driver_name' => 'Chofer Incorrecto',
+        ])->assertSessionHasErrors('driver_rut');
+        $this->assertDatabaseHas('Ope_Postas', ['id' => $post->id, 'plate' => 'PLLP96', 'driver_id' => $post->driver_id]);
+
+        $this->put("/operaciones/transporte/posta/{$post->id}", [
+            'plate' => 'PLLP96', 'driver_rut' => '19049607-4', 'driver_name' => 'Cristian Saldivia Guerrero',
+        ])->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('Ope_Choferes', ['id' => $post->driver_id, 'name' => 'Cristian Saldivia Guerrero']);
+    }
+
+    public function test_trunk_transport_updates_only_its_first_posts_and_keeps_second_posts_editable(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $user = User::factory()->create(['profile_name' => 'Administrador']);
+        $user->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $this->actingAs($user);
+
+        $expectations = [
+            4 => ['plate' => 'ABCD12', 'rut' => '13012860-2', 'name' => 'Claudio Andres Castro Valenzuela', 'first_posts' => [8]],
+            5 => ['plate' => 'EFGH34', 'rut' => '10124367-2', 'name' => 'Nelson Luis Cisternas Rivera', 'first_posts' => [13, 14, 15, 16, 17]],
+            6 => ['plate' => 'IJKL56', 'rut' => '13172671-6', 'name' => 'Marcelo Alejandro Avendaño Tapia', 'first_posts' => [18, 19, 22, 23, 24]],
+        ];
+        $secondPostsBefore = DB::table('Ope_Postas')->where('tenant_id', $tenant->id)->whereIn('post_code', [9, 10, 11, 12, 20])->orderBy('post_code')->get(['post_code', 'plate', 'driver_id']);
+
+        foreach ($expectations as $trunkCode => $expected) {
+            $trunk = DB::table('Ope_Troncales')->where(['tenant_id' => $tenant->id, 'trunk_code' => $trunkCode])->firstOrFail();
+            $this->put("/operaciones/transporte/troncal/{$trunk->id}", [
+                'plate' => $expected['plate'], 'driver_rut' => $expected['rut'], 'driver_name' => $expected['name'],
+            ])->assertSessionHasNoErrors();
+            $driverId = DB::table('Ope_Troncales')->where('id', $trunk->id)->value('driver_id');
+            foreach ($expected['first_posts'] as $postCode) {
+                $this->assertDatabaseHas('Ope_Postas', ['tenant_id' => $tenant->id, 'post_code' => $postCode, 'plate' => $expected['plate'], 'driver_id' => $driverId]);
+            }
+        }
+
+        $secondPostsAfter = DB::table('Ope_Postas')->where('tenant_id', $tenant->id)->whereIn('post_code', [9, 10, 11, 12, 20])->orderBy('post_code')->get(['post_code', 'plate', 'driver_id']);
+        $this->assertEquals($secondPostsBefore, $secondPostsAfter);
+
+        $firstPost = DB::table('Ope_Postas')->where(['tenant_id' => $tenant->id, 'post_code' => 8])->firstOrFail();
+        $this->put("/operaciones/transporte/posta/{$firstPost->id}", [
+            'plate' => 'MNOP78', 'driver_rut' => '13012860-2', 'driver_name' => 'Claudio Andres Castro Valenzuela',
+        ])->assertSessionHasErrors('plate');
+        $this->assertDatabaseHas('Ope_Postas', ['id' => $firstPost->id, 'plate' => 'ABCD12']);
+
+        $secondPost = DB::table('Ope_Postas')->where(['tenant_id' => $tenant->id, 'post_code' => 9])->firstOrFail();
+        $this->put("/operaciones/transporte/posta/{$secondPost->id}", [
+            'plate' => 'MNOP78', 'driver_rut' => '19049607-4', 'driver_name' => 'Cristian Marcelo Saldivia Guerrero',
+        ])->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('Ope_Postas', ['id' => $secondPost->id, 'plate' => 'MNOP78']);
+        $southTrunk = DB::table('Ope_Troncales')->where(['tenant_id' => $tenant->id, 'trunk_code' => 4])->firstOrFail();
+        $this->put("/operaciones/transporte/troncal/{$southTrunk->id}", [
+            'plate' => 'QRST90', 'driver_rut' => '13012860-2', 'driver_name' => 'Claudio Andres Castro Valenzuela',
+        ])->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('Ope_Postas', ['id' => $firstPost->id, 'plate' => 'QRST90']);
+        $this->assertDatabaseHas('Ope_Postas', ['id' => $secondPost->id, 'plate' => 'MNOP78']);
+        $this->get('/operaciones/transporte?type=posta&record='.$secondPost->id)->assertOk()->assertSee('Guardar transporte');
+        $this->get('/operaciones/transporte?type=posta&record='.$firstPost->id)->assertOk()->assertSee('Editar troncal')->assertDontSee('Guardar transporte');
+    }
+
+    public function test_updating_an_air_trunk_requires_choosing_whether_to_extend_the_change(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $user = User::factory()->create(['profile_name' => 'Administrador']);
+        $user->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $this->actingAs($user);
+        $airRoutes = DB::table('Ope_Troncales')->where('tenant_id', $tenant->id)->whereIn('trunk_code', [1, 2, 3])->get()->keyBy('trunk_code');
+        $north = $airRoutes->get(1);
+        $pacific = $airRoutes->get(2);
+        $south = $airRoutes->get(3);
+        $originalNorthPost = DB::table('Ope_Postas')->where(['tenant_id' => $tenant->id, 'post_code' => 1])->firstOrFail();
+
+        $this->get('/operaciones/transporte?type=troncal&record='.$north->id)
+            ->assertOk()
+            ->assertSee('name="air_route_scope"', false)
+            ->assertSee('value="only"', false)
+            ->assertSee('value="all"', false)
+            ->assertSee('otros dos aéreos');
+
+        $change = ['plate' => 'ABCD12', 'driver_rut' => '12345678-5', 'driver_name' => 'Chofer Aereo Nuevo'];
+        $this->put("/operaciones/transporte/troncal/{$north->id}", $change)->assertSessionHasErrors('air_route_scope');
+        $this->assertDatabaseHas('Ope_Troncales', ['id' => $north->id, 'plate' => 'SGSS86']);
+
+        $this->put("/operaciones/transporte/troncal/{$north->id}", [...$change, 'air_route_scope' => 'only'])
+            ->assertSessionHasNoErrors()->assertSessionHas('status', 'Transporte de Aereo Norte actualizado.');
+        $this->assertDatabaseHas('Ope_Troncales', ['id' => $north->id, 'plate' => 'ABCD12']);
+        $this->assertDatabaseHas('Ope_Troncales', ['id' => $pacific->id, 'plate' => 'SGSS86', 'driver_id' => $pacific->driver_id]);
+        $this->assertDatabaseHas('Ope_Troncales', ['id' => $south->id, 'plate' => 'SGSS86', 'driver_id' => $south->driver_id]);
+
+        $this->put("/operaciones/transporte/troncal/{$pacific->id}", [
+            'plate' => 'EFGH34', 'driver_rut' => '13012860-2', 'driver_name' => 'Claudio Andres Castro Valenzuela', 'air_route_scope' => 'all',
+        ])->assertSessionHasNoErrors()->assertSessionHas('status', 'Transporte de Aereo Pacifico actualizado y extendido a los otros aéreos.');
+        $driverId = DB::table('Ope_Troncales')->where('id', $pacific->id)->value('driver_id');
+        foreach ($airRoutes as $route) {
+            $this->assertDatabaseHas('Ope_Troncales', ['id' => $route->id, 'plate' => 'EFGH34', 'driver_id' => $driverId]);
+        }
+        $this->assertDatabaseHas('Ope_Postas', ['id' => $originalNorthPost->id, 'plate' => $originalNorthPost->plate, 'driver_id' => $originalNorthPost->driver_id]);
+        $this->assertSame(2, DB::table('Ope_Auditoria')->where(['tenant_id' => $tenant->id, 'action' => 'Extender transporte aéreo'])->count());
+    }
+
+    public function test_each_transport_row_opens_its_assigned_coverages_in_a_modal(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $user = User::factory()->create(['profile_name' => 'Administrador']);
+        $user->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        Coverage::factory()->create(['tenant_id' => $tenant->id, 'ID_ComunaMatrizAgencia' => 15, 'commune_name' => 'Cobertura Prueba Concepcion']);
+        $trunk = DB::table('Ope_Troncales')->where(['tenant_id' => $tenant->id, 'trunk_code' => 4])->firstOrFail();
+        $firstPost = DB::table('Ope_Postas')->where(['tenant_id' => $tenant->id, 'post_code' => 8])->firstOrFail();
+        $secondPost = DB::table('Ope_Postas')->where(['tenant_id' => $tenant->id, 'post_code' => 9])->firstOrFail();
+
+        $this->actingAs($user)->get('/operaciones/transporte')
+            ->assertOk()
+            ->assertSee('id="ope-coverages-dialog"', false)
+            ->assertSee(route('operations.transport.coverages', ['type' => 'troncal', 'record' => $trunk->id]))
+            ->assertSee('aria-label="Ver 1 coberturas de Troncal Sur', false)
+            ->assertDontSee('Cobertura Prueba Concepcion');
+
+        $this->get(route('operations.transport.coverages', ['type' => 'troncal', 'record' => $trunk->id]))
+            ->assertOk()->assertJsonCount(1, 'coverages')
+            ->assertJsonPath('coverages.0.commune', 'Cobertura Prueba Concepcion')
+            ->assertJsonPath('coverages.0.role', 'Troncal');
+        $this->get(route('operations.transport.coverages', ['type' => 'posta', 'record' => $firstPost->id]))
+            ->assertOk()->assertJsonCount(1, 'coverages')->assertJsonPath('coverages.0.role', 'Posta 1');
+        $this->get(route('operations.transport.coverages', ['type' => 'posta', 'record' => $secondPost->id]))
+            ->assertOk()->assertJsonCount(1, 'coverages')->assertJsonPath('coverages.0.role', 'Posta 2');
+        $this->get('/operaciones/transporte/posta/999999/coberturas')->assertNotFound();
+    }
+
+    public function test_trunk_agency_count_opens_origin_matrix_communes_in_a_modal(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $user = User::factory()->create(['profile_name' => 'Administrador']);
+        $user->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $northTrunk = DB::table('Ope_Troncales')->where(['tenant_id' => $tenant->id, 'trunk_code' => 6])->firstOrFail();
+        $externalTrunk = DB::table('Ope_Troncales')->where(['tenant_id' => $tenant->id, 'trunk_code' => 7])->firstOrFail();
+
+        $this->actingAs($user)->get('/operaciones/transporte')
+            ->assertOk()
+            ->assertSee('id="ope-agencies-dialog"', false)
+            ->assertSee('Comuna matriz origen')
+            ->assertSee('aria-label="Ver 7 agencias de Troncal Norte', false);
+
+        $response = $this->get(route('operations.transport.agencies', ['type' => 'troncal', 'record' => $northTrunk->id]))
+            ->assertOk()->assertJsonCount(7, 'agencies');
+        $losAndes = collect($response->json('agencies'))->firstWhere('code', 27);
+        $this->assertSame('Los Andes', $losAndes['name']);
+        $this->assertSame('Llay Llay', $losAndes['matrix_origin_commune']);
+        $this->assertSame('El Porvenir Najo Sitio E_1', $losAndes['address']);
+        $this->get(route('operations.transport.agencies', ['type' => 'troncal', 'record' => $externalTrunk->id]))
+            ->assertOk()->assertJsonCount(0, 'agencies');
+        $this->get('/operaciones/transporte/troncal/999999/agencias')->assertNotFound();
+    }
+
+    public function test_post_agency_counts_open_only_the_selected_relay_with_its_origin_commune(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $user = User::factory()->create(['profile_name' => 'Administrador']);
+        $user->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $firstPost = DB::table('Ope_Postas')->where(['tenant_id' => $tenant->id, 'post_code' => 8])->firstOrFail();
+        $secondPost = DB::table('Ope_Postas')->where(['tenant_id' => $tenant->id, 'post_code' => 9])->firstOrFail();
+
+        $this->actingAs($user)->get('/operaciones/transporte')
+            ->assertOk()
+            ->assertSee('aria-label="Ver 14 agencias como Posta 1 de Troncal Sur', false)
+            ->assertSee('aria-label="Ver 1 agencias como Posta 2 de Troncal Sur', false)
+            ->assertSee(route('operations.transport.agencies', ['type' => 'posta', 'record' => $secondPost->id, 'role' => 2]));
+
+        $firstResponse = $this->get(route('operations.transport.agencies', ['type' => 'posta', 'record' => $firstPost->id, 'role' => 1]))
+            ->assertOk()->assertJsonCount(14, 'agencies');
+        $buin = collect($firstResponse->json('agencies'))->firstWhere('code', 8);
+        $this->assertSame('Buin', $buin['name']);
+        $this->assertSame('Buin', $buin['matrix_origin_commune']);
+
+        $this->get(route('operations.transport.agencies', ['type' => 'posta', 'record' => $secondPost->id, 'role' => 1]))
+            ->assertOk()->assertJsonCount(0, 'agencies');
+        $this->get(route('operations.transport.agencies', ['type' => 'posta', 'record' => $secondPost->id, 'role' => 2]))
+            ->assertOk()->assertJsonCount(1, 'agencies')->assertJsonPath('agencies.0.name', 'Concepcion')
+            ->assertJsonPath('agencies.0.matrix_origin_commune', 'Concepcion');
+        $this->get('/operaciones/transporte/posta/'.$secondPost->id.'/agencias')->assertNotFound();
+        $this->get('/operaciones/transporte/posta/'.$secondPost->id.'/agencias?role=3')->assertNotFound();
+    }
 }

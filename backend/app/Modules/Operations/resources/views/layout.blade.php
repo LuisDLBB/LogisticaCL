@@ -2,6 +2,7 @@
 
         :root { --navy:#061f20; --ink:#102a2d; --muted:#60757a; --turquoise:#28c9c8; --turquoise-dark:#007f82; --turquoise-soft:#d9f5f4; --paper:#f4f7f7; --line:#d7e1e2; --white:#fff; }
         * { box-sizing:border-box; }
+        [hidden] { display:none!important; }
         body { margin:0; min-height:100vh; background:var(--paper); color:var(--ink); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
         .topbar { position:sticky; top:0; z-index:20; height:76px; display:flex; align-items:center; justify-content:space-between; padding:0 22px; background:var(--navy); color:#fff; }
         .brand { display:flex; align-items:center; gap:12px; color:#fff; text-decoration:none; }
@@ -12,7 +13,7 @@
         .nav-link,.nav-summary { display:flex; align-items:center; gap:10px; width:100%; padding:12px 15px; border-radius:9px; color:#26474c; cursor:pointer; font-size:14px; font-weight:700; text-decoration:none; }
         .sidebar .icon{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
         .nav-text{flex:1;min-width:0}
-        .nav-link:hover,.nav-summary:hover,.nav-link.active { background:var(--turquoise-soft); color:#006d70; }
+        .nav-link:hover,.nav-summary:hover,.nav-link.active,.nav-summary.active { background:var(--turquoise-soft); color:#006d70; }
         .nav-summary { list-style:none; }.nav-summary::-webkit-details-marker{display:none}.nav-summary::after{margin-left:auto;content:'⌄';color:var(--turquoise-dark)}details[open]>.nav-summary::after{content:'⌃'}
         .subnav a { display:block; padding:9px 15px 9px 43px; color:#53696d; font-size:13px; text-decoration:none; }.subnav a:hover,.subnav a.active{color:var(--turquoise-dark);font-weight:800}
         .content { min-width:0; padding:28px clamp(20px,4vw,64px) 48px; }
@@ -36,16 +37,32 @@
         @media(max-width:760px){.topbar{height:auto;min-height:70px}.user-area{display:none}.shell{display:block}.sidebar{border-right:0;border-bottom:1px solid var(--line)}.content{padding:26px 18px}.sidebar>.nav-link{display:inline-flex;width:auto;vertical-align:top}.sidebar>details{display:inline-block;width:auto;vertical-align:top}.subnav{position:absolute;z-index:10;background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px}.master-tools{grid-template-columns:1fr}}
 
 .ope-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin:18px 0}.ope-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;align-items:end}.ope-form label{display:grid;gap:6px;font-size:13px;font-weight:650}.ope-form input,.ope-form select,.ope-form textarea{width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:#fff}.ope-form label.check{display:flex;align-items:center}.ope-form label.check input{width:auto}.ope-full{grid-column:1/-1}.ope-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0}.ope-stat{font-size:28px;font-weight:800;display:block}.ope-table td{font-size:13px}.ope-badge{display:inline-block;padding:4px 9px;border-radius:5px;background:var(--turquoise-soft);font-size:12px}.ope-error{background:#fff3e1;color:#8b4e00}.success{padding:14px;background:var(--turquoise-soft);margin-bottom:16px;border-radius:7px}.error{padding:14px;background:#fff0ef;color:#9c2929;margin-bottom:16px;border-radius:7px}details.card{margin:12px 0}details.card summary{cursor:pointer;font-weight:700}.ope-form textarea{min-height:70px}.ope-muted{color:var(--muted)}pre{white-space:pre-wrap;word-break:break-word;font-size:12px}.ope-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.ope-heading h1{font-size:22px}.ope-empty{padding:30px;text-align:center;color:var(--muted)}@media print{.topbar,.sidebar,.ope-actions,.success,.error,.no-print{display:none!important}.shell{display:block}.content{padding:0}.card{box-shadow:none;border:0}body{background:white}th{background:#eee}}
+.ope-transport-dialog{width:min(850px,calc(100vw - 30px));max-height:calc(100vh - 40px);padding:24px;border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 60px rgb(0 0 0 / 22%);color:var(--ink)}.ope-transport-dialog::backdrop{background:rgb(2 23 26 / 58%)}.ope-transport-dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.ope-transport-dialog-head h2{margin:0 0 8px}.ope-dialog-close{min-width:36px;font-size:22px;padding:4px 9px}.ope-secondary-button{background:#e8eeee;color:var(--ink)}.ope-secondary-button:hover{background:#d7e2e3}.ope-transport-dialog .ope-actions{margin:4px 0 0}.ope-transport-dialog .note:last-child{margin-bottom:0}
+.ope-list-trigger{min-height:28px;padding:2px 7px;border:0;background:transparent;color:var(--turquoise-dark);white-space:nowrap;font-weight:800}.ope-list-trigger:hover{background:var(--turquoise-soft);color:#00696c}.ope-list-trigger span{font-size:16px}.ope-coverages-dialog{width:min(1150px,calc(100vw - 30px))}.ope-coverages-dialog .table-wrap{max-height:min(62vh,650px);overflow:auto}.ope-coverages-dialog th{position:sticky;top:0}.ope-coverages-dialog .note{margin-bottom:0}
+.ope-air-route-scope{margin:2px 0 0;padding:12px 15px;border:1px solid var(--line);border-radius:8px;background:#f6fbfb}.ope-air-route-scope legend{padding:0 5px;font-size:13px;font-weight:750}.ope-air-route-scope label{display:flex;align-items:center;gap:8px;margin:7px 0;font-weight:500}.ope-air-route-scope input[type=radio]{accent-color:var(--turquoise-dark)}
+.ope-bulk-save{position:sticky;top:76px;z-index:10;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:#fff;box-shadow:0 3px 10px rgb(6 31 32 / 8%)}.ope-bulk-save .note{margin:0}@media(max-width:760px){.ope-bulk-save{top:70px}}
 </style></head><body>
 <header class="topbar"><a class="brand" href="{{ route('operations.dashboard') }}"><span class="brand-mark">4N</span><span><strong>Operaciones</strong><small>4N Logística · Primera milla</small></span></a><div class="user-area"><a href="{{ route('portal.home') }}">Inicio</a> · <a href="{{ route('portal.profile') }}">{{ auth()->user()->name }}</a></div></header>
 <div class="shell"><aside class="sidebar" aria-label="Menú Operaciones">
 @foreach(['dashboard'=>['Procesos','grid'], 'loads.index'=>['Maestro Geolize','truck']] as $name=>$item)
 <a class="nav-link {{ request()->routeIs('operations.'.$name) && ($name !== 'loads.index' || request()->route('type') === 'master') ? 'active' : '' }}" href="{{ route('operations.'.$name, $name === 'loads.index' ? ['type'=>'master'] : []) }}">@include('portal.icon',['icon'=>$item[1]]) {{ $item[0] }}</a>
 @endforeach
-<a class="nav-link {{ request()->route('type') === 'reception' ? 'active' : '' }}" href="{{ route('operations.loads.index','reception') }}">@include('portal.icon',['icon'=>'truck']) Recepción de bultos</a>
-<a class="nav-link {{ request()->routeIs('operations.setup') ? 'active' : '' }}" href="{{ route('operations.setup') }}">@include('portal.icon',['icon'=>'settings']) Agencias y guías</a>
+<details @if(request()->route('type') === 'reception' || request()->routeIs('operations.system-receptions.*')) open @endif>
+<summary class="nav-summary {{ request()->route('type') === 'reception' || request()->routeIs('operations.system-receptions.*') ? 'active' : '' }}">@include('portal.icon',['icon'=>'truck']) <span class="nav-text">Recepción de bultos</span></summary>
+<div class="subnav">
+<a class="{{ request()->routeIs('operations.system-receptions.*') ? 'active' : '' }}" href="{{ route('operations.system-receptions.index') }}">Recepción Sistema</a>
+<a class="{{ request()->route('type') === 'reception' ? 'active' : '' }}" href="{{ route('operations.loads.index','reception') }}">Cargas Excel anteriores</a>
+</div></details>
+<details @if(request()->routeIs('operations.setup','operations.transport','operations.transport.update','operations.post-origins','operations.post-origins.update')) open @endif>
+<summary class="nav-summary {{ request()->routeIs('operations.setup','operations.transport','operations.transport.update','operations.post-origins','operations.post-origins.update') ? 'active' : '' }}">@include('portal.icon',['icon'=>'settings']) <span class="nav-text">Agencias y guías</span></summary>
+<div class="subnav">
+<a class="{{ request()->routeIs('operations.setup') ? 'active' : '' }}" href="{{ route('operations.setup') }}">Relación de agencias</a>
+<a class="{{ request()->routeIs('operations.transport') && request('type') !== 'posta' ? 'active' : '' }}" href="{{ route('operations.transport') }}#troncales">Troncales</a>
+<a class="{{ request()->routeIs('operations.transport') && request('type') === 'posta' ? 'active' : '' }}" href="{{ route('operations.transport') }}#postas">Posta 1 y Posta 2</a>
+<a class="{{ request()->routeIs('operations.post-origins') ? 'active' : '' }}" href="{{ route('operations.post-origins') }}">Orígenes de postas</a>
+</div></details>
 <a class="nav-link" href="{{ route('portal.home') }}">@include('portal.icon',['icon'=>'arrow-left']) Volver al inicio</a>
-<p class="note" style="padding:12px">El peso de trabajo proviene exclusivamente de Recepción.</p>
+<p class="note" style="padding:12px">El peso de Operaciones prevalece; Geolize se usa si falta.</p>
 </aside><main class="content">
 @if(session('status'))<div class="success" role="status">{{ session('status') }}</div>@endif
 @if($errors->any())<div class="error" role="alert">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>@endif

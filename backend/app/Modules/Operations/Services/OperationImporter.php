@@ -191,16 +191,17 @@ class OperationImporter
             }
         }
 
-        return ['tracking' => $tracking, 'commune' => $commune, 'merchant' => $get('comerciante'), 'service' => $get('servicio'), 'recipient' => $get('nombre del destinatario'), 'address' => $get('direccion'), 'geolize_guide' => $get('guia de despacho')];
+        return ['tracking' => $tracking, 'commune' => $commune, 'merchant' => $get('comerciante'), 'service' => $get('servicio'), 'recipient' => $get('nombre del destinatario'), 'address' => $get('direccion'), 'geolize_guide' => $get('guia de despacho'), 'geolize_weight' => $get('peso')];
     }
 
     private function reception(array $values, array $mapping, array &$errors): array
     {
         $get = fn (string $name) => empty($mapping[$name]) ? null : ($values[$this->column($mapping[$name])] ?? null);
         $tracking = $this->tracking(trim((string) $get('tracking')), $errors);
-        $weight = $this->weight($get('weight'));
-        if ($weight === null) {
-            $errors[] = 'Peso volumétrico ausente, no positivo o inválido.';
+        $rawWeight = $get('weight');
+        $weight = $this->weight($rawWeight);
+        if ($weight === null && trim((string) $rawWeight) !== '') {
+            $errors[] = 'Peso volumétrico no positivo o inválido.';
         }
         if (($mapping['profile'] ?? '') === 'legacy') {
             foreach ([2, 13] as $column) {

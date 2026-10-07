@@ -3,6 +3,7 @@
 @section('content')
 <div class="ope-heading"><h1>{{ $type === 'master' ? 'Carga Maestro Geolize' : 'Carga Recepción de bultos' }}</h1></div>
 <p class="intro">{{ $type === 'master' ? 'Carga el Maestro diario para completar cliente, servicio y destino de los paquetes.' : 'Carga los escaneos y pesos volumétricos validados por los operarios. Esta fuente define los bultos que se trabajan.' }}</p>
+@if($type === 'reception')<p class="warning">Para nuevas recepciones, usa <a href="{{ route('operations.system-receptions.index') }}">Recepción Sistema</a> y registra los bultos directamente, sin subir un Excel. Esta pantalla queda disponible para las cargas anteriores.</p>@endif
 <section class="card"><form method="POST" enctype="multipart/form-data" action="{{ route('operations.loads.store',$type) }}" class="ope-form">@csrf
 <label>Archivo Excel .xlsx<input type="file" name="file" accept=".xlsx" required></label>
 <label>Hoja de datos<input name="sheet" value="{{ old('sheet', $type === 'master' ? 'Sheet1' : 'Hoja1') }}" maxlength="80" required></label>

@@ -30,9 +30,10 @@ class ProviderPaymentsDashboardController
     {
         $tenant = Tenant::query()->where('code', '4N')->first();
         $periods = $tenant ? CourierMovement::query()->where('tenant_id', $tenant->id)->whereNotNull('nombre_proceso')
-            ->selectRaw('SUBSTR(nombre_proceso, 1, 6) AS period')
+            ->select('nombre_proceso')
             ->where('nombre_proceso', 'like', '______-%')
-            ->distinct()->orderByDesc('period')->pluck('period')->all() : [];
+            ->distinct()->orderByDesc('nombre_proceso')->pluck('nombre_proceso')
+            ->map(fn (string $process): string => substr($process, 0, 6))->unique()->values()->all() : [];
         $latestClosedPeriod = $tenant ? DB::table('PPR_Cierres_Pagos')->where('tenant_id', $tenant->id)->max('periodo') : null;
         if ($latestClosedPeriod !== null && ! in_array($latestClosedPeriod, $periods, true)) {
             $periods[] = $latestClosedPeriod;
@@ -44,7 +45,7 @@ class ProviderPaymentsDashboardController
         }
         $movements = CourierMovement::query()
             ->when($tenant, fn ($query) => $query->where('tenant_id', $tenant->id), fn ($query) => $query->whereRaw('1 = 0'))
-            ->when($selectedPeriod !== '', fn ($query) => $query->where('nombre_proceso', 'like', $selectedPeriod.'-%'), fn ($query) => $query->whereRaw('1 = 0'));
+            ->when($selectedPeriod !== '', fn ($query) => $query->where('nombre_proceso', '>=', $selectedPeriod.'-')->where('nombre_proceso', '<', $selectedPeriod.'.'), fn ($query) => $query->whereRaw('1 = 0'));
 
         $merchantCounts = (clone $movements)
             ->selectRaw('merchant_name, count(*) as total')
@@ -67,7 +68,7 @@ class ProviderPaymentsDashboardController
         $serviceCounts = CourierPaymentMovement::query()
             ->when($tenant, fn ($query) => $query->where('tenant_id', $tenant->id), fn ($query) => $query->whereRaw('1 = 0'))
             ->where('periodo', $selectedPeriod)
-            ->selectRaw('nombre_proceso, COUNT(*) AS total')
+            ->selectRaw("nombre_proceso, COUNT(*) AS total, SUM(CASE WHEN condicion_pago = 'SI' THEN COALESCE(valor, 0) ELSE 0 END) AS amount")
             ->groupBy('nombre_proceso')->orderByDesc('total')->get()
             ->each(function (CourierPaymentMovement $process) use ($selectedPeriod): void {
                 $process->service_name = str_starts_with($process->nombre_proceso, $selectedPeriod.'-')
@@ -99,13 +100,8 @@ class ProviderPaymentsDashboardController
             'worked' => ($paymentCountsByProcess[$process] ?? 0) > 0,
         ])->values();
         $processChecklist->push(['label' => 'Cierre definitivo', 'worked' => $monthClosed]);
-        $processAmounts = CourierPaymentMovement::query()
-            ->when($tenant, fn ($query) => $query->where('tenant_id', $tenant->id), fn ($query) => $query->whereRaw('1 = 0'))
-            ->where('periodo', $selectedPeriod)->where('condicion_pago', 'SI')
-            ->selectRaw('nombre_proceso, SUM(COALESCE(valor, 0)) AS amount')
-            ->groupBy('nombre_proceso')->get()
-            ->groupBy(fn (CourierPaymentMovement $process): string => str_starts_with($process->nombre_proceso, $selectedPeriod.'-')
-                ? substr($process->nombre_proceso, 7) : $process->nombre_proceso)
+        $processAmounts = $serviceCounts
+            ->groupBy('service_name')
             ->map(fn ($processes): int => (int) $processes->sum('amount'))
             ->filter(fn (int $amount): bool => $amount > 0)
             ->sortDesc();
@@ -126,7 +122,7 @@ class ProviderPaymentsDashboardController
             ->map(fn ($rows): int => (int) $rows->sum('amount'))
             ->filter(fn (int $amount): bool => $amount > 0)
             ->sortDesc();
-        $recordCount = (clone $movements)->count();
+        $recordCount = (int) $sourceProcessCounts->sum('total');
         $paymentDashboard = $paymentSummary->forPeriod($tenant?->id, $selectedPeriod);
 
         return view('provider-payments::dashboard', compact('merchantCounts', 'statusCounts', 'serviceCounts', 'sourceProcessCounts', 'paymentCountsByProcess', 'pendingProcessCounts', 'processChecklist', 'processAmounts', 'clientAmounts', 'periods', 'selectedPeriod', 'recordCount', 'paymentDashboard', 'monthClosed', 'closure'));

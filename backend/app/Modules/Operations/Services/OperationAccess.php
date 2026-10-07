@@ -40,6 +40,28 @@ class OperationAccess
         return Str::lower((string) preg_replace('/\s+/u', ' ', trim(Str::ascii($value))));
     }
 
+    public static function literalKey(string $value): string
+    {
+        return Str::lower((string) preg_replace('/\s+/u', ' ', trim($value)));
+    }
+
+    public static function validRut(string $rut): bool
+    {
+        if (preg_match('/^([1-9]\d{6,7})-([0-9K])$/D', $rut, $parts) !== 1) {
+            return false;
+        }
+
+        $sum = 0;
+        $multiplier = 2;
+        foreach (str_split(strrev($parts[1])) as $digit) {
+            $sum += (int) $digit * $multiplier;
+            $multiplier = $multiplier === 7 ? 2 : $multiplier + 1;
+        }
+        $check = 11 - $sum % 11;
+
+        return ($check === 11 ? '0' : ($check === 10 ? 'K' : (string) $check)) === $parts[2];
+    }
+
     public static function json(mixed $value): string
     {
         return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
