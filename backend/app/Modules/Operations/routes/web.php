@@ -47,8 +47,10 @@ Route::prefix('operaciones')->name('operations.')->group(function (): void {
     Route::post('/ubicaciones', [OperationSetupController::class, 'location'])->name('locations.store');
     Route::post('/configuraciones', [OperationSetupController::class, 'configuration'])->name('configurations.store');
     Route::get('/salidas', [OperationDepartureController::class, 'overview'])->name('departures.overview');
+    Route::get('/generacion-guias', [OperationBsaleGuideController::class, 'overview'])->name('guide-generation.overview');
     Route::get('/procesos/{lot}/salidas', [OperationDepartureController::class, 'index'])->whereNumber('lot')->name('departures.index');
     Route::get('/procesos/{lot}/salidas/planilla.xlsx', [OperationDepartureController::class, 'spreadsheet'])->whereNumber('lot')->name('departures.spreadsheet');
+    Route::get('/procesos/{lot}/salidas/guias-bsale.xlsx', [OperationDepartureController::class, 'guideSpreadsheet'])->whereNumber('lot')->name('guide-generation.spreadsheet');
     Route::post('/procesos/{lot}/salidas', [OperationDepartureController::class, 'store'])->whereNumber('lot')->name('departures.store');
     Route::post('/procesos/{lot}/salidas/aprobar-todas', [OperationDepartureController::class, 'approveAll'])->whereNumber('lot')->name('departures.approve-all');
     Route::post('/procesos/{lot}/reservas', [OperationDepartureController::class, 'reserve'])->whereNumber('lot')->name('reservations.store');

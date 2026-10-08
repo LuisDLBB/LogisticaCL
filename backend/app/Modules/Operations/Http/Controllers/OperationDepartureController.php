@@ -112,8 +112,47 @@ class OperationDepartureController extends Controller
             ->where('departure.lot_id', $lot)->where('departure.status', 'draft')
             ->whereNull('configuration.group_code')->distinct()->count('departure.id');
         $departures = DB::table('Ope_ProgramacionSalidas')->where('lot_id', $lot)->orderBy('departure_date')->orderBy('id')->get();
+        $guideDates = $departures->where('status', '<>', 'cancelled')->pluck('departure_date')->unique()->sortDesc()->values();
+        $requestedGuideDate = $request->query('fecha');
+        $selectedGuideDate = is_string($requestedGuideDate) && $guideDates->contains($requestedGuideDate)
+            ? $requestedGuideDate : $guideDates->first();
+        $guideDepartures = $departures->filter(fn ($departure): bool => $departure->status !== 'cancelled' && $departure->departure_date === $selectedGuideDate)
+            ->sortBy(fn ($departure): string => sprintf('%d-%010d', ['troncal' => 1, 'posta1' => 2, 'posta2' => 3, 'posta3' => 4][$departure->role] ?? 5, $departure->id))
+            ->values();
+        $currentGuides = $guideDepartures->isEmpty() ? collect() : DB::table('Ope_Guias as guide')
+            ->join('Ope_ProgramacionSalidas as departure', 'departure.id', '=', 'guide.departure_id')
+            ->whereIn('guide.departure_id', $guideDepartures->pluck('id'))
+            ->whereColumn('guide.version', 'departure.version')
+            ->get(['guide.id', 'guide.departure_id', 'guide.version', 'guide.snapshot'])
+            ->keyBy('departure_id');
+        $bsaleEmissions = $currentGuides->isEmpty() ? collect() : DB::table('Ope_GuiasBsale')
+            ->where('tenant_id', OperationAccess::tenant($request))
+            ->whereIn('guide_id', $currentGuides->pluck('id'))
+            ->orderBy('sheet_number')->get()->groupBy('guide_id');
+        $historicalBsaleCount = $guideDepartures->isEmpty() ? 0 : DB::table('Ope_GuiasBsale as emission')
+            ->join('Ope_Guias as guide', 'guide.id', '=', 'emission.guide_id')
+            ->join('Ope_ProgramacionSalidas as departure', 'departure.id', '=', 'guide.departure_id')
+            ->where('emission.tenant_id', OperationAccess::tenant($request))
+            ->whereIn('departure.id', $guideDepartures->pluck('id'))
+            ->whereColumn('emission.version', '<', 'departure.version')
+            ->where('emission.estado', 'generada')->count();
+        $blockedBsale = $bsaleEmissions->flatten()->contains(fn ($emission): bool => in_array($emission->estado, ['enviando', 'incierta'], true));
+        $bulkGuideUrls = [];
+        if (! $blockedBsale && OperationAccess::supervisor($request)) {
+            foreach ($guideDepartures as $departure) {
+                $guide = $currentGuides->get($departure->id);
+                if ($departure->status !== 'approved' || ! $guide) {
+                    continue;
+                }
+                $lineCount = count(json_decode($guide->snapshot, true)['lines'] ?? []);
+                $sheetCount = (int) ceil($lineCount / OperationBsaleGuideService::LINES_PER_SHEET);
+                if ($sheetCount > 0 && $bsaleEmissions->get($guide->id, collect())->where('estado', 'generada')->count() < $sheetCount) {
+                    $bulkGuideUrls[] = route('operations.guides.bsale.store', $guide->id);
+                }
+            }
+        }
 
-        return view('operations::departures', ['lot' => $record, 'configurations' => $configurations, 'counts' => $counts, 'scheduled' => $members, 'missingAddresses' => $missingAddresses, 'missingRoutes' => $missingRoutes, 'legacyDrafts' => $legacyDrafts, 'departures' => $departures, 'pendingDepartureCount' => $departures->where('status', 'draft')->count(), 'canApproveAll' => OperationAccess::supervisor($request), 'spreadsheetRows' => $workflow->departureSpreadsheetRows(OperationAccess::tenant($request), $lot), 'blocked' => DB::table('Ope_Incidencias')->where('lot_id', $lot)->whereNull('resolved_at')->count(), 'pendingReservations' => $reservations->pendingBatches(OperationAccess::tenant($request)), 'includedReservations' => $reservations->includedBatches(OperationAccess::tenant($request), $lot), 'canIncludeReservations' => ! DB::table('Ope_ProgramacionSalidas')->where('lot_id', $lot)->where('status', '<>', 'cancelled')->exists()]);
+        return view('operations::departures', ['lot' => $record, 'configurations' => $configurations, 'counts' => $counts, 'scheduled' => $members, 'missingAddresses' => $missingAddresses, 'missingRoutes' => $missingRoutes, 'legacyDrafts' => $legacyDrafts, 'departures' => $departures, 'guideDates' => $guideDates, 'selectedGuideDate' => $selectedGuideDate, 'guideDepartures' => $guideDepartures, 'currentGuides' => $currentGuides, 'bsaleEmissions' => $bsaleEmissions, 'historicalBsaleCount' => $historicalBsaleCount, 'blockedBsale' => $blockedBsale, 'bulkGuideUrls' => $bulkGuideUrls, 'pendingDepartureCount' => $departures->where('status', 'draft')->count(), 'canApproveAll' => OperationAccess::supervisor($request), 'spreadsheetRows' => $workflow->departureSpreadsheetRows(OperationAccess::tenant($request), $lot), 'blocked' => DB::table('Ope_Incidencias')->where('lot_id', $lot)->whereNull('resolved_at')->count(), 'pendingReservations' => $reservations->pendingBatches(OperationAccess::tenant($request)), 'includedReservations' => $reservations->includedBatches(OperationAccess::tenant($request), $lot), 'canIncludeReservations' => ! DB::table('Ope_ProgramacionSalidas')->where('lot_id', $lot)->where('status', '<>', 'cancelled')->exists()]);
     }
 
     public function spreadsheet(Request $request, int $lot, OperationWorkflow $workflow): StreamedResponse
@@ -163,6 +202,64 @@ class OperationDepartureController extends Controller
                 $spreadsheet->disconnectWorksheets();
             }
         }, 'salidas_agencias_proceso_'.$lot.'.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    public function guideSpreadsheet(Request $request, int $lot, OperationWorkflow $workflow): StreamedResponse
+    {
+        OperationAccess::lot($request, $lot);
+        $input = $request->validate(['fecha' => ['required', 'date_format:Y-m-d']]);
+        $departureIds = DB::table('Ope_ProgramacionSalidas')->where('lot_id', $lot)
+            ->where('departure_date', $input['fecha'])->where('status', '<>', 'cancelled')->pluck('id');
+        abort_if($departureIds->isEmpty(), 404);
+        $rows = array_values(array_filter($workflow->departureSpreadsheetRows(OperationAccess::tenant($request), $lot, true),
+            fn (array $row): bool => $departureIds->contains($row['departure_id'])));
+        $guideIds = collect($rows)->pluck('guide_id')->filter()->unique();
+        $emissions = $guideIds->isEmpty() ? collect() : DB::table('Ope_GuiasBsale')
+            ->where('tenant_id', OperationAccess::tenant($request))->whereIn('guide_id', $guideIds)
+            ->where('estado', 'generada')->get()->keyBy(fn ($emission): string => $emission->guide_id.':'.$emission->sheet_number);
+        $lineCounts = collect($rows)->whereNotNull('guide_id')->groupBy('guide_id')->map(fn ($guideRows): int => $guideRows->max('line_number'));
+
+        return response()->streamDownload(function () use ($rows, $emissions, $lineCounts): void {
+            $spreadsheet = new Spreadsheet;
+            try {
+                $sheet = $spreadsheet->getActiveSheet();
+                $sheet->setTitle('Guías de salida');
+                $headers = ['Fecha declarada', 'Transporte', 'N.º', 'Dirección origen', 'Comuna origen', 'Patente', 'RUT chofer', 'Nombre chofer', 'Dirección destino', 'Comuna destino', 'Agencia', 'Glosa', 'Bultos', 'Suma de peso', 'Guía interna', 'Hoja', 'N.º guía Bsale', 'PDF Bsale'];
+                foreach ($headers as $index => $header) {
+                    $sheet->setCellValueExplicit([$index + 1, 1], $header, DataType::TYPE_STRING);
+                }
+                $sheet->getStyle('A1:R1')->getFont()->setBold(true)->getColor()->setRGB('FFFFFF');
+                $sheet->getStyle('A1:R1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('007F82');
+                foreach ($rows as $index => $row) {
+                    $sheetNumber = $row['guide_id'] ? intdiv($row['line_number'] - 1, OperationBsaleGuideService::LINES_PER_SHEET) + 1 : null;
+                    $sheetCount = $row['guide_id'] ? (int) ceil($lineCounts[$row['guide_id']] / OperationBsaleGuideService::LINES_PER_SHEET) : null;
+                    $emission = $sheetNumber ? $emissions->get($row['guide_id'].':'.$sheetNumber) : null;
+                    $declaredDate = DateTimeImmutable::createFromFormat('!Y-m-d', $row['declared_date']);
+                    $values = [$declaredDate ? Date::PHPToExcel($declaredDate) : $row['declared_date'], $row['transport'], $row['number'], $row['origin_address'], $row['origin_commune'], $row['plate'], $row['driver_rut'], $row['driver_name'], $row['destination_address'], $row['destination_commune'], $row['agency'], $row['description'], $row['count'], $row['weight'], $row['guide_id'] ?: '', $sheetNumber ? 'Hoja '.$sheetNumber.' de '.$sheetCount : '', $emission?->numero ?? '', $emission?->url_pdf ?? ''];
+                    foreach ($values as $column => $value) {
+                        if (in_array($column, [2, 12, 13], true) || ($column === 0 && $declaredDate)) {
+                            $sheet->setCellValue([$column + 1, $index + 2], $value);
+                        } else {
+                            $sheet->setCellValueExplicit([$column + 1, $index + 2], (string) $value, DataType::TYPE_STRING);
+                        }
+                    }
+                }
+                foreach (['A' => 19, 'B' => 34, 'C' => 9, 'D' => 38, 'E' => 20, 'F' => 15, 'G' => 18, 'H' => 30, 'I' => 38, 'J' => 20, 'K' => 26, 'L' => 55, 'M' => 12, 'N' => 18, 'O' => 15, 'P' => 17, 'Q' => 20, 'R' => 55] as $column => $width) {
+                    $sheet->getColumnDimension($column)->setWidth($width);
+                }
+                if ($rows !== []) {
+                    $sheet->getStyle('A2:A'.(count($rows) + 1))->getNumberFormat()->setFormatCode('dd-mm-yyyy');
+                    $sheet->getStyle('N2:N'.(count($rows) + 1))->getNumberFormat()->setFormatCode('0');
+                }
+                $sheet->freezePane('A2');
+                $sheet->setAutoFilter('A1:R'.max(1, count($rows) + 1));
+                (new Xlsx($spreadsheet))->save('php://output');
+            } finally {
+                $spreadsheet->disconnectWorksheets();
+            }
+        }, 'guias_bsale_proceso_'.$lot.'_'.$input['fecha'].'.xlsx', [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
     }

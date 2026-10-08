@@ -41,22 +41,26 @@
 .ope-list-trigger{min-height:28px;padding:2px 7px;border:0;background:transparent;color:var(--turquoise-dark);white-space:nowrap;font-weight:800}.ope-list-trigger:hover{background:var(--turquoise-soft);color:#00696c}.ope-list-trigger span{font-size:16px}.ope-coverages-dialog{width:min(1150px,calc(100vw - 30px))}.ope-coverages-dialog .table-wrap{max-height:min(62vh,650px);overflow:auto}.ope-coverages-dialog th{position:sticky;top:0}.ope-coverages-dialog .note{margin-bottom:0}
 .ope-air-route-scope{margin:2px 0 0;padding:12px 15px;border:1px solid var(--line);border-radius:8px;background:#f6fbfb}.ope-air-route-scope legend{padding:0 5px;font-size:13px;font-weight:750}.ope-air-route-scope label{display:flex;align-items:center;gap:8px;margin:7px 0;font-weight:500}.ope-air-route-scope input[type=radio]{accent-color:var(--turquoise-dark)}
 .ope-bulk-save{position:sticky;top:76px;z-index:10;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:#fff;box-shadow:0 3px 10px rgb(6 31 32 / 8%)}.ope-bulk-save .note{margin:0}@media(max-width:760px){.ope-bulk-save{top:70px}}
+.ope-reception-source{margin:10px 0;padding:12px;border:1px solid var(--line);border-radius:8px;background:#fbfefe}.ope-reception-source .note{margin:5px 0 10px}.ope-reception-source .ope-table th:last-child,.ope-reception-source .ope-table td:last-child{text-align:right}.ope-source-name{display:block;margin:2px 0}.ope-guide-links{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:3px 0}.ope-guide-links .button{min-height:27px;padding:3px 7px;font-size:12px}
 </style></head><body>
 <header class="topbar"><a class="brand" href="{{ route('operations.dashboard') }}"><span class="brand-mark">4N</span><span><strong>Operaciones</strong><small>4N Logística · Primera milla</small></span></a><div class="user-area"><a href="{{ route('portal.home') }}">Inicio</a> · <a href="{{ route('portal.profile') }}">{{ auth()->user()->name }}</a></div></header>
 <div class="shell"><aside class="sidebar" aria-label="Menú Operaciones">
 @php($receptionActive = request()->routeIs('operations.system-receptions.*') || (request()->routeIs('operations.loads.*') && (request()->route('type') === 'reception' || ($load->source_type ?? null) === 'reception')))
 @php($masterActive = request()->routeIs('operations.loads.*') && (request()->route('type') === 'master' || ($load->source_type ?? null) === 'master'))
 @php($processesActive = request()->routeIs('operations.dashboard','operations.lots.*','operations.issues.*'))
-@php($departuresActive = request()->routeIs('operations.departures.*','operations.guides.*'))
-@php($configurationActive = request()->routeIs('operations.setup','operations.transport*','operations.post-origins*','operations.routes*','operations.cleanup.*'))
+@php($routesActive = request()->routeIs('operations.routes*'))
+@php($guideGenerationActive = request()->routeIs('operations.guide-generation.*') || request()->routeIs('operations.guides.bsale.*','operations.guides.show'))
+@php($departuresActive = request()->routeIs('operations.departures.*'))
+@php($configurationActive = request()->routeIs('operations.setup','operations.transport*','operations.post-origins*','operations.cleanup.*'))
 <a class="nav-link {{ $receptionActive ? 'active' : '' }}" href="{{ route('operations.system-receptions.index') }}" @if($receptionActive) aria-current="page" @endif>@include('portal.icon',['icon'=>'truck']) <span class="nav-text">Recepción Sistema</span></a>
 <a class="nav-link {{ $masterActive ? 'active' : '' }}" href="{{ route('operations.loads.index','master') }}" @if($masterActive) aria-current="page" @endif>@include('portal.icon',['icon'=>'chart']) <span class="nav-text">Maestro Geolize</span></a>
 <a class="nav-link {{ $processesActive ? 'active' : '' }}" href="{{ route('operations.dashboard') }}" @if($processesActive) aria-current="page" @endif>@include('portal.icon',['icon'=>'grid']) <span class="nav-text">Procesos</span></a>
+<a class="nav-link {{ $routesActive ? 'active' : '' }}" href="{{ route('operations.routes') }}" @if($routesActive) aria-current="page" @endif>@include('portal.icon',['icon'=>'truck']) <span class="nav-text">Programación de Rutas</span></a>
 <a class="nav-link {{ $departuresActive ? 'active' : '' }}" href="{{ route('operations.departures.overview') }}" @if($departuresActive) aria-current="page" @endif>@include('portal.icon',['icon'=>'truck']) <span class="nav-text">Salidas</span></a>
+<a class="nav-link {{ $guideGenerationActive ? 'active' : '' }}" href="{{ route('operations.guide-generation.overview') }}" @if($guideGenerationActive) aria-current="page" @endif>@include('portal.icon',['icon'=>'chart']) <span class="nav-text">Generación de Guías</span></a>
 <details @if($configurationActive) open @endif>
 <summary class="nav-summary {{ $configurationActive ? 'active' : '' }}">@include('portal.icon',['icon'=>'settings']) <span class="nav-text">Configuración</span></summary>
 <div class="subnav">
-<a class="{{ request()->routeIs('operations.routes*') ? 'active' : '' }}" href="{{ route('operations.routes') }}">Programación de Rutas</a>
 <a class="{{ request()->routeIs('operations.setup') ? 'active' : '' }}" href="{{ route('operations.setup') }}">Agencias y guías</a>
 <a class="{{ request()->routeIs('operations.transport') && request('type') !== 'posta' ? 'active' : '' }}" href="{{ route('operations.transport') }}#troncales">Troncales</a>
 <a class="{{ request()->routeIs('operations.transport') && request('type') === 'posta' ? 'active' : '' }}" href="{{ route('operations.transport') }}#postas">Posta 1 y Posta 2</a>

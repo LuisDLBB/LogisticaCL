@@ -42,7 +42,21 @@
 <section id="planilla" class="card" style="margin:18px 0;scroll-margin-top:90px"><div class="ope-actions" style="justify-content:space-between"><h2 style="margin:0">Planilla general de salidas</h2><a class="button" href="{{ route('operations.departures.spreadsheet',$lot->id) }}">Descargar Excel</a></div>
 <p class="note">{{ count($spreadsheetRows) }} {{ count($spreadsheetRows) === 1 ? 'fila' : 'filas' }} de las salidas vigentes. El N.º comienza en 1 para cada salida y agencia. El peso se muestra en kg enteros y las salidas canceladas no se incluyen.</p>
 <div class="table-wrap" style="max-height:65vh"><table class="ope-table" style="min-width:1850px"><thead><tr><th>Fecha declarada</th><th>Transporte</th><th>N.º</th><th>Dirección origen</th><th>Comuna origen</th><th>Patente</th><th>RUT chofer</th><th>Nombre chofer</th><th>Dirección destino</th><th>Comuna destino</th><th>Agencia</th><th>Glosa</th><th>Bultos</th><th>Suma de peso</th></tr></thead><tbody>@forelse($spreadsheetRows as $row)<tr><td>{{ \Carbon\Carbon::parse($row['declared_date'])->format('d-m-Y') }}</td><td>{{ $row['transport'] }}</td><td>{{ $row['number'] }}</td><td>{{ $row['origin_address'] }}</td><td>{{ $row['origin_commune'] }}</td><td>{{ $row['plate'] }}</td><td>{{ $row['driver_rut'] }}</td><td>{{ $row['driver_name'] }}</td><td>{{ $row['destination_address'] }}</td><td>{{ $row['destination_commune'] }}</td><td>{{ $row['agency'] }}</td><td>{{ $row['description'] }}</td><td>{{ $row['count'] }}</td><td>{{ $row['weight'] }}</td></tr>@empty<tr><td colspan="14" class="ope-empty">Todavía no hay salidas vigentes para incluir en la planilla.</td></tr>@endforelse</tbody></table></div></section>
-<h2>Salidas y revisión del supervisor</h2>
+<section id="generacion-guias" style="scroll-margin-top:90px">
+<h2>Generación de Guías</h2>
+<p class="note">Revisa las salidas aprobadas y sus números de Bsale. Cada salida puede generar varias hojas de hasta 15 líneas. La emisión masiva respeta el orden troncal, Posta 1, Posta 2 y Posta 3; se detiene si alguna hoja queda incierta.</p>
+@if($guideDates->isNotEmpty())
+<form method="GET" action="{{ route('operations.departures.index', $lot->id) }}" class="ope-actions">
+    <label>Fecha de salida <select name="fecha" onchange="this.form.submit()">@foreach($guideDates as $date)<option value="{{ $date }}" @selected($date === $selectedGuideDate)>{{ \Carbon\Carbon::parse($date)->format('d-m-Y') }}</option>@endforeach</select></label>
+    <a href="{{ route('operations.guide-generation.overview', ['fecha' => $selectedGuideDate]) }}">Ver otras fechas y procesos</a>
+    <a class="button" href="{{ route('operations.guide-generation.spreadsheet', ['lot' => $lot->id, 'fecha' => $selectedGuideDate]) }}">Descargar Excel con guías Bsale</a>
+</form>
+@endif
+@if($historicalBsaleCount > 0)<p class="warning">Hay {{ $historicalBsaleCount }} guías Bsale de versiones anteriores de estas salidas. Si las nuevas corrigen esas emisiones, comprueba primero su anulación en Bsale.</p>@endif
+@if($blockedBsale)<p class="warning">Hay una emisión incierta o en curso. Revísala en <a href="{{ route('operations.guides.bsale.index') }}">el historial de Bsale</a> antes de emitir más guías.</p>@endif
+@if($canApproveAll && count($bulkGuideUrls) > 0)
+<div class="ope-actions"><button type="button" data-generate-bsale-many>Generar guías masivas en Bsale ({{ count($bulkGuideUrls) }})</button><span class="note" data-generate-bsale-status role="status"></span></div>
+@endif
 @if($canApproveAll && $pendingDepartureCount > 0)
 <form method="POST" action="{{ route('operations.departures.approve-all',$lot->id) }}" class="card" data-approve-all>@csrf
 <strong>{{ $pendingDepartureCount }} {{ $pendingDepartureCount === 1 ? 'salida pendiente' : 'salidas pendientes' }}</strong>
@@ -50,7 +64,25 @@
 <div class="ope-actions"><label><input type="checkbox" name="confirmed" value="1" required> Confirmo agencias, direcciones, choferes, RUT, patentes, bultos y pesos de todas las salidas pendientes.</label><button type="submit">Aprobar todo</button></div>
 </form>
 @endif
-<div class="card table-wrap"><table class="ope-table"><thead><tr><th>Salida</th><th>Fecha / Tramo</th><th>Transporte</th><th>Estado</th><th></th></tr></thead><tbody>@forelse($departures as $departure)<tr><td>#{{ $departure->id }} · {{ $departure->name }}</td><td>{{ $departure->departure_date }} / {{ $departure->role }}</td><td>{{ $departure->plate ?: 'Sin patente' }} · {{ $departure->driver_name ?: 'Sin chofer' }}</td><td>{{ ['approved'=>'Aprobada','draft'=>'Pendiente supervisor','cancelled'=>'Cancelada'][$departure->status] }}</td><td><a href="{{ route('operations.departures.show',$departure->id) }}">Revisar salida y guía</a></td></tr>@empty<tr><td colspan="5" class="ope-empty">Selecciona las agencias para crear la primera salida.</td></tr>@endforelse</tbody></table></div>
+<div class="card table-wrap"><table class="ope-table"><thead><tr><th>Salida</th><th>Fecha / Tramo</th><th>Transporte</th><th>Estado</th><th>Guía Bsale</th><th>Acción</th></tr></thead><tbody>
+@forelse($guideDepartures as $departure)
+    @php($guide = $currentGuides->get($departure->id))
+    @php($emissions = $guide ? $bsaleEmissions->get($guide->id, collect()) : collect())
+    <tr><td>#{{ $departure->id }} · {{ $departure->name }}</td><td>{{ $departure->departure_date }} / {{ $departure->role }}</td><td>{{ $departure->plate ?: 'Sin patente' }} · {{ $departure->driver_name ?: 'Sin chofer' }}</td><td>{{ ['approved'=>'Aprobada','draft'=>'Pendiente supervisor','cancelled'=>'Cancelada'][$departure->status] }}</td><td>
+        @forelse($emissions as $emission)
+            <div class="ope-guide-links"><strong>Hoja {{ $emission->sheet_number }} de {{ $emission->sheet_count }}:</strong> {{ $emission->numero ?: ucfirst($emission->estado) }}
+            @if($emission->estado === 'generada' && $emission->url_pdf && in_array(parse_url($emission->url_pdf, PHP_URL_SCHEME), ['http', 'https'], true))<a href="{{ $emission->url_pdf }}" target="_blank" rel="noopener noreferrer">Ver guía</a>@endif
+            @if($emission->estado === 'generada' && \App\Modules\Operations\Services\OperationBsaleGuideService::downloadablePdfUrl($emission->url_pdf))<a href="{{ route('operations.guides.bsale.pdf', $emission->id) }}">Descargar</a>@endif
+            </div>
+        @empty
+            <span class="ope-muted">Aún sin guía Bsale</span>
+        @endforelse
+    </td><td><a href="{{ $guide ? route('operations.guides.show', $guide->id) : route('operations.departures.show', $departure->id) }}">{{ $guide ? 'Ver guía interna' : 'Revisar salida' }}</a></td></tr>
+@empty
+    <tr><td colspan="6" class="ope-empty">No hay salidas programadas para esta fecha.</td></tr>
+@endforelse
+</tbody></table></div>
+</section>
 @endsection
 @push('scripts')
 <script>
@@ -81,6 +113,29 @@ submitDepartures?.closest('form')?.addEventListener('submit', (event) => {
     }
 });
 if (selectAllDepartures && selectionCount && submitDepartures) updateDepartureSelection();
+document.querySelector('[data-generate-bsale-many]')?.addEventListener('click', async event => {
+    const button = event.currentTarget;
+    const status = document.querySelector('[data-generate-bsale-status]');
+    const urls = @json($bulkGuideUrls);
+    const token = @json(csrf_token());
+    button.disabled = true;
+    for (let index = 0; index < urls.length; index++) {
+        status.textContent = `Generando ${index + 1} de ${urls.length}…`;
+        try {
+            const response = await fetch(urls[index], {method: 'POST', credentials: 'same-origin', headers: {'Accept': 'application/json', 'X-CSRF-TOKEN': token}});
+            const result = await response.json();
+            if (!response.ok || result.estado !== 'generada') {
+                status.textContent = result.message || result.errors?.bsale?.[0] || 'Emisión detenida. Revisa la guía en Bsale antes de continuar.';
+                return;
+            }
+        } catch {
+            status.textContent = 'No se pudo confirmar la emisión. Revisa Bsale antes de volver a intentarlo.';
+            return;
+        }
+    }
+    status.textContent = `${urls.length} guías internas procesadas. Actualizando números Bsale…`;
+    window.location.reload();
+});
 document.querySelector('[data-approve-all]')?.addEventListener('submit', event => {
     const button = event.currentTarget.querySelector('button[type="submit"]');
     button.disabled = true;

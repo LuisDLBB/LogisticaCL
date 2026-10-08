@@ -8,6 +8,7 @@ use App\Modules\Operations\Services\OperationWorkflow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -19,15 +20,67 @@ class OperationLotController extends Controller
     {
         $tenant = OperationAccess::tenant($request);
 
-        $loads = DB::table('Ope_Cargas')->where('tenant_id', $tenant)->where('status', 'completed')->orderByDesc('id')->get(['id', 'filename', 'source_type', 'created_at', 'row_count']);
+        $loads = DB::table('Ope_Cargas')->where('tenant_id', $tenant)->where('status', 'completed')->orderByDesc('id')->get(['id', 'filename', 'source_type', 'created_at', 'row_count', 'mapping']);
         $selectedLoad = $loads->firstWhere('id', $request->integer('load'));
+        $lots = DB::table('Ope_Lotes')->where('tenant_id', $tenant)->orderByDesc('id')->paginate(20);
+        $lotIds = $lots->getCollection()->pluck('id');
 
         return view('operations::lots', [
-            'lots' => DB::table('Ope_Lotes')->where('tenant_id', $tenant)->orderByDesc('id')->paginate(20),
+            'lots' => $lots,
             'loads' => $loads,
+            'receptionSummaries' => $this->receptionSummaries($loads),
+            'lotSources' => $lotIds->isEmpty() ? collect() : DB::table('Ope_LoteFuentes as source')
+                ->join('Ope_Cargas as load', 'load.id', '=', 'source.load_id')
+                ->whereIn('source.lot_id', $lotIds)
+                ->orderBy('load.id')
+                ->get(['source.lot_id', 'load.filename', 'load.mapping'])
+                ->groupBy('lot_id'),
+            'lotPackageCounts' => $lotIds->isEmpty() ? collect() : DB::table('Ope_Bultos')
+                ->whereIn('lot_id', $lotIds)
+                ->where('excluded', false)
+                ->select('lot_id')
+                ->selectRaw('COUNT(*) as total')
+                ->groupBy('lot_id')
+                ->pluck('total', 'lot_id'),
             'selectedMasterLoadId' => $selectedLoad?->source_type === 'master' ? $selectedLoad->id : null,
             'selectedReceptionLoadIds' => $selectedLoad?->source_type === 'reception' ? [$selectedLoad->id] : [],
         ]);
+    }
+
+    private function receptionSummaries(Collection $loads): array
+    {
+        $receptions = $loads->where('source_type', 'reception')->keyBy('id');
+        if ($receptions->isEmpty()) {
+            return [];
+        }
+
+        $profiles = $receptions->mapWithKeys(fn ($load): array => [$load->id => json_decode($load->mapping, true)['profile'] ?? '']);
+        $counts = [];
+        foreach (DB::table('Ope_FilasFuente')->whereIn('load_id', $receptions->keys())->select('load_id', 'data', 'raw')->cursor() as $row) {
+            $data = json_decode($row->data, true) ?: [];
+            $client = trim((string) ($data['client_name'] ?? ''));
+            if ($client === '' && $profiles->get($row->load_id) === 'legacy') {
+                $raw = json_decode($row->raw, true) ?: [];
+                $client = trim((string) ($raw[3] ?? ''));
+            }
+            $client = $client !== '' ? $client : 'Cliente no informado en el archivo';
+            $operator = trim((string) ($data['operator'] ?? ''));
+            $operator = $operator !== '' ? $operator : 'Operario no informado';
+            $counts[$row->load_id][$client][$operator] = ($counts[$row->load_id][$client][$operator] ?? 0) + 1;
+        }
+
+        $summaries = [];
+        foreach ($counts as $loadId => $clients) {
+            ksort($clients, SORT_NATURAL | SORT_FLAG_CASE);
+            foreach ($clients as $client => $operators) {
+                ksort($operators, SORT_NATURAL | SORT_FLAG_CASE);
+                foreach ($operators as $operator => $count) {
+                    $summaries[$loadId][] = ['client' => $client, 'operator' => $operator, 'count' => $count];
+                }
+            }
+        }
+
+        return $summaries;
     }
 
     public function store(Request $request, OperationWorkflow $workflow): RedirectResponse

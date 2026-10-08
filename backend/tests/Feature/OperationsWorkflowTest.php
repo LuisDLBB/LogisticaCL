@@ -123,7 +123,9 @@ class OperationsWorkflowTest extends TestCase
     {
         $this->member('Operario');
 
-        $this->get('/operaciones')->assertSee('Preparar proceso')->assertSeeInOrder(['Recepción Sistema', 'Maestro Geolize', 'Procesos', 'Salidas', 'Configuración']);
+        $this->get('/operaciones')->assertSee('Procesos Trabajados')->assertSee('Preparar proceso')
+            ->assertSeeInOrder(['Recepción Sistema', 'Maestro Geolize', 'Procesos', 'Programación de Rutas', 'Salidas', 'Generación de Guías', 'Configuración', 'Volver al inicio'])
+            ->assertDontSee('1. Recepción Sistema');
         $this->get('/operaciones/salidas')->assertOk()->assertSee('Todavía no hay procesos preparados');
         $this->get('/operaciones/cargas/master')->assertSee('Carga Maestro Geolize');
         $this->get('/operaciones/cargas/reception')->assertSee('Carga Recepción');
@@ -158,9 +160,30 @@ class OperationsWorkflowTest extends TestCase
         $this->assertSame('4N202609286768-600', $data['tracking']);
         $this->assertSame('6.000', $data['weight']);
         $this->assertSame('Operario H', $data['operator']);
+        $this->assertSame('Cliente', $data['client_name']);
         $this->assertNull($data['customer_guide']);
         $this->assertSame('MANIFIESTO 4N', $data['reference']);
         $this->get('/operaciones/carga/'.$row->load_id)->assertSee('MANIFIESTO 4N');
+        $this->get('/operaciones')->assertOk()->assertSee('Archivo cargado: operaciones.xlsx')
+            ->assertSeeInOrder(['Cliente', 'Operario H', 'Total de la recepción']);
+    }
+
+    public function test_process_page_totals_legacy_excel_bultos_by_client_and_operator(): void
+    {
+        [$tenant, $user] = $this->member();
+        $file = $this->excel('Hoja1', [
+            ['Fecha', 'Código barra', 'Peso C', 'Cliente', 'Código paquete', 'Peso F', 'Seguimiento', 'Operario', 'ESD', 'Extra', 'Alto', 'Largo', 'Ancho', 'Peso N'],
+            ['2026-10-08', 'BAR1', 4, 'Cliente A', 'PKG-1', 4, '', 'Operario X', 'R1', '', '', '', '', 4],
+            ['2026-10-08', 'BAR2', 5, 'Cliente A', 'PKG-2', 5, '', 'Operario X', 'R2', '', '', '', '', 5],
+            ['2026-10-08', 'BAR3', 6, 'Cliente B', 'PKG-3', 6, '', 'Operario Y', 'R3', '', '', '', '', 6],
+        ]);
+        $mapping = ['profile' => 'legacy', 'date' => 'A', 'tracking' => 'E', 'weight' => 'F', 'operator' => 'H', 'customer_guide' => null, 'reference' => 'I'];
+        app(OperationImporter::class)->import($file->getPathname(), 'fixture', 'recepcion.xlsx', $tenant, $user, 'reception', 'Hoja1', $mapping);
+
+        $this->get('/operaciones')->assertOk()->assertSee('Archivo cargado: recepcion.xlsx')
+            ->assertSee('<tr><td>Cliente A</td><td>Operario X</td><td>2</td></tr>', false)
+            ->assertSee('<tr><td>Cliente B</td><td>Operario Y</td><td>1</td></tr>', false)
+            ->assertSee('Total de la recepción');
     }
 
     public function test_identical_file_is_not_loaded_twice_and_does_not_leave_an_extra_upload(): void
@@ -730,7 +753,7 @@ class OperationsWorkflowTest extends TestCase
         $this->assertSame(2, DB::table('Ope_BultoTramos')->count());
         $this->assertSame(2, DB::table('Ope_ProgramacionSalidas')->where('status', 'draft')->count());
         $this->assertDatabaseCount('Ope_Guias', 0);
-        $this->get('/operaciones/procesos/'.$lot.'/salidas')->assertSee('Revisar salida y guía')->assertSee('2 filas de las salidas vigentes');
+        $this->get('/operaciones/procesos/'.$lot.'/salidas')->assertSee('Revisar salida')->assertSee('2 filas de las salidas vigentes');
         $rows = app(OperationWorkflow::class)->departureSpreadsheetRows($tenant, $lot);
         $this->assertSame(['Troncal', 'Posta 1'], array_map(fn ($row): string => explode(' · ', $row['transport'])[0], $rows));
         $this->assertSame([1, 1], array_column($rows, 'number'));

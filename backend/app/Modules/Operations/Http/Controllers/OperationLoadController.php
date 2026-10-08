@@ -25,8 +25,8 @@ class OperationLoadController extends Controller
     public function store(Request $request, string $type, OperationImporter $importer): RedirectResponse
     {
         abort_unless(in_array($type, ['master', 'reception'], true), 404);
-        $input = $request->validate(['file' => ['required', 'file', 'mimes:xlsx', 'extensions:xlsx', 'max:65536'], 'sheet' => ['required', 'string', 'max:80'], 'profile' => [$type === 'reception' ? 'required' : 'nullable', Rule::in(['legacy', 'custom'])], 'date' => ['nullable', 'regex:/^[A-Z]{1,2}$/D'], 'tracking' => ['nullable', 'regex:/^[A-Z]{1,2}$/D'], 'weight' => ['nullable', 'regex:/^[A-Z]{1,2}$/D'], 'operator' => ['nullable', 'regex:/^[A-Z]{1,2}$/D'], 'customer_guide' => ['nullable', 'regex:/^[A-Z]{1,2}$/D'], 'reference' => ['nullable', 'regex:/^[A-Z]{1,2}$/D']]);
-        $mapping = $type === 'master' ? [] : array_intersect_key($input, array_flip(['profile', 'date', 'tracking', 'weight', 'operator', 'customer_guide', 'reference']));
+        $input = $request->validate(['file' => ['required', 'file', 'mimes:xlsx', 'extensions:xlsx', 'max:65536'], 'sheet' => ['required', 'string', 'max:80'], 'profile' => [$type === 'reception' ? 'required' : 'nullable', Rule::in(['legacy', 'custom'])], 'date' => ['nullable', 'regex:/^[A-Z]{1,2}$/D'], 'tracking' => ['nullable', 'regex:/^[A-Z]{1,2}$/D'], 'weight' => ['nullable', 'regex:/^[A-Z]{1,2}$/D'], 'operator' => ['nullable', 'regex:/^[A-Z]{1,2}$/D'], 'client' => ['nullable', 'regex:/^[A-Z]{1,2}$/D'], 'customer_guide' => ['nullable', 'regex:/^[A-Z]{1,2}$/D'], 'reference' => ['nullable', 'regex:/^[A-Z]{1,2}$/D']]);
+        $mapping = $type === 'master' ? [] : array_intersect_key($input, array_flip(['profile', 'date', 'tracking', 'weight', 'operator', 'client', 'customer_guide', 'reference']));
         if ($type === 'reception' && ($input['profile'] ?? 'legacy') === 'legacy') {
             $mapping = ['profile' => 'legacy', 'date' => 'A', 'tracking' => 'E', 'weight' => 'F', 'operator' => 'H', 'customer_guide' => $input['customer_guide'] ?? null, 'reference' => 'I'];
         }

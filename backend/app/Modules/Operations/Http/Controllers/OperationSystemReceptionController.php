@@ -229,7 +229,7 @@ class OperationSystemReceptionController extends Controller
                         'operator' => $users->get($scan->user_id),
                         'customer_guide' => $record->document_type === 'guia' ? $record->document_number : null,
                         'reference' => ucfirst($record->document_type).' '.$record->document_number,
-                        'client_id' => $record->client_id, 'client_name' => $client->commercial_name,
+                        'client_id' => $record->client_id, 'client_name' => $client->commercial_name ?: $client->legal_name,
                         'height_cm' => $scan->height_cm, 'length_cm' => $scan->length_cm, 'width_cm' => $scan->width_cm,
                         'observations' => $record->observations,
                     ];

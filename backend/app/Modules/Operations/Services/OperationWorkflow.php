@@ -821,7 +821,7 @@ class OperationWorkflow
         return ['departure' => (array) $departure, 'origin' => $agencyData[0]['origin'] ?? [], 'destination' => $agencyData[0]['destination'] ?? [], 'agencies' => $agencyData, 'count' => count($packages), 'weight' => OperationWeightFormatter::canonical($weightUnits / 1000), 'lines' => $lines, 'packages' => $packages];
     }
 
-    public function departureSpreadsheetRows(int $tenant, int $lot): array
+    public function departureSpreadsheetRows(int $tenant, int $lot, bool $includeGuideReference = false): array
     {
         $departures = DB::table('Ope_ProgramacionSalidas as departure')
             ->join('Ope_Lotes as lot', 'lot.id', '=', 'departure.lot_id')
@@ -831,7 +831,7 @@ class OperationWorkflow
             ->orderBy('departure.id')
             ->get(['departure.id', 'departure.status', 'departure.version', 'departure.departure_date']);
         $guides = DB::table('Ope_Guias')->whereIn('departure_id', $departures->pluck('id'))
-            ->get(['departure_id', 'version', 'snapshot'])
+            ->get(['id', 'departure_id', 'version', 'snapshot'])
             ->keyBy(fn ($guide): string => $guide->departure_id.':'.$guide->version);
         $catalog = DB::table('Ope_SalidaAgencias as assigned')
             ->join('Ope_GuiaConfiguraciones as configuration', 'configuration.id', '=', 'assigned.configuration_id')
@@ -894,6 +894,8 @@ class OperationWorkflow
                     '_role_order' => ['troncal' => 1, 'posta1' => 2, 'posta2' => 3, 'posta3' => 4][$role] ?? 5,
                     '_departure_id' => $departure->id,
                     '_line_order' => $lineOrder,
+                    '_guide_id' => $guide?->id,
+                    '_guide_version' => $guide?->version,
                 ];
             }
         }
@@ -904,7 +906,13 @@ class OperationWorkflow
         foreach ($rows as &$row) {
             $route = OperationAccess::json([$row['_departure_id'], $row['transport'], $row['agency']]);
             $row['number'] = $routeNumbers[$route] = ($routeNumbers[$route] ?? 0) + 1;
-            unset($row['_role_order'], $row['_departure_id'], $row['_line_order']);
+            if ($includeGuideReference) {
+                $row['departure_id'] = $row['_departure_id'];
+                $row['guide_id'] = $row['_guide_id'];
+                $row['guide_version'] = $row['_guide_version'];
+                $row['line_number'] = $row['_line_order'] + 1;
+            }
+            unset($row['_role_order'], $row['_departure_id'], $row['_line_order'], $row['_guide_id'], $row['_guide_version']);
         }
         unset($row);
 

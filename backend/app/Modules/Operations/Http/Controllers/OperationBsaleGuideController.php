@@ -5,6 +5,7 @@ namespace App\Modules\Operations\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Operations\Services\OperationAccess;
 use App\Modules\Operations\Services\OperationBsaleGuideService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -16,6 +17,33 @@ use Throwable;
 
 class OperationBsaleGuideController extends Controller
 {
+    public function overview(Request $request): View
+    {
+        $tenant = OperationAccess::tenant($request);
+        $dates = DB::table('Ope_ProgramacionSalidas as departure')
+            ->join('Ope_Lotes as lot', 'lot.id', '=', 'departure.lot_id')
+            ->where('lot.tenant_id', $tenant)
+            ->where('departure.status', '<>', 'cancelled')
+            ->distinct()->orderByDesc('departure.departure_date')->pluck('departure.departure_date');
+        $requestedDate = $request->query('fecha');
+        $selectedDate = is_string($requestedDate) && $dates->contains($requestedDate) ? $requestedDate : $dates->first();
+        $processes = $selectedDate === null ? collect() : DB::table('Ope_ProgramacionSalidas as departure')
+            ->join('Ope_Lotes as lot', 'lot.id', '=', 'departure.lot_id')
+            ->where('lot.tenant_id', $tenant)
+            ->where('departure.departure_date', $selectedDate)
+            ->where('departure.status', '<>', 'cancelled')
+            ->groupBy('lot.id', 'lot.name', 'lot.operation_date')
+            ->orderByDesc('lot.id')
+            ->get(['lot.id', 'lot.name', 'lot.operation_date'])
+            ->map(function ($lot) use ($selectedDate): object {
+                $lot->departure_date = $selectedDate;
+
+                return $lot;
+            });
+
+        return view('operations::guide-generation-overview', compact('dates', 'selectedDate', 'processes'));
+    }
+
     public function index(Request $request): View
     {
         OperationAccess::requireSupervisor($request);
@@ -34,11 +62,21 @@ class OperationBsaleGuideController extends Controller
         ]);
     }
 
-    public function store(Request $request, int $guide, OperationBsaleGuideService $bsale): RedirectResponse
+    public function store(Request $request, int $guide, OperationBsaleGuideService $bsale): JsonResponse|RedirectResponse
     {
         OperationAccess::requireSupervisor($request);
         DB::table('Ope_Guias')->whereIn('departure_id', OperationAccess::departures($request)->select('id'))->where('id', $guide)->firstOrFail();
         $emission = $bsale->emit(OperationAccess::tenant($request), $request->user()->id, $guide);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'estado' => $emission->estado,
+                'guide_id' => $guide,
+                'generated_count' => $emission->generated_count,
+                'sheet_count' => $emission->sheet_count,
+                'message' => $emission->estado === 'generada' ? 'Guía generada en Bsale.' : OperationBsaleGuideService::UNCERTAIN_MESSAGE,
+            ]);
+        }
 
         return redirect()->route('operations.guides.show', $guide)->with('status', $emission->estado === 'generada'
             ? ((int) $emission->sheet_count === 1

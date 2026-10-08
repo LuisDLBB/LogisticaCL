@@ -75,7 +75,11 @@ class OperationsSystemReceptionTest extends TestCase
         $this->assertSame('4N202610076109-119', $source->tracking);
         $this->assertEquals(4.125, json_decode($source->data, true)['weight']);
         $this->assertSame('G-123', json_decode($source->data, true)['customer_guide']);
-        $this->get('/operaciones?load='.$closed->load_id)->assertOk()->assertSee('Recepción Sistema #'.$reception->id);
+        $this->get('/operaciones?load='.$closed->load_id)->assertOk()
+            ->assertSee('Recepción Sistema #'.$reception->id)
+            ->assertSee($client->commercial_name)
+            ->assertSee($user->name)
+            ->assertSee('Total de la recepción');
 
         $coverage = Coverage::factory()->create(['tenant_id' => $tenant->id, 'provider_id' => null, 'commune_name' => 'Chillán', 'effective_from' => '2026-01-01', 'effective_to' => null]);
         $master = DB::table('Ope_Cargas')->insertGetId([

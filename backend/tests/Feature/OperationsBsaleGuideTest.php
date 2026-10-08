@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
 
 class OperationsBsaleGuideTest extends TestCase
@@ -96,6 +97,45 @@ class OperationsBsaleGuideTest extends TestCase
                 'urlPublicView' => 'https://example.test/guide',
             ],
         ];
+    }
+
+    public function test_generation_screen_shows_bsale_sheets_and_exports_each_number_on_its_lines(): void
+    {
+        [, , $departure, $guide] = $this->fixture(lineCount: 16);
+        $lot = DB::table('Ope_ProgramacionSalidas')->where('id', $departure)->value('lot_id');
+        $secondResponse = $this->bsaleResponse();
+        $secondResponse['id'] = 502;
+        $secondResponse['guide']['id'] = 602;
+        $secondResponse['guide']['number'] = 742;
+        Http::fake(['api.bsale.io/v1/shippings.json' => Http::sequence()
+            ->push($this->bsaleResponse(), 201)->push($secondResponse, 201)]);
+
+        $this->get(route('operations.guide-generation.overview'))->assertOk()
+            ->assertSee('Generación de Guías')->assertSee('09-10-2026')
+            ->assertSee(route('operations.departures.index', ['lot' => $lot, 'fecha' => '2026-10-09']).'#generacion-guias', false);
+        $this->get(route('operations.departures.index', ['lot' => $lot, 'fecha' => '2026-10-09']))
+            ->assertOk()->assertSee('Generar guías masivas en Bsale (1)');
+        $this->postJson(route('operations.guides.bsale.store', $guide))
+            ->assertOk()->assertJsonPath('estado', 'generada')->assertJsonPath('sheet_count', 2);
+        $this->get(route('operations.departures.index', ['lot' => $lot, 'fecha' => '2026-10-09']))
+            ->assertOk()->assertSee('741')->assertSee('742')->assertSee('Ver guía')
+            ->assertDontSee('Generar guías masivas en Bsale');
+
+        $response = $this->get(route('operations.guide-generation.spreadsheet', ['lot' => $lot, 'fecha' => '2026-10-09']))
+            ->assertOk()->assertDownload('guias_bsale_proceso_'.$lot.'_2026-10-09.xlsx');
+        $path = tempnam(sys_get_temp_dir(), 'ope-guides-');
+        try {
+            file_put_contents($path, $response->streamedContent());
+            $spreadsheet = IOFactory::load($path);
+            $sheet = $spreadsheet->getActiveSheet();
+            $this->assertSame('N.º guía Bsale', $sheet->getCell('Q1')->getValue());
+            $this->assertSame('741', $sheet->getCell('Q2')->getValue());
+            $this->assertSame('742', $sheet->getCell('Q17')->getValue());
+            $this->assertSame('Hoja 2 de 2', $sheet->getCell('P17')->getValue());
+            $spreadsheet->disconnectWorksheets();
+        } finally {
+            unlink($path);
+        }
     }
 
     public function test_sends_only_approved_snapshot_data_with_production_token_and_stores_response(): void

@@ -220,13 +220,17 @@ class OperationImporter
         if ($operator === '' || mb_strlen($operator) > 160 || str_starts_with($operator, '#')) {
             $errors[] = 'Operario ausente o inválido.';
         }
+        $client = trim((string) (($mapping['profile'] ?? '') === 'legacy' ? ($values[3] ?? '') : $get('client')));
+        if (mb_strlen($client) > 255 || str_starts_with($client, '#')) {
+            $client = '';
+        }
         $guide = trim((string) $get('customer_guide'));
         $reference = trim((string) $get('reference'));
         if (mb_strlen($guide) > 160 || mb_strlen($reference) > 160 || str_starts_with($guide, '#')) {
             $errors[] = 'Guía cliente o referencia inválida.';
         }
 
-        return ['tracking' => $tracking, 'weight' => $weight, 'date' => $date, 'operator' => $operator, 'customer_guide' => $guide ?: null, 'reference' => $reference ?: null];
+        return ['tracking' => $tracking, 'weight' => $weight, 'date' => $date, 'operator' => $operator, 'client_name' => $client ?: null, 'customer_guide' => $guide ?: null, 'reference' => $reference ?: null];
     }
 
     private function tracking(string $value, array &$errors): string
