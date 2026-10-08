@@ -7,9 +7,12 @@ use App\Modules\Operations\Services\OperationAccess;
 use App\Modules\Operations\Services\OperationBsaleGuideService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Throwable;
 
 class OperationBsaleGuideController extends Controller
 {
@@ -42,6 +45,36 @@ class OperationBsaleGuideController extends Controller
                 ? 'Guía de Despacho Electrónica generada en Bsale.'
                 : $emission->sheet_count.' guías de despacho generadas en Bsale para esta salida.')
             : OperationBsaleGuideService::UNCERTAIN_MESSAGE);
+    }
+
+    public function downloadPdf(Request $request, int $emission): Response
+    {
+        OperationAccess::requireSupervisor($request);
+        $record = DB::table('Ope_GuiasBsale')->where([
+            'id' => $emission,
+            'tenant_id' => OperationAccess::tenant($request),
+            'estado' => 'generada',
+        ])->firstOrFail();
+        abort_unless(OperationBsaleGuideService::downloadablePdfUrl($record->url_pdf), 404);
+
+        try {
+            $pdf = Http::connectTimeout(10)->timeout(60)
+                ->withOptions(['allow_redirects' => false])
+                ->get($record->url_pdf);
+        } catch (Throwable) {
+            abort(502, 'No se pudo obtener el PDF de Bsale. Inténtalo nuevamente.');
+        }
+        abort_unless($pdf->successful() && str_starts_with($pdf->body(), '%PDF-'), 502,
+            'Bsale no entregó un PDF descargable. Puedes abrirlo desde el enlace de Bsale.');
+
+        $number = preg_replace('/[^0-9A-Za-z_-]/', '', (string) ($record->numero ?: $record->id));
+        $filename = "GDE-Bsale-{$number}-Hoja-{$record->sheet_number}-de-{$record->sheet_count}.pdf";
+
+        return response($pdf->body(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function reconcile(Request $request, int $emission, OperationBsaleGuideService $bsale): RedirectResponse

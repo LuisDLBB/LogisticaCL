@@ -61,6 +61,7 @@ Route::prefix('operaciones')->name('operations.')->group(function (): void {
     Route::post('/salidas/{departure}/reabrir', [OperationDepartureController::class, 'reopen'])->whereNumber('departure')->name('departures.reopen');
     Route::post('/salidas/{departure}/cancelar', [OperationDepartureController::class, 'cancel'])->whereNumber('departure')->name('departures.cancel');
     Route::get('/guias/bsale', [OperationBsaleGuideController::class, 'index'])->name('guides.bsale.index');
+    Route::get('/guias/bsale/{emission}/pdf', [OperationBsaleGuideController::class, 'downloadPdf'])->whereNumber('emission')->name('guides.bsale.pdf');
     Route::post('/guias/bsale/{emission}/conciliar', [OperationBsaleGuideController::class, 'reconcile'])->whereNumber('emission')->name('guides.bsale.reconcile');
     Route::get('/guias/{guide}', [OperationDepartureController::class, 'guide'])->whereNumber('guide')->name('guides.show');
     Route::post('/guias/{guide}/bsale', [OperationBsaleGuideController::class, 'store'])->whereNumber('guide')->name('guides.bsale.store');

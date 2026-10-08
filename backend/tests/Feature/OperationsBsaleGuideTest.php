@@ -160,6 +160,55 @@ class OperationsBsaleGuideTest extends TestCase
         ]);
     }
 
+    public function test_generated_bsale_pdf_can_be_viewed_and_downloaded_without_a_new_emission(): void
+    {
+        [$tenant, $user, , $guide] = $this->fixture(lineCount: 16);
+        $url = 'https://app2.bsale.io/view/42/guide.pdf?sfd=99';
+        $emission = DB::table('Ope_GuiasBsale')->insertGetId([
+            'tenant_id' => $tenant, 'guide_id' => $guide, 'version' => 1,
+            'sheet_number' => 2, 'sheet_count' => 2, 'line_start' => 16, 'line_end' => 16,
+            'estado' => 'generada', 'numero' => '741', 'url_pdf' => $url,
+            'user_id' => $user, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        Http::fake(['app2.bsale.io/view/*' => Http::response("%PDF-1.4\ncontenido", 200, ['Content-Type' => 'application/pdf'])]);
+
+        $this->get(route('operations.guides.show', $guide))
+            ->assertOk()->assertSee('Ver PDF de Bsale')->assertSee('Descargar PDF')
+            ->assertSee(route('operations.guides.bsale.pdf', $emission));
+        $this->get(route('operations.guides.bsale.index'))
+            ->assertOk()->assertSee('Ver PDF de Bsale')->assertSee('Descargar PDF');
+        $response = $this->get(route('operations.guides.bsale.pdf', $emission));
+        $response->assertOk()->assertHeader('Content-Type', 'application/pdf')
+            ->assertHeader('Content-Disposition', 'attachment; filename="GDE-Bsale-741-Hoja-2-de-2.pdf"');
+        $this->assertSame("%PDF-1.4\ncontenido", $response->getContent());
+        Http::assertSentCount(1);
+        Http::assertSent(fn ($request): bool => $request->url() === $url && ! $request->hasHeader('access_token'));
+    }
+
+    public function test_pdf_download_rejects_untrusted_urls_and_requires_supervisor(): void
+    {
+        [$tenant, $user, , $guide] = $this->fixture();
+        $emission = DB::table('Ope_GuiasBsale')->insertGetId([
+            'tenant_id' => $tenant, 'guide_id' => $guide, 'version' => 1,
+            'estado' => 'generada', 'numero' => '742',
+            'url_pdf' => 'https://localhost/private.pdf',
+            'user_id' => $user, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        Http::fake();
+
+        $this->get(route('operations.guides.bsale.pdf', $emission))->assertNotFound();
+        Http::assertNothingSent();
+
+        DB::table('Ope_GuiasBsale')->where('id', $emission)->update([
+            'url_pdf' => 'https://app2.bsale.io/view/42/guide.pdf',
+        ]);
+        $operator = User::factory()->create(['profile_name' => 'Operario']);
+        $operator->tenants()->attach($tenant, ['is_active' => true, 'role_code' => 'operator']);
+        $this->actingAs($operator);
+        $this->get(route('operations.guides.bsale.pdf', $emission))->assertForbidden();
+        Http::assertNothingSent();
+    }
+
     public function test_sixteen_lines_make_two_guides_with_traceable_packages(): void
     {
         [$tenant, , , $twoSheetGuide] = $this->fixture(lineCount: 16);

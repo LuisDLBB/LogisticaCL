@@ -17,6 +17,23 @@ class OperationBsaleGuideService
 
     public const UNCERTAIN_MESSAGE = 'Revisa en Bsale si la guía fue creada antes de reintentar.';
 
+    public static function downloadablePdfUrl(?string $url): bool
+    {
+        if ($url === null) {
+            return false;
+        }
+
+        $parts = parse_url($url);
+
+        return is_array($parts)
+            && ($parts['scheme'] ?? null) === 'https'
+            && in_array(strtolower($parts['host'] ?? ''), ['app2.bsale.io', 'app2.bsale.cl'], true)
+            && ! isset($parts['port'])
+            && ! isset($parts['user'])
+            && ! isset($parts['pass'])
+            && str_ends_with(strtolower($parts['path'] ?? ''), '.pdf');
+    }
+
     public function emit(int $tenantId, int $userId, int $guideId): object
     {
         $token = config('services.bsale.production_token');

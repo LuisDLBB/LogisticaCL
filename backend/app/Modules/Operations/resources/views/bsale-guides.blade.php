@@ -16,7 +16,8 @@
 <td>{{ ucfirst($emission->estado) }}</td>
 <td>{{ $emission->numero ?: '—' }}</td>
 <td>
-@if($emission->url_pdf && in_array(parse_url($emission->url_pdf, PHP_URL_SCHEME), ['http', 'https'], true))<a href="{{ $emission->url_pdf }}" target="_blank" rel="noopener noreferrer">PDF</a>@endif
+@if($emission->url_pdf && in_array(parse_url($emission->url_pdf, PHP_URL_SCHEME), ['http', 'https'], true))<a class="button" href="{{ $emission->url_pdf }}" target="_blank" rel="noopener noreferrer">Ver PDF de Bsale</a>@endif
+@if($emission->estado === 'generada' && \App\Modules\Operations\Services\OperationBsaleGuideService::downloadablePdfUrl($emission->url_pdf))<a class="button" href="{{ route('operations.guides.bsale.pdf', $emission->id) }}">Descargar PDF</a>@endif
 @if($emission->url_publica && in_array(parse_url($emission->url_publica, PHP_URL_SCHEME), ['http', 'https'], true))<a href="{{ $emission->url_publica }}" target="_blank" rel="noopener noreferrer">Vista pública</a>@endif
 </td>
 </tr>
