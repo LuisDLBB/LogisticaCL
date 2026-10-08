@@ -19,6 +19,12 @@ class OperationBsaleGuideService
 
     public static function downloadablePdfUrl(?string $url): bool
     {
+        return self::trustedPdfRedirectUrl($url)
+            && str_ends_with(strtolower(parse_url($url, PHP_URL_PATH) ?: ''), '.pdf');
+    }
+
+    public static function trustedPdfRedirectUrl(?string $url): bool
+    {
         if ($url === null) {
             return false;
         }
@@ -30,8 +36,7 @@ class OperationBsaleGuideService
             && in_array(strtolower($parts['host'] ?? ''), ['app2.bsale.io', 'app2.bsale.cl'], true)
             && ! isset($parts['port'])
             && ! isset($parts['user'])
-            && ! isset($parts['pass'])
-            && str_ends_with(strtolower($parts['path'] ?? ''), '.pdf');
+            && ! isset($parts['pass']);
     }
 
     public function emit(int $tenantId, int $userId, int $guideId): object
@@ -176,6 +181,7 @@ class OperationBsaleGuideService
 
         try {
             $response = Http::connectTimeout(10)->timeout(60)
+                ->withOptions(['verify' => config('services.bsale.ca_bundle') ?: true])
                 ->withHeaders(['access_token' => $token])
                 ->post(self::ENDPOINT, $payload);
             $body = $response->json();

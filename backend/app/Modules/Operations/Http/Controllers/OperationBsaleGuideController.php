@@ -57,12 +57,27 @@ class OperationBsaleGuideController extends Controller
         ])->firstOrFail();
         abort_unless(OperationBsaleGuideService::downloadablePdfUrl($record->url_pdf), 404);
 
-        try {
-            $pdf = Http::connectTimeout(10)->timeout(60)
-                ->withOptions(['allow_redirects' => false])
-                ->get($record->url_pdf);
-        } catch (Throwable) {
-            abort(502, 'No se pudo obtener el PDF de Bsale. Inténtalo nuevamente.');
+        $url = $record->url_pdf;
+        $redirects = 0;
+        while (true) {
+            try {
+                $pdf = Http::connectTimeout(10)->timeout(60)
+                    ->withOptions([
+                        'allow_redirects' => false,
+                        'verify' => config('services.bsale.ca_bundle') ?: true,
+                    ])
+                    ->get($url);
+            } catch (Throwable) {
+                abort(502, 'No se pudo obtener el PDF de Bsale. Inténtalo nuevamente.');
+            }
+            if (! in_array($pdf->status(), [301, 302, 303, 307, 308], true)) {
+                break;
+            }
+
+            $redirects++;
+            $url = $pdf->header('Location');
+            abort_unless($redirects <= 3 && OperationBsaleGuideService::trustedPdfRedirectUrl($url), 502,
+                'Bsale redirigió el PDF a una dirección no admitida. Ábrelo desde el enlace de Bsale.');
         }
         abort_unless($pdf->successful() && str_starts_with($pdf->body(), '%PDF-'), 502,
             'Bsale no entregó un PDF descargable. Puedes abrirlo desde el enlace de Bsale.');

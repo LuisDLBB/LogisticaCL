@@ -13,7 +13,7 @@
 <td>@if($emission->internal_guide_id)<a href="{{ route('operations.guides.show', $emission->internal_guide_id) }}">#{{ $emission->guide_id }}</a>@else #{{ $emission->guide_id }} · guía interna limpiada @endif</td>
 <td>{{ $emission->version }}</td>
 <td>Hoja {{ $emission->sheet_number }} de {{ $emission->sheet_count }}</td>
-<td>{{ ucfirst($emission->estado) }}</td>
+<td>{{ $emission->estado === 'error' ? 'No se creó · reintento habilitado' : ucfirst($emission->estado) }}</td>
 <td>{{ $emission->numero ?: '—' }}</td>
 <td>
 @if($emission->url_pdf && in_array(parse_url($emission->url_pdf, PHP_URL_SCHEME), ['http', 'https'], true))<a class="button" href="{{ $emission->url_pdf }}" target="_blank" rel="noopener noreferrer">Ver PDF de Bsale</a>@endif

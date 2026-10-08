@@ -43,6 +43,7 @@ return [
     'bsale' => [
         'demo_token' => env('BSALE_DEMO_TOKEN'),
         'production_token' => env('BSALE_PRODUCTION_TOKEN'),
+        'ca_bundle' => env('BSALE_CA_BUNDLE'),
     ],
 
 ];
