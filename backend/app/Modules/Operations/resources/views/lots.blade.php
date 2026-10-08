@@ -1,8 +1,13 @@
 @extends('operations::layout')
 @section('title','Procesos de Operaciones')
 @section('content')
-<h1>Operaciones · Primera milla</h1><p class="intro">Carga las fuentes, revisa los bultos y prepara las salidas para aprobación del supervisor.</p>
-<div class="ope-grid"><a class="card" href="{{ route('operations.loads.index','master') }}"><h3>1. Maestro Geolize</h3><p class="note">Datos diarios de cliente, servicio y destino.</p></a><a class="card" href="{{ route('operations.system-receptions.index') }}"><h3>2. Recepción Sistema</h3><p class="note">Escaneo directo con respaldo, peso y medidas. Sin Excel.</p></a><a class="card" href="{{ route('operations.setup') }}"><h3>3. Agencias y guías</h3><p class="note">Direcciones y configuración por troncal y postas.</p></a></div>
+<h1>Procesos</h1><p class="intro">Prepara el cruce de bultos recibidos con Maestro Geolize, resuelve las incidencias y luego programa las salidas.</p>
+<div class="ope-grid ope-steps">
+    <a class="card" href="{{ route('operations.system-receptions.index') }}"><h3>1. Recepción Sistema</h3><p class="note">Registrar y escanear los bultos físicos.</p></a>
+    <a class="card" href="{{ route('operations.loads.index','master') }}"><h3>2. Maestro Geolize</h3><p class="note">Cargar los datos de cliente, servicio y destino.</p></a>
+    <a class="card" href="#preparar-proceso"><h3>3. Procesos</h3><p class="note">Cruzar las fuentes y revisar incidencias.</p></a>
+    <a class="card" href="{{ route('operations.departures.overview') }}"><h3>4. Salidas</h3><p class="note">Programar agencias y revisar las guías.</p></a>
+</div>
 <section class="card" id="preparar-proceso"><h2>Preparar proceso</h2><form method="POST" action="{{ route('operations.lots.store') }}" class="ope-form">@csrf
 <label>Nombre del proceso<input name="name" value="{{ old('name','Primera milla') }}" maxlength="160" required></label><label>Fecha del proceso<input type="date" name="operation_date" value="{{ old('operation_date',now()->timezone('America/Santiago')->format('Y-m-d')) }}" required></label>
 <label>Maestro Geolize<select name="master_load_id" required><option value="">Seleccionar carga</option>@foreach($loads->where('source_type','master') as $load)<option value="{{ $load->id }}" @selected(old('master_load_id',$selectedMasterLoadId)==$load->id)>#{{ $load->id }} · {{ $load->filename }} · {{ $load->created_at }}</option>@endforeach</select></label>

@@ -45,7 +45,7 @@
 <h2>Tramos preparados desde Recepción</h2>
 @php($configuredAgencyLegs=$configurations->groupBy(fn($row) => ($row->agency_name ?? $row->name).'|'.$row->role))
 <div class="card table-wrap"><table class="ope-table"><thead><tr><th>Agencia</th><th>Coberturas</th><th>Transporte del tramo</th><th>Tramo</th><th>Origen → Destino</th></tr></thead><tbody>
-@forelse($configuredAgencyLegs as $leg)@php($configuration=$leg->first())<tr><td>{{ $configuration->agency_name ?? $configuration->name }}</td><td>{{ $leg->count() }}</td><td>{{ $configuration->role==='troncal' ? $configuration->trunk_name : ($configuration->role==='posta1' ? $configuration->first_post_name : $configuration->second_post_name) }}</td><td>{{ ['troncal'=>'Troncal','posta1'=>'Posta 1','posta2'=>'Posta 2'][$configuration->role] }}</td><td>{{ $configuration->origin_name }} → {{ $configuration->destination_name }}</td></tr>
+@forelse($configuredAgencyLegs as $leg)@php($configuration=$leg->first())<tr><td>{{ $configuration->agency_name ?? $configuration->name }}</td><td>{{ $leg->count() }}</td><td>{{ $configuration->role==='troncal' ? $configuration->trunk_name : ($configuration->role==='posta1' ? $configuration->first_post_name : $configuration->second_post_name) }}</td><td>{{ ['troncal'=>'Troncal','posta1'=>'Posta 1','posta2'=>'Posta 2','posta3'=>'Posta 3'][$configuration->role] ?? $configuration->role }}</td><td>{{ $configuration->origin_name }} → {{ $configuration->destination_name }}</td></tr>
 @empty<tr><td colspan="5" class="ope-empty">Los tramos se mostrarán aquí cuando prepares un proceso con bultos de Recepción.</td></tr>@endforelse
 </tbody></table></div>
 @endsection

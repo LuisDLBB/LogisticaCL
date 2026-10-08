@@ -370,7 +370,7 @@ class OperationSetupController extends Controller
         return back()->with('status', 'Ubicación guardada. Las guías y salidas existentes conservan sus direcciones originales.');
     }
 
-    public function updateAgency(Request $request, int $agency): RedirectResponse
+    public function updateAgency(Request $request, int $agency, OperationWorkflow $workflow): RedirectResponse
     {
         OperationAccess::requireSupervisor($request);
         $tenant = OperationAccess::tenant($request);
@@ -381,26 +381,16 @@ class OperationSetupController extends Controller
         if (OperationAccess::key($input['address']) === 'pendiente') {
             throw ValidationException::withMessages(['address' => 'Ingresa la dirección real de entrega de la agencia.']);
         }
-        DB::transaction(function () use ($request, $tenant, $agency, $input): void {
+        DB::transaction(function () use ($request, $tenant, $agency, $input, $workflow): void {
             $before = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'id' => $agency])->lockForUpdate()->firstOrFail();
             DB::table('Ope_Agencias')->where('id', $agency)->update([...$input, 'updated_at' => now()]);
             OperationAccess::audit($tenant, $request->user()->id, 'Corregir dirección de agencia', 'agencia', $agency, $input, $before);
-            $finalRole = $before->second_post_id === null ? 'posta1' : 'posta2';
-            $configurations = DB::table('Ope_GuiaConfiguraciones')
-                ->where('tenant_id', $tenant)
-                ->where('role', $finalRole)
-                ->whereIn('coverage_id', DB::table('PPR_coverages')
-                    ->where(['tenant_id' => $tenant, 'ID_ComunaMatrizAgencia' => $before->agency_code])
-                    ->select('id'))
-                ->lockForUpdate()
-                ->get();
-            if ($configurations->isNotEmpty()) {
-                $destinationId = $this->catalogLocation($tenant, $before->name, $input['address'], $input['commune']);
-                foreach ($configurations as $configuration) {
-                    $after = ['destination_id' => $destinationId, 'version' => $configuration->version + 1, 'updated_at' => now()];
-                    DB::table('Ope_GuiaConfiguraciones')->where('id', $configuration->id)->update($after);
-                    OperationAccess::audit($tenant, $request->user()->id, 'Actualizar destino de guía', 'configuracion', $configuration->id, $after, $configuration);
-                }
+            $lotIds = DB::table('Ope_Lotes as lot')
+                ->join('Ope_Bultos as package', 'package.lot_id', '=', 'lot.id')
+                ->where('lot.tenant_id', $tenant)
+                ->distinct()->pluck('lot.id');
+            foreach ($lotIds as $lotId) {
+                $workflow->prepareGuideRoutes($tenant, $lotId);
             }
         });
 
@@ -476,6 +466,26 @@ class OperationSetupController extends Controller
             if ($coverages->isEmpty()) {
                 throw ValidationException::withMessages(['agency_id' => 'Esta agencia aún no tiene coberturas activas asociadas.']);
             }
+            $planned = DB::table('Ope_GuiaConfiguraciones')
+                ->where('tenant_id', $tenant)
+                ->where('sequence', $sequence)
+                ->whereNotNull('group_code')
+                ->whereIn('coverage_id', $coverages->pluck('id'))
+                ->get();
+            if ($planned->count() === $coverages->count()) {
+                foreach ($planned as $configuration) {
+                    $after = [
+                        'template' => $input['template'],
+                        'requires_customer_guide' => $request->boolean('requires_customer_guide'),
+                        'version' => $configuration->version + 1,
+                        'updated_at' => now(),
+                    ];
+                    DB::table('Ope_GuiaConfiguraciones')->where('id', $configuration->id)->update($after);
+                    OperationAccess::audit($tenant, $request->user()->id, 'Actualizar formato de guía', 'configuracion', $configuration->id, $after, $configuration);
+                }
+
+                return;
+            }
             if ($sequence === 3 && $agency->second_post_id === null) {
                 throw ValidationException::withMessages(['role' => 'Esta agencia no tiene Posta 2 asignada.']);
             }
@@ -502,6 +512,18 @@ class OperationSetupController extends Controller
             }
             foreach ($coverages as $coverage) {
                 $before = DB::table('Ope_GuiaConfiguraciones')->where(['coverage_id' => $coverage->id, 'sequence' => $sequence])->first();
+                if ($before?->group_code !== null) {
+                    $after = [
+                        'template' => $input['template'],
+                        'requires_customer_guide' => $request->boolean('requires_customer_guide'),
+                        'version' => $before->version + 1,
+                        'updated_at' => now(),
+                    ];
+                    DB::table('Ope_GuiaConfiguraciones')->where('id', $before->id)->update($after);
+                    OperationAccess::audit($tenant, $request->user()->id, 'Actualizar formato de guía', 'configuracion', $before->id, $after, $before);
+
+                    continue;
+                }
                 $previous = $sequence > 1 ? DB::table('Ope_GuiaConfiguraciones')->where(['coverage_id' => $coverage->id, 'sequence' => $sequence - 1])->first() : null;
                 if ($sequence > 1 && ! $previous) {
                     throw ValidationException::withMessages(['role' => 'Configura primero el tramo anterior de todas las coberturas de esta agencia.']);

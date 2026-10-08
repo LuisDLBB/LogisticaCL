@@ -1,8 +1,10 @@
 <?php
 
+use App\Modules\Operations\Http\Controllers\OperationDataCleanupController;
 use App\Modules\Operations\Http\Controllers\OperationDepartureController;
 use App\Modules\Operations\Http\Controllers\OperationLoadController;
 use App\Modules\Operations\Http\Controllers\OperationLotController;
+use App\Modules\Operations\Http\Controllers\OperationRouteController;
 use App\Modules\Operations\Http\Controllers\OperationSetupController;
 use App\Modules\Operations\Http\Controllers\OperationSystemReceptionController;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +15,8 @@ Route::prefix('operaciones')->name('operations.')->group(function (): void {
     Route::post('/cargas/{type}', [OperationLoadController::class, 'store'])->where('type', 'master|reception')->middleware('throttle:10,1')->name('loads.store');
     Route::get('/carga/{load}', [OperationLoadController::class, 'show'])->whereNumber('load')->name('loads.show');
     Route::get('/recepcion-sistema', [OperationSystemReceptionController::class, 'index'])->name('system-receptions.index');
+    Route::get('/limpiar-datos', [OperationDataCleanupController::class, 'index'])->name('cleanup.index');
+    Route::post('/limpiar-datos', [OperationDataCleanupController::class, 'destroy'])->name('cleanup.destroy');
     Route::post('/recepcion-sistema', [OperationSystemReceptionController::class, 'store'])->name('system-receptions.store');
     Route::get('/recepcion-sistema/{reception}', [OperationSystemReceptionController::class, 'show'])->whereNumber('reception')->name('system-receptions.show');
     Route::put('/recepcion-sistema/{reception}/formato-qr', [OperationSystemReceptionController::class, 'updateQrFormat'])->whereNumber('reception')->name('system-receptions.qr-format');
@@ -27,6 +31,12 @@ Route::prefix('operaciones')->name('operations.')->group(function (): void {
     Route::post('/procesos/{lot}/incidencias/{issue}', [OperationLotController::class, 'resolve'])->whereNumber(['lot', 'issue'])->name('issues.resolve');
     Route::get('/configuracion', [OperationSetupController::class, 'index'])->name('setup');
     Route::get('/origenes-postas', [OperationSetupController::class, 'postOrigins'])->name('post-origins');
+    Route::get('/rutas', [OperationRouteController::class, 'index'])->name('routes');
+    Route::put('/rutas/{agency}/datos', [OperationRouteController::class, 'updateData'])->whereNumber('agency')->name('routes.data.update');
+    Route::post('/rutas/troncal/{trunk}/tramos', [OperationRouteController::class, 'calculateBetweenStops'])->whereNumber('trunk')->middleware('throttle:3,1')->name('routes.stops.calculate');
+    Route::put('/rutas/troncal/{trunk}/tramos', [OperationRouteController::class, 'saveBetweenStops'])->whereNumber('trunk')->name('routes.stops.save');
+    Route::post('/rutas/{agency}/calcular', [OperationRouteController::class, 'calculate'])->whereNumber('agency')->middleware('throttle:10,1')->name('routes.calculate');
+    Route::put('/rutas/{agency}/estimaciones', [OperationRouteController::class, 'save'])->whereNumber('agency')->name('routes.estimates.save');
     Route::put('/origenes-postas/{post}', [OperationSetupController::class, 'updatePostOrigin'])->whereNumber('post')->name('post-origins.update');
     Route::put('/agencias/{agency}', [OperationSetupController::class, 'updateAgency'])->whereNumber('agency')->name('agencies.update');
     Route::get('/transporte', [OperationSetupController::class, 'transport'])->name('transport');
@@ -35,9 +45,15 @@ Route::prefix('operaciones')->name('operations.')->group(function (): void {
     Route::put('/transporte/{type}/{record}', [OperationSetupController::class, 'updateTransport'])->where(['type' => 'troncal|posta', 'record' => '[0-9]+'])->name('transport.update');
     Route::post('/ubicaciones', [OperationSetupController::class, 'location'])->name('locations.store');
     Route::post('/configuraciones', [OperationSetupController::class, 'configuration'])->name('configurations.store');
+    Route::get('/salidas', [OperationDepartureController::class, 'overview'])->name('departures.overview');
     Route::get('/procesos/{lot}/salidas', [OperationDepartureController::class, 'index'])->whereNumber('lot')->name('departures.index');
     Route::get('/procesos/{lot}/salidas/planilla.xlsx', [OperationDepartureController::class, 'spreadsheet'])->whereNumber('lot')->name('departures.spreadsheet');
     Route::post('/procesos/{lot}/salidas', [OperationDepartureController::class, 'store'])->whereNumber('lot')->name('departures.store');
+    Route::post('/procesos/{lot}/salidas/aprobar-todas', [OperationDepartureController::class, 'approveAll'])->whereNumber('lot')->name('departures.approve-all');
+    Route::post('/procesos/{lot}/reservas', [OperationDepartureController::class, 'reserve'])->whereNumber('lot')->name('reservations.store');
+    Route::post('/procesos/{lot}/reservas/incluir', [OperationDepartureController::class, 'includeReservations'])->whereNumber('lot')->name('reservations.include');
+    Route::post('/procesos/{lot}/reservas/{batch}/cancelar', [OperationDepartureController::class, 'cancelReservation'])->where(['lot' => '[0-9]+', 'batch' => '[0-9a-fA-F-]{36}'])->name('reservations.cancel');
+    Route::post('/procesos/{lot}/reservas/{batch}/devolver', [OperationDepartureController::class, 'returnReservation'])->where(['lot' => '[0-9]+', 'batch' => '[0-9a-fA-F-]{36}'])->name('reservations.return');
     Route::get('/salidas/{departure}', [OperationDepartureController::class, 'show'])->whereNumber('departure')->name('departures.show');
     Route::put('/salidas/{departure}/transporte', [OperationDepartureController::class, 'assignment'])->whereNumber('departure')->name('departures.assignment');
     Route::post('/salidas/{departure}/aprobar', [OperationDepartureController::class, 'approve'])->whereNumber('departure')->name('departures.approve');
