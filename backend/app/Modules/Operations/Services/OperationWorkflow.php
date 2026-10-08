@@ -811,14 +811,14 @@ class OperationWorkflow
         }
         $lines = [];
         foreach ($groups as $group) {
-            $group['weight'] = number_format($group['weight_units'] / 1000, 3, '.', '');
-            $group['description'] = strtr($group['template'], ['{cliente}' => $group['merchant'] ?? '', '{servicio}' => $group['service'] ?? '', '{bultos}' => (string) $group['count'], '{peso}' => $group['weight'], '{guia_cliente}' => $group['customer_guide'] ?? '', '{referencia}' => $group['reference'] ?? '']);
+            $group['weight'] = OperationWeightFormatter::canonical($group['weight_units'] / 1000);
+            $group['description'] = strtr($group['template'], ['{cliente}' => $group['merchant'] ?? '', '{servicio}' => $group['service'] ?? '', '{bultos}' => (string) $group['count'], '{peso}' => OperationWeightFormatter::display($group['weight']), '{guia_cliente}' => $group['customer_guide'] ?? '', '{referencia}' => $group['reference'] ?? '']);
             unset($group['weight_units'], $group['template']);
             $lines[] = $group;
         }
         $agencyData = $agencies->map(fn ($row) => json_decode($row->snapshot, true))->values()->all();
 
-        return ['departure' => (array) $departure, 'origin' => $agencyData[0]['origin'] ?? [], 'destination' => $agencyData[0]['destination'] ?? [], 'agencies' => $agencyData, 'count' => count($packages), 'weight' => number_format($weightUnits / 1000, 3, '.', ''), 'lines' => $lines, 'packages' => $packages];
+        return ['departure' => (array) $departure, 'origin' => $agencyData[0]['origin'] ?? [], 'destination' => $agencyData[0]['destination'] ?? [], 'agencies' => $agencyData, 'count' => count($packages), 'weight' => OperationWeightFormatter::canonical($weightUnits / 1000), 'lines' => $lines, 'packages' => $packages];
     }
 
     public function departureSpreadsheetRows(int $tenant, int $lot): array
@@ -888,7 +888,7 @@ class OperationWorkflow
                     'destination_address' => $destination['address'] ?? '',
                     'destination_commune' => $destination['commune'] ?? '',
                     'agency' => $line['agency'] ?? '',
-                    'description' => str_replace((string) $line['weight'], (string) $wholeWeight, $line['description'] ?? ''),
+                    'description' => OperationWeightFormatter::withWeight($line['description'] ?? '', $line['weight'], (string) $wholeWeight),
                     'count' => (int) $line['count'],
                     'weight' => $wholeWeight,
                     '_role_order' => ['troncal' => 1, 'posta1' => 2, 'posta2' => 3, 'posta3' => 4][$role] ?? 5,

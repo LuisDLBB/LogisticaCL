@@ -158,6 +158,25 @@ class OperationsBsaleGuideTest extends TestCase
             'guide_id' => $oneSheetGuide, 'sheet_number' => 1, 'sheet_count' => 1,
             'line_start' => 1, 'line_end' => 15, 'estado' => 'generada',
         ]);
+        Http::assertSent(fn ($request): bool => $request->data()['details'][0]['comment'] === 'Glosa 1'
+            && $request->data()['details'][14]['comment'] === "Glosa 15\nHoja 1 de 1");
+    }
+
+    public function test_existing_snapshot_uses_reception_weight_without_thousand_separator_in_bsale_detail(): void
+    {
+        [, , , $guide, $snapshot] = $this->fixture();
+        $snapshot['lines'][0]['weight'] = '4.000';
+        $snapshot['lines'][0]['description'] = 'Cliente: 2 bultos, 4.000 kg';
+        $encoded = json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        DB::table('Ope_Guias')->where('id', $guide)->update(['snapshot' => $encoded, 'sha256' => hash('sha256', $encoded)]);
+        Http::fake(['api.bsale.io/v1/shippings.json' => Http::response($this->bsaleResponse(), 201)]);
+
+        $this->post(route('operations.guides.bsale.store', $guide))->assertSessionHasNoErrors();
+
+        Http::assertSent(fn ($request): bool => $request->data()['details'] === [
+            ['comment' => "Cliente: 2 bultos, 4 kg\nHoja 1 de 1", 'quantity' => 2],
+        ]);
+        $this->get(route('operations.guides.show', $guide))->assertSee('Cliente: 2 bultos, 4 kg');
     }
 
     public function test_generated_bsale_pdf_can_be_viewed_and_downloaded_without_a_new_emission(): void
@@ -251,8 +270,9 @@ class OperationsBsaleGuideTest extends TestCase
         $this->assertCount(2, $requests);
         $this->assertCount(15, $requests[0]['details']);
         $this->assertCount(1, $requests[1]['details']);
-        $this->assertSame("Glosa 1\nHoja 1 de 2", $requests[0]['details'][0]['comment']);
+        $this->assertSame('Glosa 1', $requests[0]['details'][0]['comment']);
         $this->assertSame('Glosa 2', $requests[0]['details'][1]['comment']);
+        $this->assertSame("Glosa 15\nHoja 1 de 2", $requests[0]['details'][14]['comment']);
         $this->assertSame("Glosa 16\nHoja 2 de 2", $requests[1]['details'][0]['comment']);
         $this->assertSame('Victoria 1900', $requests[1]['address']);
         $first = DB::table('Ope_GuiasBsale')->where(['guide_id' => $twoSheetGuide, 'sheet_number' => 1])->firstOrFail();

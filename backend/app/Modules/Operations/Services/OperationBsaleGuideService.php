@@ -256,10 +256,10 @@ class OperationBsaleGuideService
         $departure = $snapshot['departure'];
         $destination = $snapshot['destination'];
         $details = array_map(fn (array $line): array => [
-            'comment' => $line['description'],
+            'comment' => OperationWeightFormatter::description($line['description'], $line['weight'] ?? null),
             'quantity' => $line['count'],
         ], array_slice($snapshot['lines'], ($sheetNumber - 1) * self::LINES_PER_SHEET, self::LINES_PER_SHEET));
-        $details[0]['comment'] .= "\nHoja {$sheetNumber} de {$sheetCount}";
+        $details[array_key_last($details)]['comment'] .= "\nHoja {$sheetNumber} de {$sheetCount}";
 
         return [
             'documentTypeId' => 7,

@@ -6,6 +6,7 @@ use App\Models\Coverage;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Modules\Operations\Jobs\ImportOperationLoad;
+use App\Modules\Operations\Services\OperationGuideWeightCorrection;
 use App\Modules\Operations\Services\OperationImporter;
 use App\Modules\Operations\Services\OperationWorkflow;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -209,7 +210,12 @@ class OperationsWorkflowTest extends TestCase
         $fallbackSnapshot = json_decode(DB::table('Ope_Bultos')->where(['lot_id' => $lot, 'tracking' => 'PKG-2'])->value('snapshot'), true);
         $this->assertSame('geolize', $fallbackSnapshot['weight_source']);
         $configuration = $this->configuration($tenant, $coverage->id);
-        $this->departure($tenant, $user, $lot, $configuration);
+        $departure = $this->departure($tenant, $user, $lot, $configuration);
+
+        $preview = app(OperationWorkflow::class)->preview($departure);
+        $this->assertSame(['4.125', '8'], array_column($preview['lines'], 'weight'));
+        $this->assertSame(['Cliente Uno: 1 bultos / 4,125 kg', 'Cliente Dos: 1 bultos / 8 kg'], array_column($preview['lines'], 'description'));
+        $this->assertSame('12.125', $preview['weight']);
 
         $rows = app(OperationWorkflow::class)->departureSpreadsheetRows($tenant, $lot);
         $this->assertSame([4, 8], array_column($rows, 'weight'));
@@ -459,7 +465,7 @@ class OperationsWorkflowTest extends TestCase
         $this->post('/operaciones/salidas/'.$departure.'/aprobar', ['confirmed' => 1])->assertSessionHasNoErrors();
 
         $guide = DB::table('Ope_Guias')->first();
-        $this->get('/operaciones/guias/'.$guide->id)->assertSee('Dirección destino')->assertSee('ABCD12')->assertSee('4.125');
+        $this->get('/operaciones/guias/'.$guide->id)->assertSee('Dirección destino')->assertSee('ABCD12')->assertSee('4,125');
         $this->get('/operaciones/guias/'.$guide->id.'/resumen.csv')->assertDownload('Guia_interna_'.$guide->id.'_v1.csv');
         $this->post('/operaciones/salidas/'.$departure.'/aprobar', ['confirmed' => 1])->assertSessionHasNoErrors();
         $this->assertDatabaseCount('Ope_Guias', 1);
@@ -473,6 +479,39 @@ class OperationsWorkflowTest extends TestCase
         $this->assertDatabaseHas('Ope_Guias', ['id' => $guide->id, 'sha256' => $before]);
         $this->get('/operaciones/guias/'.$guide->id)->assertSee('Versión histórica')->assertSee('Dirección destino')->assertSee('ABCD12');
         $this->assertDatabaseHas('Ope_Auditoria', ['action' => 'Reabrir salida']);
+    }
+
+    public function test_correcting_approved_guide_weights_creates_a_new_version_and_preserves_the_previous_one(): void
+    {
+        [$tenant, $user] = $this->member();
+        [$lot, $coverage] = $this->lot($tenant, $user);
+        $configuration = $this->configuration($tenant, $coverage);
+        $departure = $this->departure($tenant, $user, $lot, $configuration);
+        $this->put('/operaciones/salidas/'.$departure.'/transporte', $this->transport())->assertSessionHasNoErrors();
+        $this->post('/operaciones/salidas/'.$departure.'/aprobar', ['confirmed' => 1])->assertSessionHasNoErrors();
+        $original = DB::table('Ope_Guias')->where('departure_id', $departure)->firstOrFail();
+        $snapshot = json_decode($original->snapshot, true);
+        $snapshot['lines'][0]['weight'] = '4.000';
+        $snapshot['lines'][0]['description'] = 'Cliente Uno: 1 bultos / 4.000 kg';
+        $snapshot['packages'][0]['weight'] = '4.000';
+        $snapshot['weight'] = '4.000';
+        $encoded = json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        DB::table('Ope_Bultos')->where('lot_id', $lot)->update(['weight' => 4]);
+        DB::table('Ope_Guias')->where('id', $original->id)->update(['snapshot' => $encoded, 'sha256' => hash('sha256', $encoded)]);
+
+        $correction = app(OperationGuideWeightCorrection::class)->correctLot($tenant, $user, $lot);
+
+        $this->assertSame(1, $correction['updated']);
+        $this->assertDatabaseHas('Ope_Guias', ['id' => $original->id, 'version' => 1, 'sha256' => hash('sha256', $encoded)]);
+        $this->assertDatabaseHas('Ope_ProgramacionSalidas', ['id' => $departure, 'version' => 2, 'status' => 'approved']);
+        $updated = DB::table('Ope_Guias')->where('id', $correction['new_guide_ids'][0])->firstOrFail();
+        $updatedSnapshot = json_decode($updated->snapshot, true);
+        $this->assertSame('4', $updatedSnapshot['lines'][0]['weight']);
+        $this->assertSame('Cliente Uno: 1 bultos / 4 kg', $updatedSnapshot['lines'][0]['description']);
+        $this->assertSame('4', $updatedSnapshot['weight']);
+        $this->assertSame('4', $updatedSnapshot['packages'][0]['weight']);
+        $this->assertSame(0, app(OperationGuideWeightCorrection::class)->correctLot($tenant, $user, $lot)['updated']);
+        $this->assertDatabaseCount('Ope_Guias', 2);
     }
 
     public function test_supervisor_can_approve_all_pending_guides_in_leg_order_without_partial_results(): void
