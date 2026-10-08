@@ -5,14 +5,266 @@ namespace Tests\Feature;
 use App\Models\Coverage;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Modules\Operations\Services\OperationRouteEstimator;
 use Database\Seeders\OperationsTransportSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class OperationsTransportCatalogTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_routes_show_ordered_agency_legs_and_allow_manual_estimates(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $user = User::factory()->create(['profile_name' => 'Administrador']);
+        $user->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $this->actingAs($user);
+        $agency = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant->id, 'agency_code' => 21])->firstOrFail();
+
+        $this->get('/operaciones/rutas')->assertOk()
+            ->assertSee('Programación de Rutas')
+            ->assertSee('Troncal Sur (Santiago-Chillan)')
+            ->assertSee('Troncal Sur (Chillan-Concepcion)')
+            ->assertSee('Retorno estimado al origen de la troncal')
+            ->assertSee('✈');
+
+        $this->put('/operaciones/rutas/'.$agency->id.'/estimaciones', [
+            'segment' => 'posta2', 'distance_km' => 225.4, 'duration_minutes' => 185,
+            'maps_url' => 'https://www.google.cl/maps/dir/Temuco/PuertoMontt',
+        ])->assertRedirect(route('operations.routes').'#agency-'.$agency->id);
+        $this->assertDatabaseHas('Ope_RouteEstimates', [
+            'tenant_id' => $tenant->id, 'agency_id' => $agency->id, 'segment' => 'posta2',
+            'distance_km' => 225.4, 'duration_minutes' => 185, 'source' => 'manual',
+            'maps_url' => 'https://www.google.cl/maps/dir/Temuco/PuertoMontt',
+        ]);
+        $this->get('/operaciones/rutas')->assertSee('225,4 km')->assertSee('3 h 5 min')
+            ->assertSee('https://www.google.cl/maps/dir/Temuco/PuertoMontt');
+
+        $this->put('/operaciones/rutas/'.$agency->id.'/estimaciones', [
+            'segment' => 'posta2', 'distance_km' => 225.4, 'duration_minutes' => '',
+            'maps_url' => 'https://www.google.cl/maps/dir/Temuco/PuertoMontt',
+        ])->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('Ope_RouteEstimates', ['agency_id' => $agency->id, 'segment' => 'posta2', 'duration_minutes' => null]);
+        $this->get('/operaciones/rutas')->assertSee('Tiempo pendiente');
+
+        $this->put('/operaciones/rutas/'.$agency->id.'/estimaciones', [
+            'segment' => 'posta2', 'distance_km' => 225.4, 'maps_url' => 'https://example.com/incorrecto',
+        ])->assertSessionHasErrors('maps_url');
+    }
+
+    public function test_route_programming_shows_ordered_visual_branches_and_all_ground_stops(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $user = User::factory()->create(['profile_name' => 'Administrador']);
+        $user->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $this->actingAs($user);
+
+        $html = $this->get('/operaciones/rutas')->assertOk()->getContent();
+        $southTrunkId = DB::table('Ope_Troncales')->where(['tenant_id' => $tenant->id, 'trunk_code' => 4])->value('id');
+        $this->assertTrue(strpos($html, 'id="route-hub-title"') < strpos($html, 'id="route-air-map-title"'));
+        $this->assertStringContainsString('Bodega 4 Nortes', $html);
+        $this->assertStringContainsString('href="#visual-trunk-'.$southTrunkId.'"', $html);
+        $this->assertStringContainsString('id="visual-trunk-'.$southTrunkId.'"', $html);
+        foreach ([1, 2, 3] as $airCode) {
+            $this->assertStringContainsString('href="#air-branch-'.$airCode.'"', $html);
+            $this->assertStringContainsString('id="air-branch-'.$airCode.'"', $html);
+        }
+        $visual = substr($html, strpos($html, 'id="route-air-map-title"'), strpos($html, '<dialog class="route-visual-dialog"') - strpos($html, 'id="route-air-map-title"'));
+
+        $this->assertNotFalse($visual);
+        $this->assertTrue(strpos($visual, 'Aéreo Norte') < strpos($visual, 'Aéreo Pacífico'));
+        $this->assertTrue(strpos($visual, 'Aéreo Pacífico') < strpos($visual, 'Aéreo Sur'));
+        $this->assertTrue(strpos($visual, 'Ver datos de Antofagasta') < strpos($visual, 'Ver datos de Calama'));
+        $this->assertTrue(strpos($visual, 'Ver datos de Calama') < strpos($visual, 'Ver datos de Iquique'));
+        $this->assertTrue(strpos($visual, 'Ver datos de Iquique') < strpos($visual, 'Ver datos de Arica'));
+        foreach (['Buin', 'Rancagua', 'San Fernando', 'Curico', 'Talca', 'Chillan', 'Consolidado a Chillan', 'Consolidado a Temuco', 'Consolidado a Puerto Montt', 'Chonchi', 'Vallenar', 'Copiapo'] as $stop) {
+            $this->assertStringContainsString('Ver datos de '.$stop, $visual, $stop.' debe figurar en el recorrido visual.');
+        }
+        foreach (['Nombre chofer', 'RUT chofer', 'Patente asignada', 'Dirección origen', 'Dirección destino'] as $field) {
+            $this->assertStringContainsString($field, $html);
+        }
+        $this->assertStringContainsString('data-route-driver=', $visual);
+        $this->assertStringContainsString('data-route-plate=', $visual);
+        $this->assertStringContainsString('<svg viewBox="0 0 48 48"', $visual);
+        $this->assertStringNotContainsString("@include('operations::route-truck-icon')", $visual);
+        $south = substr($visual, strpos($visual, 'id="visual-trunk-'.$southTrunkId.'"'));
+        $firstPost = substr($south, strpos($south, '<h3>Posta 1</h3>'), strpos($south, '<h3>Posta 2</h3>') - strpos($south, '<h3>Posta 1</h3>'));
+        $this->assertTrue(strpos($firstPost, 'Ver datos de Concepcion') < strpos($firstPost, 'Ver datos de Los Angeles'));
+
+        $vRegionId = DB::table('Ope_Troncales')->where(['tenant_id' => $tenant->id, 'trunk_code' => 5])->value('id');
+        $regionStart = strpos($visual, 'id="visual-trunk-'.$vRegionId.'"');
+        $vRegion = substr($visual, $regionStart, strpos($visual, 'id="visual-trunk-6"', $regionStart) - $regionStart);
+        $previousPosition = -1;
+        foreach (['Viña del Mar', 'Litoral', 'Casa Blanca', 'Curacavi', 'Talagante'] as $stop) {
+            $position = strpos($vRegion, 'Ver datos de '.$stop);
+            $this->assertNotFalse($position, $stop.' debe figurar en Posta 1 de V Región.');
+            $this->assertGreaterThan($previousPosition, $position);
+            $previousPosition = $position;
+        }
+    }
+
+    public function test_ground_route_arrows_show_the_distance_between_consecutive_agencies(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $user = User::factory()->create(['profile_name' => 'Administrador']);
+        $user->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $this->actingAs($user);
+        $trunk = DB::table('Ope_Troncales')->where(['tenant_id' => $tenant->id, 'trunk_code' => 5])->firstOrFail();
+        $estimator = new class extends OperationRouteEstimator
+        {
+            public array $calls = [];
+
+            public function configured(): bool
+            {
+                return true;
+            }
+
+            public function estimate(string $origin, string $destination, bool $air = false, ?string $mapsUrl = null): array
+            {
+                $this->calls[] = [$origin, $destination];
+
+                return ['distance_km' => 12.3, 'duration_minutes' => 18, 'source' => 'openrouteservice'];
+            }
+        };
+        app()->instance(OperationRouteEstimator::class, $estimator);
+
+        $this->post('/operaciones/rutas/troncal/'.$trunk->id.'/tramos')->assertSessionHasNoErrors();
+
+        $this->assertContains(['Avenida Valparaiso 34, Viña del Mar', 'Los Zorzales 76, El Tabo'], $estimator->calls);
+        $this->get('/operaciones/rutas')->assertOk()->assertSee('12,3 km')->assertSee('Calcular km entre paradas');
+
+        $vina = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant->id, 'agency_code' => 22])->firstOrFail();
+        $litoral = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant->id, 'agency_code' => 25])->firstOrFail();
+        $gap = 'gap:posta1:'.$vina->id.':'.$litoral->id;
+        $this->put('/operaciones/rutas/troncal/'.$trunk->id.'/tramos', ['distances' => [$gap => '31,4']])->assertSessionHasNoErrors();
+        $this->get('/operaciones/rutas')->assertOk()->assertSee('31,4 km');
+        $this->put('/operaciones/rutas/troncal/'.$trunk->id.'/tramos', ['distances' => ['gap:inexistente' => 10]])->assertSessionHasErrors('distances');
+    }
+
+    public function test_ground_distance_calculation_stops_after_the_first_map_failure(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $user = User::factory()->create(['profile_name' => 'Administrador']);
+        $user->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $this->actingAs($user);
+        $trunk = DB::table('Ope_Troncales')->where(['tenant_id' => $tenant->id, 'trunk_code' => 5])->firstOrFail();
+        $estimator = new class extends OperationRouteEstimator
+        {
+            public int $calls = 0;
+
+            public function estimate(string $origin, string $destination, bool $air = false, ?string $mapsUrl = null): array
+            {
+                $this->calls++;
+
+                throw new \RuntimeException('Dirección no reconocida.');
+            }
+        };
+        app()->instance(OperationRouteEstimator::class, $estimator);
+
+        $this->post('/operaciones/rutas/troncal/'.$trunk->id.'/tramos')->assertSessionHasErrors('mapas');
+        $this->assertSame(1, $estimator->calls);
+    }
+
+    public function test_air_routes_share_one_warehouse_to_airport_leg_and_keep_each_destination_post(): void
+    {
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $user = User::factory()->create(['profile_name' => 'Administrador']);
+        $user->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $this->actingAs($user);
+        $arica = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant->id, 'agency_code' => 2])->firstOrFail();
+
+        $page = $this->get('/operaciones/rutas')->assertOk()
+            ->assertSee('Aéreos · un tramo común')
+            ->assertSee('7 destinos')
+            ->assertSeeInOrder(['Antofagasta', 'Arica', 'Calama', 'Iquique', 'Isla de Pascua', 'Coyhaique', 'Punta Arenas'])
+            ->assertSee('Camino a Mejillones S/N (Aeropuerto)')
+            ->assertSee('Aeropuerto Chacalluta')
+            ->assertSee('Aereo Norte')
+            ->assertSee('Aereo Pacifico')
+            ->assertSee('Aereo Sur');
+        $this->assertSame(1, substr_count($page->getContent(), 'Tramo común · Bodega → Aeropuerto'));
+        $this->assertSame(0, substr_count($page->getContent(), 'Troncal · Aereo Norte'));
+        $page->assertSee('Aeropuerto Arturo Merino Benítez, Carga Nacional')
+            ->assertSee('18,6 km')->assertSee('25,9 km')->assertSee('Tiempo pendiente');
+
+        $this->put('/operaciones/rutas/'.$arica->id.'/estimaciones', [
+            'segment' => 'troncal', 'distance_km' => 26.5, 'duration_minutes' => 45,
+        ])->assertRedirect();
+        $sharedPage = $this->get('/operaciones/rutas')->assertOk()->assertSee('26,5 km');
+        $this->assertSame(1, substr_count($sharedPage->getContent(), '26,5 km'));
+    }
+
+    public function test_routes_calculate_road_metrics_with_the_configured_map_service(): void
+    {
+        config(['services.openrouteservice.key' => 'fake-map-key']);
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $user = User::factory()->create(['profile_name' => 'Administrador']);
+        $user->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $this->actingAs($user);
+        $agency = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant->id, 'agency_code' => 15])->firstOrFail();
+        Http::fake(function ($request) {
+            if (str_contains($request->url(), '/pelias/v1/search')) {
+                $isOrigin = str_contains($request->url(), 'Galvarino');
+                $longitude = $isOrigin ? -70.7 : -72.1;
+                $label = $isOrigin ? 'Galvarino 8481, Quilicura' : 'Cinco de Abril 399, Chillan';
+
+                return Http::response(['features' => [['properties' => ['label' => $label], 'geometry' => ['coordinates' => [$longitude, -33.4]]]]]);
+            }
+
+            return Http::response(['routes' => [['summary' => ['distance' => 123450, 'duration' => 7200]]]]);
+        });
+
+        $this->post('/operaciones/rutas/'.$agency->id.'/calcular', ['segment' => 'troncal'])
+            ->assertRedirect(route('operations.routes').'#agency-'.$agency->id);
+        $this->assertDatabaseHas('Ope_RouteEstimates', [
+            'agency_id' => $agency->id, 'segment' => 'troncal', 'distance_km' => 123.5,
+            'duration_minutes' => 120, 'source' => 'openrouteservice',
+        ]);
+        Http::assertSentCount(3);
+    }
+
+    public function test_calculation_uses_saved_map_coordinates_without_geocoding_and_preserves_the_link(): void
+    {
+        config(['services.openrouteservice.key' => 'fake-map-key']);
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $user = User::factory()->create(['profile_name' => 'Administrador']);
+        $user->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $this->actingAs($user);
+        $agency = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant->id, 'agency_code' => 1])->firstOrFail();
+        $savedMapUrl = DB::table('Ope_RouteEstimates')->where(['agency_id' => $agency->id, 'segment' => 'troncal'])->value('maps_url');
+        Http::fake(['https://api.heigit.org/openrouteservice/v2/directions/driving-car' => Http::response([
+            'routes' => [['summary' => ['distance' => 17525.9, 'duration' => 1149.8]]],
+        ])]);
+
+        $this->post('/operaciones/rutas/'.$agency->id.'/calcular', ['segment' => 'troncal'])
+            ->assertRedirect(route('operations.routes').'#agency-'.$agency->id);
+        $this->assertDatabaseHas('Ope_RouteEstimates', [
+            'agency_id' => $agency->id, 'segment' => 'troncal', 'distance_km' => 17.5,
+            'duration_minutes' => 20, 'source' => 'openrouteservice', 'maps_url' => $savedMapUrl,
+        ]);
+        Http::assertSentCount(1);
+    }
+
+    public function test_calculation_does_not_save_an_imprecisely_geocoded_route(): void
+    {
+        config(['services.openrouteservice.key' => 'fake-map-key']);
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $user = User::factory()->create(['profile_name' => 'Administrador']);
+        $user->tenants()->attach($tenant->id, ['is_active' => true, 'role_code' => 'operator']);
+        $this->actingAs($user);
+        $agency = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant->id, 'agency_code' => 15])->firstOrFail();
+        Http::fake(['https://api.heigit.org/pelias/v1/search*' => Http::response(['features' => [
+            ['properties' => ['label' => 'Galvarino, Chile Chico, AI, Chile'], 'geometry' => ['coordinates' => [-71.72, -46.54]]],
+        ]])]);
+
+        $this->post('/operaciones/rutas/'.$agency->id.'/calcular', ['segment' => 'troncal'])
+            ->assertSessionHasErrors('mapas');
+        $this->assertDatabaseMissing('Ope_RouteEstimates', ['agency_id' => $agency->id, 'segment' => 'troncal']);
+        Http::assertSentCount(1);
+    }
 
     public function test_agencies_link_to_trunks_and_both_post_relays_without_duplicating_drivers(): void
     {
@@ -73,7 +325,7 @@ class OperationsTransportCatalogTest extends TestCase
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $airports = [
-            1 => 'Aeropuerto Andrés Sabella Gálvez',
+            1 => 'Camino a Mejillones S/N (Aeropuerto)',
             2 => 'Aeropuerto Chacalluta',
             3 => 'Aeródromo El Loa',
             4 => 'Aeropuerto Diego Aracena',

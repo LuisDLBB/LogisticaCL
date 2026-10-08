@@ -2,6 +2,7 @@
 
 namespace App\Modules\Operations\Services;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -107,14 +108,21 @@ class OperationWorkflow
             return;
         }
 
+        $pendingCoverageIds = DB::table('Ope_BultoTramos as leg')
+            ->join('Ope_Bultos as package', 'package.id', '=', 'leg.package_id')
+            ->join('Ope_ProgramacionSalidas as departure', 'departure.id', '=', 'leg.departure_id')
+            ->whereIn('package.coverage_id', $coverageIds->pluck('id'))
+            ->where('departure.status', 'draft')
+            ->distinct()->pluck('package.coverage_id')->flip();
+
         $agencies = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'is_active' => true])
-            ->whereIn('agency_code', $coverageIds->pluck('ID_ComunaMatrizAgencia'))
             ->get()->keyBy('agency_code');
         $trunks = DB::table('Ope_Troncales')->where(['tenant_id' => $tenant, 'is_active' => true])
             ->whereIn('id', $agencies->pluck('trunk_id'))->get()->keyBy('id');
-        $posts = DB::table('Ope_Postas')->where('tenant_id', $tenant)
-            ->whereIn('id', $agencies->pluck('post_id')->concat($agencies->pluck('second_post_id'))->filter())
-            ->get()->keyBy('id');
+        $posts = DB::table('Ope_Postas')->where('tenant_id', $tenant)->get();
+        $postsById = $posts->keyBy('id');
+        $postsByCode = $posts->keyBy('post_code');
+        $planner = app(OperationGuideRoutePlanner::class);
         $configurations = DB::table('Ope_GuiaConfiguraciones')->where('tenant_id', $tenant)
             ->whereIn('coverage_id', $coverageIds->pluck('id'))->get()
             ->keyBy(fn ($configuration): string => $configuration->coverage_id.'|'.$configuration->sequence);
@@ -128,9 +136,7 @@ class OperationWorkflow
         foreach ($coverageIds as $coverage) {
             $agency = $agencies->get($coverage->ID_ComunaMatrizAgencia);
             $trunk = $agency ? $trunks->get($agency->trunk_id) : null;
-            $firstPost = $agency ? $posts->get($agency->post_id) : null;
-            $secondPost = $agency?->second_post_id ? $posts->get($agency->second_post_id) : null;
-            if (! $agency || ! $trunk || ! $firstPost || ($agency->second_post_id && ! $secondPost)) {
+            if (! $agency || ! $trunk) {
                 continue;
             }
             if (blank($trunk->origin_address) || blank($trunk->destination_address)
@@ -139,40 +145,62 @@ class OperationWorkflow
                 continue;
             }
 
-            $originId = $locationId($trunk->name.' · origen', $trunk->origin_address, $trunk->origin_commune);
-            $trunkDestinationId = $locationId($trunk->name.' · destino', $trunk->destination_address, $trunk->destination_commune);
-            $firstPostOriginId = filled($firstPost->origin_address) && filled($firstPost->origin_commune)
-                ? $locationId($firstPost->name.' · origen', $firstPost->origin_address, $firstPost->origin_commune)
-                : $trunkDestinationId;
-            $secondPostOriginId = $secondPost && filled($secondPost->origin_address) && filled($secondPost->origin_commune)
-                ? $locationId($secondPost->name.' · origen', $secondPost->origin_address, $secondPost->origin_commune)
-                : $trunkDestinationId;
-            $hasFinalAddress = filled($agency->address) && OperationAccess::key($agency->address) !== 'pendiente';
-            $agencyDestinationId = $hasFinalAddress ? $locationId($agency->name, $agency->address, $agency->commune) : null;
-            $legs = [
-                ['sequence' => 1, 'role' => 'troncal', 'origin_id' => $originId, 'destination_id' => $trunkDestinationId],
-            ];
-            if ($agency->second_post_id === null && $agencyDestinationId !== null) {
-                $legs[] = ['sequence' => 2, 'role' => 'posta1', 'origin_id' => $firstPostOriginId, 'destination_id' => $agencyDestinationId];
+            $planned = $planner->legs($agency, $trunk, $postsById, $postsByCode, $agencies);
+            if ($planned === [] || collect($planned)->contains(fn (array $leg): bool => blank($leg['origin']['address'])
+                || blank($leg['destination']['address'])
+                || OperationAccess::key($leg['origin']['address']) === 'pendiente'
+                || OperationAccess::key($leg['destination']['address']) === 'pendiente')) {
+                continue;
             }
-            if ($agency->second_post_id !== null) {
-                $legs[] = ['sequence' => 2, 'role' => 'posta1', 'origin_id' => $firstPostOriginId, 'destination_id' => $trunkDestinationId];
-                if ($agencyDestinationId !== null) {
-                    $legs[] = ['sequence' => 3, 'role' => 'posta2', 'origin_id' => $secondPostOriginId, 'destination_id' => $agencyDestinationId];
+            if ($pendingCoverageIds->has($coverage->id)) {
+                $current = $configurations->filter(fn (object $configuration): bool => $configuration->coverage_id === $coverage->id && $configuration->is_active);
+                $structureChanged = $current->count() !== count($planned)
+                    || collect($planned)->contains(function (array $leg) use ($configurations, $coverage): bool {
+                        $existing = $configurations->get($coverage->id.'|'.$leg['sequence']);
+
+                        return ! $existing || $existing->role !== $leg['role']
+                            || $existing->group_code !== $leg['groupCode']
+                            || $existing->transport_kind !== $leg['transportKind']
+                            || (int) $existing->transport_id !== (int) $leg['transportId'];
+                    });
+                if ($structureChanged) {
+                    continue;
                 }
             }
+            $legs = collect($planned)->map(function (array $leg) use ($locationId): array {
+                return [
+                    'sequence' => $leg['sequence'], 'role' => $leg['role'],
+                    'origin_id' => $locationId($leg['origin']['name'], $leg['origin']['address'], $leg['origin']['commune']),
+                    'destination_id' => $locationId($leg['destination']['name'], $leg['destination']['address'], $leg['destination']['commune']),
+                    'transport_kind' => $leg['transportKind'], 'transport_id' => $leg['transportId'],
+                    'group_code' => $leg['groupCode'], 'stop_order' => $leg['stopOrder'],
+                ];
+            });
             foreach ($legs as $leg) {
                 $existing = $configurations->get($coverage->id.'|'.$leg['sequence']);
                 $data = [...$leg, 'tenant_id' => $tenant, 'coverage_id' => $coverage->id, 'name' => $agency->name, 'is_active' => true, 'updated_at' => now()];
                 if ($existing) {
-                    $changed = $existing->name !== $data['name'] || $existing->origin_id !== $leg['origin_id'] || $existing->destination_id !== $leg['destination_id'] || ! $existing->is_active;
+                    $changed = $existing->name !== $data['name'] || $existing->role !== $data['role']
+                        || $existing->origin_id !== $leg['origin_id'] || $existing->destination_id !== $leg['destination_id']
+                        || $existing->transport_kind !== $leg['transport_kind'] || (int) $existing->transport_id !== (int) $leg['transport_id']
+                        || $existing->group_code !== $leg['group_code'] || (int) $existing->stop_order !== (int) $leg['stop_order']
+                        || ! $existing->is_active;
                     if ($changed) {
-                        $this->refreshConfigurationRoute($existing, $data);
+                        $structural = $existing->role !== $data['role'] || $existing->group_code !== $data['group_code']
+                            || $existing->transport_kind !== $data['transport_kind']
+                            || (int) $existing->transport_id !== (int) $data['transport_id'];
+                        $updated = [...$data, 'version' => $existing->version + 1];
+                        DB::table('Ope_GuiaConfiguraciones')->where('id', $existing->id)->update($updated);
+                        if (! $structural) {
+                            $this->refreshConfigurationRoute($existing, $updated);
+                        }
                     }
                 } else {
                     DB::table('Ope_GuiaConfiguraciones')->insert([...$data, 'template' => '{cliente} / {servicio}: {bultos} bultos, {peso} kg', 'requires_customer_guide' => false, 'version' => 1, 'created_at' => now()]);
                 }
             }
+            DB::table('Ope_GuiaConfiguraciones')->where(['tenant_id' => $tenant, 'coverage_id' => $coverage->id])
+                ->whereNotIn('sequence', $legs->pluck('sequence'))->update(['is_active' => false, 'updated_at' => now()]);
         }
     }
 
@@ -311,6 +339,12 @@ class OperationWorkflow
                 throw ValidationException::withMessages(['configuration_ids' => 'Selecciona configuraciones activas de esta empresa.']);
             }
             $first = $configurations->first();
+            if (! $first) {
+                throw ValidationException::withMessages(['configuration_ids' => 'Selecciona al menos una ruta vigente.']);
+            }
+            if ($first->group_code !== null) {
+                return $this->createGroupedDeparture($tenant, $user, $lotId, $input, $first, $configurations);
+            }
             $agency = DB::table('PPR_coverages as coverage')
                 ->join('Ope_Agencias as agency', function ($join): void {
                     $join->on('agency.agency_code', '=', 'coverage.ID_ComunaMatrizAgencia')
@@ -435,6 +469,118 @@ class OperationWorkflow
         });
     }
 
+    private function createGroupedDeparture(int $tenant, int $user, int $lotId, array $input, object $first, Collection $selected): int
+    {
+        $coverageIds = DB::table('Ope_Bultos')->where(['lot_id' => $lotId, 'excluded' => false])
+            ->whereNotNull('coverage_id')->distinct()->pluck('coverage_id');
+        $candidates = DB::table('Ope_GuiaConfiguraciones as configuration')
+            ->join('PPR_coverages as coverage', 'coverage.id', '=', 'configuration.coverage_id')
+            ->join('Ope_Agencias as agency', function ($join): void {
+                $join->on('agency.agency_code', '=', 'coverage.ID_ComunaMatrizAgencia')
+                    ->on('agency.tenant_id', '=', 'coverage.tenant_id');
+            })
+            ->where('configuration.tenant_id', $tenant)->where('configuration.is_active', true)
+            ->where('configuration.group_code', $first->group_code)
+            ->where('configuration.sequence', $first->sequence)
+            ->where('configuration.role', $first->role)
+            ->where('configuration.origin_id', $first->origin_id)
+            ->where('configuration.destination_id', $first->destination_id)
+            ->whereIn('configuration.coverage_id', $coverageIds)
+            ->orderBy('agency.agency_code')->orderBy('configuration.id')
+            ->get(['configuration.*', 'agency.name as agency_name', 'agency.agency_code']);
+        $firstTransport = $this->configurationTransport($tenant, $first);
+        $signature = $this->transportSignature($firstTransport);
+        $configurations = $candidates->filter(fn (object $configuration): bool => $this->transportSignature(
+            $this->configurationTransport($tenant, $configuration),
+        ) === $signature)->values();
+        if ($configurations->isEmpty() || $selected->pluck('id')->diff($configurations->pluck('id'))->isNotEmpty()) {
+            throw ValidationException::withMessages(['configuration_ids' => 'Selecciona agencias del mismo vehículo y punto de descarga.']);
+        }
+
+        $origin = DB::table('Ope_Ubicaciones')->where(['tenant_id' => $tenant, 'id' => $first->origin_id, 'is_active' => true])->firstOrFail();
+        $destination = DB::table('Ope_Ubicaciones')->where(['tenant_id' => $tenant, 'id' => $first->destination_id, 'is_active' => true])->firstOrFail();
+        if (OperationAccess::key($origin->address) === 'pendiente' || OperationAccess::key($destination->address) === 'pendiente') {
+            throw ValidationException::withMessages(['configuration_ids' => 'Completa las direcciones reales del origen y la descarga antes de programar esta guía.']);
+        }
+        $agencyNames = $configurations->pluck('agency_name')->unique()->values();
+        $routeName = $agencyNames->count() === 1 ? $agencyNames->first() : $destination->name.' · '.$agencyNames->count().' agencias';
+        $id = DB::table('Ope_ProgramacionSalidas')->insertGetId([
+            'lot_id' => $lotId, 'departure_date' => $input['departure_date'],
+            'name' => mb_substr($routeName.' · '.$input['name'], 0, 160),
+            'role' => $first->role, 'origin_id' => $origin->id, 'destination_id' => $destination->id,
+            'plate' => $firstTransport['transport']->plate,
+            'driver_name' => $firstTransport['driver']?->name,
+            'driver_rut' => $firstTransport['driver']?->rut,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        foreach ($configurations as $configuration) {
+            $packages = DB::table('Ope_Bultos')->where(['lot_id' => $lotId, 'coverage_id' => $configuration->coverage_id, 'excluded' => false])->get();
+            $packageIds = $packages->pluck('id');
+            if ($configuration->requires_customer_guide && $packages->contains(fn (object $package): bool => blank($package->customer_guide))) {
+                throw ValidationException::withMessages(['configuration_ids' => 'Falta la guía del cliente en una de las coberturas seleccionadas.']);
+            }
+            if (DB::table('Ope_BultoTramos')->where('configuration_id', $configuration->id)->whereIn('package_id', $packageIds)->exists()) {
+                throw ValidationException::withMessages(['configuration_ids' => 'Uno de los bultos ya está programado para este tramo.']);
+            }
+            $prior = DB::table('Ope_GuiaConfiguraciones')->where(['coverage_id' => $configuration->coverage_id, 'is_active' => true])
+                ->where('sequence', '<', $configuration->sequence)->orderBy('sequence')->get(['id', 'sequence']);
+            foreach ($prior as $previousLeg) {
+                $members = DB::table('Ope_BultoTramos')->where('configuration_id', $previousLeg->id)
+                    ->whereIn('package_id', $packageIds)->get(['package_id', 'departure_id']);
+                if ($members->count() !== $packages->count()) {
+                    throw ValidationException::withMessages(['configuration_ids' => 'Programa primero todos los tramos anteriores de la carga seleccionada.']);
+                }
+                if ($previousLeg->id === $prior->last()->id && ! str_starts_with($configuration->group_code, 'air:agency:')) {
+                    $snapshots = DB::table('Ope_SalidaAgencias')->where('configuration_id', $previousLeg->id)
+                        ->whereIn('departure_id', $members->pluck('departure_id')->unique())->pluck('snapshot', 'departure_id');
+                    foreach ($members as $member) {
+                        $previous = json_decode($snapshots->get($member->departure_id, 'null'), true);
+                        if (! $previous || ($previous['destination']['id'] ?? null) !== $origin->id) {
+                            throw ValidationException::withMessages(['configuration_ids' => 'El origen de esta posta no coincide con la descarga del tramo anterior.']);
+                        }
+                    }
+                }
+            }
+            foreach ($packageIds->chunk(300) as $chunk) {
+                DB::table('Ope_BultoTramos')->insert($chunk->map(fn (int $packageId): array => [
+                    'departure_id' => $id, 'package_id' => $packageId, 'configuration_id' => $configuration->id,
+                ])->all());
+            }
+            $transport = $this->configurationTransport($tenant, $configuration)['transport'];
+            DB::table('Ope_SalidaAgencias')->insert([
+                'departure_id' => $id, 'configuration_id' => $configuration->id,
+                'snapshot' => OperationAccess::json([
+                    'configuration' => $configuration, 'origin' => $origin, 'destination' => $destination,
+                    'transport' => ['name' => $transport->name],
+                ]),
+            ]);
+        }
+        OperationAccess::audit($tenant, $user, 'Programar salida consolidada', 'salida', $id, $input);
+
+        return $id;
+    }
+
+    /** @return array{transport: object, driver: object|null} */
+    private function configurationTransport(int $tenant, object $configuration): array
+    {
+        $table = $configuration->transport_kind === 'trunk' ? 'Ope_Troncales' : 'Ope_Postas';
+        $transport = DB::table($table)->where(['tenant_id' => $tenant, 'id' => $configuration->transport_id])->firstOrFail();
+        $driver = $transport->driver_id ? DB::table('Ope_Choferes')->where(['tenant_id' => $tenant, 'id' => $transport->driver_id])->first() : null;
+
+        return compact('transport', 'driver');
+    }
+
+    /** @param  array{transport: object, driver: object|null}  $assignment */
+    private function transportSignature(array $assignment): string
+    {
+        return OperationAccess::json([
+            $assignment['transport']->plate,
+            $assignment['driver']?->rut,
+            $assignment['driver']?->name,
+        ]);
+    }
+
     public function createDepartures(int $tenant, int $user, int $lotId, array $input): array
     {
         return DB::transaction(function () use ($tenant, $user, $lotId, $input): array {
@@ -445,9 +591,11 @@ class OperationWorkflow
                 ->where('configuration.is_active', true)
                 ->whereIn('configuration.id', $input['configuration_ids'])
                 ->orderBy('configuration.sequence')
+                ->orderBy('configuration.stop_order')
                 ->orderBy('coverage.ID_ComunaMatrizAgencia')
                 ->orderBy('configuration.id')
-                ->get(['configuration.id', 'configuration.role', 'coverage.ID_ComunaMatrizAgencia as agency_code']);
+                ->get(['configuration.id', 'configuration.role', 'configuration.sequence', 'configuration.group_code',
+                    'configuration.transport_kind', 'configuration.transport_id', 'coverage.ID_ComunaMatrizAgencia as agency_code']);
             if ($selected->count() !== count($input['configuration_ids'])) {
                 throw ValidationException::withMessages(['configuration_ids' => 'Una de las agencias seleccionadas ya no está disponible. Actualiza la página.']);
             }
@@ -457,7 +605,19 @@ class OperationWorkflow
             }
 
             $departures = [];
+            $scheduledGroups = [];
+            $signatures = [];
             foreach ($selected as $configuration) {
+                $group = 'single:'.$configuration->id;
+                if ($configuration->group_code !== null) {
+                    $transportKey = $configuration->transport_kind.'|'.$configuration->transport_id;
+                    $signatures[$transportKey] ??= $this->transportSignature($this->configurationTransport($tenant, $configuration));
+                    $group = $configuration->sequence.'|'.$configuration->group_code.'|'.$signatures[$transportKey];
+                }
+                if (isset($scheduledGroups[$group])) {
+                    continue;
+                }
+                $scheduledGroups[$group] = true;
                 $departures[] = $this->createDeparture($tenant, $user, $lotId, [
                     'name' => $input['name'],
                     'departure_date' => $input['departure_date'],
@@ -493,6 +653,36 @@ class OperationWorkflow
         });
     }
 
+    public function approveAll(int $tenant, int $user, int $lotId): int
+    {
+        return DB::transaction(function () use ($tenant, $user, $lotId): int {
+            DB::table('Ope_Lotes')->where(['tenant_id' => $tenant, 'id' => $lotId])->lockForUpdate()->firstOrFail();
+            $departures = DB::table('Ope_ProgramacionSalidas')
+                ->where(['lot_id' => $lotId, 'status' => 'draft'])
+                ->orderByRaw("CASE role WHEN 'troncal' THEN 1 WHEN 'posta1' THEN 2 WHEN 'posta2' THEN 3 WHEN 'posta3' THEN 4 ELSE 5 END")
+                ->orderBy('departure_date')
+                ->orderBy('id')
+                ->get(['id', 'name']);
+            if ($departures->isEmpty()) {
+                throw ValidationException::withMessages(['approvals' => 'No hay salidas pendientes de aprobación en este proceso.']);
+            }
+
+            foreach ($departures as $departure) {
+                try {
+                    $this->approve($tenant, $user, $departure->id);
+                } catch (ValidationException $exception) {
+                    $reason = collect($exception->errors())->flatten()->first() ?? 'Revisa los datos de esta salida.';
+                    throw ValidationException::withMessages(['approvals' => 'Salida #'.$departure->id.' · '.$departure->name.': '.$reason.' No se aprobó ninguna salida.']);
+                }
+            }
+            OperationAccess::audit($tenant, $user, 'Aprobar salidas en bloque', 'lote', $lotId, [
+                'departures' => $departures->pluck('id')->all(),
+            ]);
+
+            return $departures->count();
+        });
+    }
+
     public function approve(int $tenant, int $user, int $id): int
     {
         return DB::transaction(function () use ($tenant, $user, $id): int {
@@ -521,9 +711,12 @@ class OperationWorkflow
                         throw ValidationException::withMessages(['departure' => 'Aprueba los tramos anteriores antes de esta posta y respeta sus fechas.']);
                     }
                 }
-                $other = DB::table('Ope_Bultos as b')->join('Ope_BultoTramos as t', 't.package_id', '=', 'b.id')->join('Ope_ProgramacionSalidas as d', 'd.id', '=', 't.departure_id')->join('Ope_Lotes as l', 'l.id', '=', 'b.lot_id')->where('l.tenant_id', $tenant)->where('b.tracking', $package['tracking'])->where('b.lot_id', '<>', $departure->lot_id)->where('d.status', 'approved')->exists();
-                if ($other) {
-                    throw ValidationException::withMessages(['departure' => 'El paquete '.$package['tracking'].' ya tiene una salida aprobada en otro proceso.']);
+                $other = DB::table('Ope_Bultos as b')->join('Ope_BultoTramos as t', 't.package_id', '=', 'b.id')->join('Ope_ProgramacionSalidas as d', 'd.id', '=', 't.departure_id')->join('Ope_Lotes as l', 'l.id', '=', 'b.lot_id')->where('l.tenant_id', $tenant)->where('b.tracking', $package['tracking'])->where('b.lot_id', '<>', $departure->lot_id)->where('d.status', 'approved');
+                if ($other->exists()) {
+                    $ancestors = $this->reservationAncestors($package['id']);
+                    if ($ancestors === [] || $other->whereNotIn('b.id', $ancestors)->exists()) {
+                        throw ValidationException::withMessages(['departure' => 'El paquete '.$package['tracking'].' ya tiene una salida aprobada en otro proceso.']);
+                    }
                 }
             }
             $encoded = OperationAccess::json($snapshot);
@@ -535,6 +728,22 @@ class OperationWorkflow
         });
     }
 
+    /** @return array<int, int> */
+    private function reservationAncestors(int $packageId): array
+    {
+        $ancestors = [];
+        while ($sourceId = DB::table('Ope_Reservas')->where(['status' => 'included', 'included_package_id' => $packageId])->value('source_package_id')) {
+            $sourceId = (int) $sourceId;
+            if (in_array($sourceId, $ancestors, true)) {
+                break;
+            }
+            $ancestors[] = $sourceId;
+            $packageId = $sourceId;
+        }
+
+        return $ancestors;
+    }
+
     public function reopen(int $tenant, int $user, int $id, string $reason): void
     {
         DB::transaction(function () use ($tenant, $user, $id, $reason): void {
@@ -543,7 +752,7 @@ class OperationWorkflow
                 throw ValidationException::withMessages(['departure' => 'Solo se puede reabrir una salida aprobada.']);
             }
             $packageIds = DB::table('Ope_BultoTramos')->where('departure_id', $id)->pluck('package_id');
-            $downstream = DB::table('Ope_BultoTramos as t')->join('Ope_GuiaConfiguraciones as c', 'c.id', '=', 't.configuration_id')->join('Ope_ProgramacionSalidas as d', 'd.id', '=', 't.departure_id')->whereIn('t.package_id', $packageIds)->where('d.status', 'approved')->where('c.sequence', '>', ['troncal' => 1, 'posta1' => 2, 'posta2' => 3][$departure->role])->exists();
+            $downstream = DB::table('Ope_BultoTramos as t')->join('Ope_GuiaConfiguraciones as c', 'c.id', '=', 't.configuration_id')->join('Ope_ProgramacionSalidas as d', 'd.id', '=', 't.departure_id')->whereIn('t.package_id', $packageIds)->where('d.status', 'approved')->where('c.sequence', '>', ['troncal' => 1, 'posta1' => 2, 'posta2' => 3, 'posta3' => 4][$departure->role])->exists();
             if ($downstream) {
                 throw ValidationException::withMessages(['departure' => 'Reabre primero las postas posteriores que ya están aprobadas.']);
             }
@@ -560,7 +769,7 @@ class OperationWorkflow
                 throw ValidationException::withMessages(['departure' => 'Solo se puede cancelar una salida que nunca ha sido aprobada.']);
             }
             $packageIds = DB::table('Ope_BultoTramos')->where('departure_id', $id)->pluck('package_id');
-            $hasLater = DB::table('Ope_BultoTramos as t')->join('Ope_GuiaConfiguraciones as c', 'c.id', '=', 't.configuration_id')->whereIn('t.package_id', $packageIds)->where('c.sequence', '>', ['troncal' => 1, 'posta1' => 2, 'posta2' => 3][$departure->role])->exists();
+            $hasLater = DB::table('Ope_BultoTramos as t')->join('Ope_GuiaConfiguraciones as c', 'c.id', '=', 't.configuration_id')->whereIn('t.package_id', $packageIds)->where('c.sequence', '>', ['troncal' => 1, 'posta1' => 2, 'posta2' => 3, 'posta3' => 4][$departure->role])->exists();
             if ($hasLater) {
                 throw ValidationException::withMessages(['departure' => 'Cancela primero las postas posteriores programadas.']);
             }
@@ -652,6 +861,7 @@ class OperationWorkflow
                 'troncal' => 'Troncal',
                 'posta1' => 'Posta 1',
                 'posta2' => 'Posta 2',
+                'posta3' => 'Posta 3',
                 default => 'Transporte',
             };
             $currentCatalog = $catalog->get($departure->id);
@@ -681,7 +891,7 @@ class OperationWorkflow
                     'description' => str_replace((string) $line['weight'], (string) $wholeWeight, $line['description'] ?? ''),
                     'count' => (int) $line['count'],
                     'weight' => $wholeWeight,
-                    '_role_order' => ['troncal' => 1, 'posta1' => 2, 'posta2' => 3][$role] ?? 4,
+                    '_role_order' => ['troncal' => 1, 'posta1' => 2, 'posta2' => 3, 'posta3' => 4][$role] ?? 5,
                     '_departure_id' => $departure->id,
                     '_line_order' => $lineOrder,
                 ];

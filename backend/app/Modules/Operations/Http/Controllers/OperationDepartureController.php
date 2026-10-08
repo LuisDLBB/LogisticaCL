@@ -4,6 +4,8 @@ namespace App\Modules\Operations\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Operations\Services\OperationAccess;
+use App\Modules\Operations\Services\OperationGuideRoutePlanner;
+use App\Modules\Operations\Services\OperationReservationService;
 use App\Modules\Operations\Services\OperationWorkflow;
 use DateTimeImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -19,7 +21,26 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OperationDepartureController extends Controller
 {
-    public function index(Request $request, int $lot, OperationWorkflow $workflow): View
+    public function overview(Request $request): View
+    {
+        $tenant = OperationAccess::tenant($request);
+        $lots = DB::table('Ope_Lotes')->where('tenant_id', $tenant)->orderByDesc('operation_date')->orderByDesc('id')->paginate(20);
+        $departureCounts = DB::table('Ope_ProgramacionSalidas')
+            ->whereIn('lot_id', $lots->pluck('id'))
+            ->select('lot_id')
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as pending")
+            ->selectRaw("SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved")
+            ->selectRaw("SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled")
+            ->groupBy('lot_id')
+            ->get()
+            ->keyBy('lot_id');
+        $reservationCount = DB::table('Ope_Reservas')->where(['tenant_id' => $tenant, 'status' => 'pending'])->count();
+
+        return view('operations::departure-overview', compact('lots', 'departureCounts', 'reservationCount'));
+    }
+
+    public function index(Request $request, int $lot, OperationWorkflow $workflow, OperationReservationService $reservations): View
     {
         $record = OperationAccess::lot($request, $lot);
         DB::transaction(fn () => $workflow->prepareGuideRoutes(OperationAccess::tenant($request), $lot));
@@ -33,15 +54,28 @@ class OperationDepartureController extends Controller
             ->leftJoin('Ope_Troncales as trunk', 'trunk.id', '=', 'agency.trunk_id')
             ->leftJoin('Ope_Postas as first_post', 'first_post.id', '=', 'agency.post_id')
             ->leftJoin('Ope_Postas as second_post', 'second_post.id', '=', 'agency.second_post_id')
+            ->leftJoin('Ope_Troncales as leg_trunk', function ($join): void {
+                $join->on('leg_trunk.id', '=', 'c.transport_id')->where('c.transport_kind', 'trunk');
+            })
+            ->leftJoin('Ope_Postas as leg_post', function ($join): void {
+                $join->on('leg_post.id', '=', 'c.transport_id')->where('c.transport_kind', 'post');
+            })
+            ->leftJoin('Ope_Choferes as leg_trunk_driver', 'leg_trunk_driver.id', '=', 'leg_trunk.driver_id')
+            ->leftJoin('Ope_Choferes as leg_post_driver', 'leg_post_driver.id', '=', 'leg_post.driver_id')
             ->join('Ope_Ubicaciones as origin', 'origin.id', '=', 'c.origin_id')
             ->join('Ope_Ubicaciones as destination', 'destination.id', '=', 'c.destination_id')
             ->where('c.tenant_id', OperationAccess::tenant($request))
             ->where('c.is_active', true)
             ->whereIn('c.coverage_id', $counts->keys())
             ->orderBy('c.sequence')
-            ->orderBy('agency.name')
+            ->orderBy('c.stop_order')
+            ->orderBy('agency.agency_code')
             ->get(['c.*', 'agency.id as agency_id', 'agency.name as agency_name',
                 'trunk.name as trunk_name', 'first_post.name as first_post_name', 'second_post.name as second_post_name',
+                'leg_trunk.name as leg_trunk_name', 'leg_post.name as leg_post_name',
+                'leg_trunk.plate as leg_trunk_plate', 'leg_post.plate as leg_post_plate',
+                'leg_trunk_driver.rut as leg_trunk_driver_rut', 'leg_post_driver.rut as leg_post_driver_rut',
+                'leg_trunk_driver.name as leg_trunk_driver_name', 'leg_post_driver.name as leg_post_driver_name',
                 'origin.name as origin_name', 'destination.name as destination_name']);
         $members = DB::table('Ope_BultoTramos')->whereIn('departure_id', DB::table('Ope_ProgramacionSalidas')->where('lot_id', $lot)->select('id'))->pluck('configuration_id')->unique();
         $coverageRoutes = DB::table('PPR_coverages as coverage')
@@ -49,17 +83,36 @@ class OperationDepartureController extends Controller
                 $join->on('agency.agency_code', '=', 'coverage.ID_ComunaMatrizAgencia')
                     ->on('agency.tenant_id', '=', 'coverage.tenant_id');
             })
+            ->leftJoin('Ope_Troncales as trunk', 'trunk.id', '=', 'agency.trunk_id')
             ->where('coverage.tenant_id', OperationAccess::tenant($request))
             ->whereIn('coverage.id', $counts->keys())
-            ->get(['coverage.id', 'coverage.commune_name', 'agency.id as agency_id', 'agency.name as agency_name', 'agency.address', 'agency.second_post_id']);
+            ->get(['coverage.id', 'coverage.commune_name', 'agency.id as agency_id', 'agency.agency_code', 'agency.name as agency_name',
+                'agency.address', 'agency.second_post_id', 'trunk.trunk_code']);
         $routeCounts = $configurations->countBy('coverage_id');
-        $missing = $coverageRoutes->filter(fn ($coverage): bool => $routeCounts->get($coverage->id, 0) < ($coverage->second_post_id ? 3 : 2)
+        $pendingCoverageIds = DB::table('Ope_BultoTramos as leg')
+            ->join('Ope_Bultos as package', 'package.id', '=', 'leg.package_id')
+            ->join('Ope_ProgramacionSalidas as departure', 'departure.id', '=', 'leg.departure_id')
+            ->where('package.lot_id', $lot)
+            ->where('departure.status', 'draft')
+            ->distinct()->pluck('package.coverage_id');
+        $planner = app(OperationGuideRoutePlanner::class);
+        $missing = $coverageRoutes->reject(fn ($coverage): bool => $pendingCoverageIds->contains($coverage->id))
+            ->filter(fn ($coverage): bool => $routeCounts->get($coverage->id, 0) < $planner->expectedLegCount(
+                (int) $coverage->trunk_code, (int) $coverage->agency_code, $coverage->second_post_id !== null,
+            )
             || ($coverage->agency_id && OperationAccess::key($coverage->address ?? '') === 'pendiente'));
         $missingAddresses = $missing->filter(fn ($coverage): bool => $coverage->agency_id && (blank($coverage->address) || OperationAccess::key($coverage->address) === 'pendiente'))
             ->groupBy('agency_id');
         $missingRoutes = $missing->reject(fn ($coverage): bool => $coverage->agency_id && (blank($coverage->address) || OperationAccess::key($coverage->address) === 'pendiente'));
 
-        return view('operations::departures', ['lot' => $record, 'configurations' => $configurations, 'counts' => $counts, 'scheduled' => $members, 'missingAddresses' => $missingAddresses, 'missingRoutes' => $missingRoutes, 'departures' => DB::table('Ope_ProgramacionSalidas')->where('lot_id', $lot)->orderBy('departure_date')->orderBy('id')->get(), 'spreadsheetRows' => $workflow->departureSpreadsheetRows(OperationAccess::tenant($request), $lot), 'blocked' => DB::table('Ope_Incidencias')->where('lot_id', $lot)->whereNull('resolved_at')->count()]);
+        $legacyDrafts = DB::table('Ope_ProgramacionSalidas as departure')
+            ->join('Ope_SalidaAgencias as assigned', 'assigned.departure_id', '=', 'departure.id')
+            ->join('Ope_GuiaConfiguraciones as configuration', 'configuration.id', '=', 'assigned.configuration_id')
+            ->where('departure.lot_id', $lot)->where('departure.status', 'draft')
+            ->whereNull('configuration.group_code')->distinct()->count('departure.id');
+        $departures = DB::table('Ope_ProgramacionSalidas')->where('lot_id', $lot)->orderBy('departure_date')->orderBy('id')->get();
+
+        return view('operations::departures', ['lot' => $record, 'configurations' => $configurations, 'counts' => $counts, 'scheduled' => $members, 'missingAddresses' => $missingAddresses, 'missingRoutes' => $missingRoutes, 'legacyDrafts' => $legacyDrafts, 'departures' => $departures, 'pendingDepartureCount' => $departures->where('status', 'draft')->count(), 'canApproveAll' => OperationAccess::supervisor($request), 'spreadsheetRows' => $workflow->departureSpreadsheetRows(OperationAccess::tenant($request), $lot), 'blocked' => DB::table('Ope_Incidencias')->where('lot_id', $lot)->whereNull('resolved_at')->count(), 'pendingReservations' => $reservations->pendingBatches(OperationAccess::tenant($request)), 'includedReservations' => $reservations->includedBatches(OperationAccess::tenant($request), $lot), 'canIncludeReservations' => ! DB::table('Ope_ProgramacionSalidas')->where('lot_id', $lot)->where('status', '<>', 'cancelled')->exists()]);
     }
 
     public function spreadsheet(Request $request, int $lot, OperationWorkflow $workflow): StreamedResponse
@@ -127,6 +180,40 @@ class OperationDepartureController extends Controller
         return redirect()->route('operations.departures.show', $id)->with('status', 'Salida programada. El supervisor debe confirmar los datos de transporte.');
     }
 
+    public function reserve(Request $request, int $lot, OperationReservationService $reservations): RedirectResponse
+    {
+        OperationAccess::lot($request, $lot);
+        $input = $request->validate(['configuration_ids' => ['required', 'array', 'min:1', 'max:500'], 'configuration_ids.*' => ['required', 'integer', 'distinct'], 'warehouse_returned' => ['sometimes', 'accepted']]);
+        $count = $reservations->reserve(OperationAccess::tenant($request), $request->user()->id, $lot, $input['configuration_ids'], $request->boolean('warehouse_returned'));
+
+        return redirect()->route('operations.departures.index', $lot)->with('status', $count.' bultos guardados como reserva para otro proceso.');
+    }
+
+    public function includeReservations(Request $request, int $lot, OperationReservationService $reservations): RedirectResponse
+    {
+        OperationAccess::lot($request, $lot);
+        $input = $request->validate(['batch_ids' => ['required', 'array', 'min:1', 'max:500'], 'batch_ids.*' => ['required', 'uuid', 'distinct']]);
+        $count = $reservations->include(OperationAccess::tenant($request), $request->user()->id, $lot, $input['batch_ids']);
+
+        return redirect()->route('operations.departures.index', $lot)->with('status', $count.' bultos de reserva incorporados al proceso. Sus rutas se actualizaron con la configuración actual.');
+    }
+
+    public function cancelReservation(Request $request, int $lot, string $batch, OperationReservationService $reservations): RedirectResponse
+    {
+        OperationAccess::lot($request, $lot);
+        $count = $reservations->cancelPending(OperationAccess::tenant($request), $request->user()->id, $lot, $batch);
+
+        return redirect()->route('operations.departures.index', $lot)->with('status', $count.' bultos devueltos al proceso de origen.');
+    }
+
+    public function returnReservation(Request $request, int $lot, string $batch, OperationReservationService $reservations): RedirectResponse
+    {
+        OperationAccess::lot($request, $lot);
+        $count = $reservations->returnToPending(OperationAccess::tenant($request), $request->user()->id, $lot, $batch);
+
+        return redirect()->route('operations.departures.index', $lot)->with('status', $count.' bultos devueltos a reservas guardadas.');
+    }
+
     public function show(Request $request, int $departure, OperationWorkflow $workflow): View
     {
         $record = OperationAccess::departures($request)->where('id', $departure)->firstOrFail();
@@ -153,6 +240,17 @@ class OperationDepartureController extends Controller
         $id = $workflow->approve(OperationAccess::tenant($request), $request->user()->id, $departure);
 
         return redirect()->route('operations.guides.show', $id)->with('status', 'Guía interna aprobada y versionada.');
+    }
+
+    public function approveAll(Request $request, int $lot, OperationWorkflow $workflow): RedirectResponse
+    {
+        OperationAccess::lot($request, $lot);
+        OperationAccess::requireSupervisor($request);
+        $request->validate(['confirmed' => ['accepted']]);
+        $count = $workflow->approveAll(OperationAccess::tenant($request), $request->user()->id, $lot);
+
+        return redirect()->route('operations.departures.index', $lot)
+            ->with('status', $count.' '.($count === 1 ? 'guía aprobada' : 'guías aprobadas').' en orden de recorrido.');
     }
 
     public function reopen(Request $request, int $departure, OperationWorkflow $workflow): RedirectResponse

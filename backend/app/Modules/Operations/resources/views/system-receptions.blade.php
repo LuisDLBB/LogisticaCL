@@ -21,4 +21,5 @@
 @empty<tr><td colspan="7" class="ope-empty">Todavía no hay recepciones registradas.</td></tr>@endforelse
 </tbody></table></div>
 @include('operations::pager',['rows'=>$receptions])
+<p class="note">¿Buscas una carga anterior? <a href="{{ route('operations.loads.index','reception') }}">Ver recepciones cargadas desde Excel</a>.</p>
 @endsection

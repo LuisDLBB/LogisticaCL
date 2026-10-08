@@ -90,6 +90,24 @@ class OperationsWorkflowTest extends TestCase
         return ['plate' => 'AB-CD-12', 'driver_name' => 'Chofer Uno', 'driver_rut' => '12.345.678-5'];
     }
 
+    private function addAgencyPackage(int $tenant, int $lot, int $agencyCode, string $tracking): int
+    {
+        $agency = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'agency_code' => $agencyCode])->firstOrFail();
+        $coverage = Coverage::factory()->create([
+            'tenant_id' => $tenant,
+            'commune_name' => $agency->commune,
+            'ID_ComunaMatrizAgencia' => $agencyCode,
+        ]);
+        DB::table('Ope_Bultos')->insert([
+            'lot_id' => $lot, 'tracking' => $tracking, 'weight' => 3,
+            'merchant' => 'Cliente de prueba', 'service' => 'Normal',
+            'commune' => $agency->commune, 'coverage_id' => $coverage->id,
+            'snapshot' => '{}', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        return $coverage->id;
+    }
+
     public function test_guests_and_inactive_members_cannot_access_operations(): void
     {
         $this->get('/operaciones')->assertRedirect(route('login'));
@@ -104,12 +122,27 @@ class OperationsWorkflowTest extends TestCase
     {
         $this->member('Operario');
 
-        $this->get('/operaciones')->assertSee('Preparar proceso');
+        $this->get('/operaciones')->assertSee('Preparar proceso')->assertSeeInOrder(['Recepción Sistema', 'Maestro Geolize', 'Procesos', 'Salidas', 'Configuración']);
+        $this->get('/operaciones/salidas')->assertOk()->assertSee('Todavía no hay procesos preparados');
         $this->get('/operaciones/cargas/master')->assertSee('Carga Maestro Geolize');
         $this->get('/operaciones/cargas/reception')->assertSee('Carga Recepción');
         $this->get('/operaciones/configuracion')->assertSee('Agencias y rutas de guías');
         $this->get('/modulos/operaciones')->assertRedirect(route('operations.dashboard'));
         $this->assertDatabaseHas('user_activities', ['module' => 'Operaciones']);
+    }
+
+    public function test_salidas_menu_lists_processes_with_their_scheduled_departures(): void
+    {
+        [$tenant, $user] = $this->member();
+        [$lot, $coverage] = $this->lot($tenant, $user);
+        $configuration = $this->configuration($tenant, $coverage);
+        $this->departure($tenant, $user, $lot, $configuration);
+
+        $this->get('/operaciones/salidas')
+            ->assertOk()
+            ->assertSee('Primera milla')
+            ->assertSee('Pendientes de aprobación')
+            ->assertSee(route('operations.departures.index', $lot), false);
     }
 
     public function test_receiving_legacy_file_uses_hoja1_and_preserves_operator_and_esd_as_reference(): void
@@ -442,6 +475,43 @@ class OperationsWorkflowTest extends TestCase
         $this->assertDatabaseHas('Ope_Auditoria', ['action' => 'Reabrir salida']);
     }
 
+    public function test_supervisor_can_approve_all_pending_guides_in_leg_order_without_partial_results(): void
+    {
+        [$tenant, $user] = $this->member();
+        [$lot, $coverage] = $this->lot($tenant, $user);
+        $trunk = $this->configuration($tenant, $coverage);
+        $postOrigin = DB::table('Ope_GuiaConfiguraciones')->where('id', $trunk)->value('destination_id');
+        $post = $this->configuration($tenant, $coverage, 'posta1', $postOrigin);
+        $trunkDeparture = $this->departure($tenant, $user, $lot, $trunk);
+        $postDeparture = $this->departure($tenant, $user, $lot, $post);
+        foreach ([$trunkDeparture, $postDeparture] as $departure) {
+            $this->put('/operaciones/salidas/'.$departure.'/transporte', $this->transport())->assertSessionHasNoErrors();
+        }
+
+        $this->get('/operaciones/procesos/'.$lot.'/salidas')->assertOk()->assertSee('Aprobar todo');
+        $this->post('/operaciones/procesos/'.$lot.'/salidas/aprobar-todas')->assertSessionHasErrors('confirmed');
+        $this->member('Operario');
+        $this->post('/operaciones/procesos/'.$lot.'/salidas/aprobar-todas', ['confirmed' => 1])->assertForbidden();
+        $this->actingAs(User::findOrFail($user));
+
+        DB::table('Ope_ProgramacionSalidas')->where('id', $postDeparture)->update(['plate' => null]);
+        $this->post('/operaciones/procesos/'.$lot.'/salidas/aprobar-todas', ['confirmed' => 1])
+            ->assertSessionHasErrors('approvals');
+        $this->assertDatabaseCount('Ope_Guias', 0);
+        $this->assertDatabaseHas('Ope_ProgramacionSalidas', ['id' => $trunkDeparture, 'status' => 'draft']);
+        $this->assertDatabaseHas('Ope_ProgramacionSalidas', ['id' => $postDeparture, 'status' => 'draft']);
+
+        DB::table('Ope_ProgramacionSalidas')->where('id', $postDeparture)->update(['plate' => 'ABCD12']);
+        $this->post('/operaciones/procesos/'.$lot.'/salidas/aprobar-todas', ['confirmed' => 1])
+            ->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('Ope_Guias', 2);
+        $this->assertSame([$trunkDeparture, $postDeparture], DB::table('Ope_Guias')->orderBy('id')->pluck('departure_id')->all());
+        $this->assertDatabaseHas('Ope_ProgramacionSalidas', ['id' => $trunkDeparture, 'status' => 'approved']);
+        $this->assertDatabaseHas('Ope_ProgramacionSalidas', ['id' => $postDeparture, 'status' => 'approved']);
+        $this->assertDatabaseHas('Ope_Auditoria', ['action' => 'Aprobar salidas en bloque', 'entity_id' => $lot]);
+        $this->get('/operaciones/procesos/'.$lot.'/salidas')->assertOk()->assertDontSee('Aprobar todo');
+    }
+
     public function test_invalid_rut_missing_transport_and_duplicate_departure_are_rejected(): void
     {
         [$tenant,$user] = $this->member();
@@ -508,26 +578,24 @@ class OperationsWorkflowTest extends TestCase
 
         $this->assertDatabaseCount('Ope_Bultos', 1);
         $this->assertDatabaseMissing('Ope_Bultos', ['tracking' => 'PKG-2']);
-        $this->assertSame(3, DB::table('Ope_GuiaConfiguraciones')->where('coverage_id', $coverage)->count());
+        $this->assertSame(2, DB::table('Ope_GuiaConfiguraciones')->where('coverage_id', $coverage)->count());
         $configurations = DB::table('Ope_GuiaConfiguraciones')->where('coverage_id', $coverage)->orderBy('sequence')->get();
-        $this->assertSame(['troncal', 'posta1', 'posta2'], $configurations->pluck('role')->all());
+        $this->assertSame(['troncal', 'posta1'], $configurations->pluck('role')->all());
         $this->assertSame($configurations[0]->destination_id, $configurations[1]->origin_id);
-        $this->assertSame($configurations[1]->destination_id, $configurations[2]->origin_id);
-        $this->assertSame($configurations[0]->destination_id, $configurations[1]->destination_id);
-        $this->assertSame('Gran Bretaña', DB::table('Ope_Ubicaciones')->where('id', $configurations[2]->destination_id)->value('address'));
+        $this->assertSame('Gran Bretaña', DB::table('Ope_Ubicaciones')->where('id', $configurations[1]->destination_id)->value('address'));
 
         $this->get('/operaciones/configuracion')->assertOk()->assertSee('no necesitas configurar guías aquí')->assertDontSee('Configurar guías por agencia');
-        $this->get('/operaciones/procesos/'.$lot.'/salidas')->assertOk()->assertSee('Posta 2')->assertDontSee('Falta configurar');
+        $this->get('/operaciones/procesos/'.$lot.'/salidas')->assertOk()->assertSee('Posta 1')->assertDontSee('Falta configurar');
         $this->get('/operaciones/procesos/'.$lot.'/salidas')->assertOk();
-        $this->assertSame(3, DB::table('Ope_GuiaConfiguraciones')->where('coverage_id', $coverage)->count());
+        $this->assertSame(2, DB::table('Ope_GuiaConfiguraciones')->where('coverage_id', $coverage)->count());
 
         foreach ($configurations as $configuration) {
             $this->post('/operaciones/procesos/'.$lot.'/salidas', [
                 'name' => 'Salida de prueba', 'departure_date' => '2026-09-28', 'configuration_ids' => [$configuration->id],
             ])->assertSessionHasNoErrors();
         }
-        $this->assertDatabaseCount('Ope_ProgramacionSalidas', 3);
-        $this->assertDatabaseCount('Ope_BultoTramos', 3);
+        $this->assertDatabaseCount('Ope_ProgramacionSalidas', 2);
+        $this->assertDatabaseCount('Ope_BultoTramos', 2);
     }
 
     public function test_aerial_post_guides_start_at_their_airport_and_end_at_the_agency(): void
@@ -539,7 +607,7 @@ class OperationsWorkflowTest extends TestCase
 
         $origin = DB::table('Ope_Ubicaciones')->where('id', $configurations[1]->origin_id)->firstOrFail();
         $destination = DB::table('Ope_Ubicaciones')->where('id', $configurations[1]->destination_id)->firstOrFail();
-        $this->assertSame('Aeropuerto Andrés Sabella Gálvez', $origin->address);
+        $this->assertSame('Camino a Mejillones S/N (Aeropuerto)', $origin->address);
         $this->assertSame('Antofagasta', $origin->commune);
         $this->assertSame('Manutara 1090', $destination->address);
 
@@ -549,11 +617,11 @@ class OperationsWorkflowTest extends TestCase
             ])->assertSessionHasNoErrors();
         }
         $rows = app(OperationWorkflow::class)->departureSpreadsheetRows($tenant, $lot);
-        $this->assertSame('Aeropuerto Andrés Sabella Gálvez', $rows[1]['origin_address']);
+        $this->assertSame('Camino a Mejillones S/N (Aeropuerto)', $rows[1]['origin_address']);
         $this->assertSame('Manutara 1090', $rows[1]['destination_address']);
     }
 
-    public function test_second_post_can_start_at_its_own_registered_address(): void
+    public function test_concepcion_post_starts_at_chillan_even_if_another_origin_is_registered(): void
     {
         [$tenant, $user] = $this->member();
         [$lot, $coverage] = $this->lot($tenant, $user, [], 'Concepción', 15);
@@ -563,15 +631,16 @@ class OperationsWorkflowTest extends TestCase
         ])->assertSessionHasNoErrors();
 
         $configurations = DB::table('Ope_GuiaConfiguraciones')->where('coverage_id', $coverage)->orderBy('sequence')->get();
-        $this->assertSame('Terminal de relevo', DB::table('Ope_Ubicaciones')->where('id', $configurations[2]->origin_id)->value('address'));
-        $this->assertSame('Gran Bretaña', DB::table('Ope_Ubicaciones')->where('id', $configurations[2]->destination_id)->value('address'));
+        $this->assertSame(2, $configurations->count());
+        $this->assertSame('Cinco de Abril 399', DB::table('Ope_Ubicaciones')->where('id', $configurations[1]->origin_id)->value('address'));
+        $this->assertSame('Gran Bretaña', DB::table('Ope_Ubicaciones')->where('id', $configurations[1]->destination_id)->value('address'));
         foreach ($configurations as $configuration) {
             $this->post('/operaciones/procesos/'.$lot.'/salidas', [
                 'name' => 'Relevo', 'departure_date' => '2026-09-28', 'configuration_ids' => [$configuration->id],
             ])->assertSessionHasNoErrors();
         }
         $rows = app(OperationWorkflow::class)->departureSpreadsheetRows($tenant, $lot);
-        $this->assertSame('Terminal de relevo', $rows[2]['origin_address']);
+        $this->assertSame('Cinco de Abril 399', $rows[1]['origin_address']);
     }
 
     public function test_changing_a_post_origin_refreshes_pending_guides_but_preserves_approved_history(): void
@@ -618,14 +687,14 @@ class OperationsWorkflowTest extends TestCase
             'name' => 'Viaje masivo', 'departure_date' => '2026-09-28', 'configuration_ids' => $configurationIds,
         ])->assertRedirect(route('operations.departures.index', $lot))->assertSessionHasNoErrors();
 
-        $this->assertSame(['troncal', 'posta1', 'posta2'], DB::table('Ope_ProgramacionSalidas')->where('lot_id', $lot)->orderBy('id')->pluck('role')->all());
-        $this->assertSame(3, DB::table('Ope_BultoTramos')->count());
-        $this->assertSame(3, DB::table('Ope_ProgramacionSalidas')->where('status', 'draft')->count());
+        $this->assertSame(['troncal', 'posta1'], DB::table('Ope_ProgramacionSalidas')->where('lot_id', $lot)->orderBy('id')->pluck('role')->all());
+        $this->assertSame(2, DB::table('Ope_BultoTramos')->count());
+        $this->assertSame(2, DB::table('Ope_ProgramacionSalidas')->where('status', 'draft')->count());
         $this->assertDatabaseCount('Ope_Guias', 0);
-        $this->get('/operaciones/procesos/'.$lot.'/salidas')->assertSee('Revisar salida y guía')->assertSee('3 filas de las salidas vigentes');
+        $this->get('/operaciones/procesos/'.$lot.'/salidas')->assertSee('Revisar salida y guía')->assertSee('2 filas de las salidas vigentes');
         $rows = app(OperationWorkflow::class)->departureSpreadsheetRows($tenant, $lot);
-        $this->assertSame(['Troncal', 'Posta 1', 'Posta 2'], array_map(fn ($row): string => explode(' · ', $row['transport'])[0], $rows));
-        $this->assertSame([1, 1, 1], array_column($rows, 'number'));
+        $this->assertSame(['Troncal', 'Posta 1'], array_map(fn ($row): string => explode(' · ', $row['transport'])[0], $rows));
+        $this->assertSame([1, 1], array_column($rows, 'number'));
     }
 
     public function test_spreadsheet_numbers_restart_for_each_transport_and_destination_agency(): void
@@ -802,7 +871,7 @@ class OperationsWorkflowTest extends TestCase
         [$lot, $coverage] = $this->lot($tenant, $user, [], 'Chillán', 16);
         $agency = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'agency_code' => 16])->firstOrFail();
 
-        $this->assertSame(2, DB::table('Ope_GuiaConfiguraciones')->where('coverage_id', $coverage)->count());
+        $this->assertSame(0, DB::table('Ope_GuiaConfiguraciones')->where('coverage_id', $coverage)->count());
         $this->assertDatabaseMissing('Ope_GuiaConfiguraciones', ['coverage_id' => $coverage, 'role' => 'posta2']);
         $this->get('/operaciones/procesos/'.$lot.'/salidas')
             ->assertOk()
@@ -813,12 +882,12 @@ class OperationsWorkflowTest extends TestCase
 
         $this->put('/operaciones/agencias/'.$agency->id, ['address' => 'Destino confirmado 123', 'commune' => 'Los Angeles'])->assertSessionHasNoErrors();
         $this->get('/operaciones/procesos/'.$lot.'/salidas')->assertOk()->assertDontSee('No se pudo completar la ruta automática');
-        $this->assertDatabaseHas('Ope_GuiaConfiguraciones', ['coverage_id' => $coverage, 'role' => 'posta2']);
-        $destinationId = DB::table('Ope_GuiaConfiguraciones')->where(['coverage_id' => $coverage, 'role' => 'posta2'])->value('destination_id');
+        $this->assertDatabaseHas('Ope_GuiaConfiguraciones', ['coverage_id' => $coverage, 'role' => 'posta1']);
+        $destinationId = DB::table('Ope_GuiaConfiguraciones')->where(['coverage_id' => $coverage, 'role' => 'posta1'])->value('destination_id');
         $this->assertSame('Destino confirmado 123', DB::table('Ope_Ubicaciones')->where('id', $destinationId)->value('address'));
     }
 
-    public function test_one_agency_gets_three_guides_with_catalog_transport_and_all_its_coverages(): void
+    public function test_concepcion_gets_two_guides_with_catalog_transport_and_all_its_coverages(): void
     {
         [$tenant, $user] = $this->member();
         [$lot, $coverage] = $this->lot($tenant, $user);
@@ -831,17 +900,12 @@ class OperationsWorkflowTest extends TestCase
         ]);
         $agencyId = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'agency_code' => 15])->value('id');
         $trunk = DB::table('Ope_Troncales')->where(['tenant_id' => $tenant, 'trunk_code' => 4])->firstOrFail();
-        $firstPost = DB::table('Ope_Postas')->where(['tenant_id' => $tenant, 'post_code' => 8])->firstOrFail();
-        $secondPost = DB::table('Ope_Postas')->where(['tenant_id' => $tenant, 'post_code' => 9])->firstOrFail();
+        $firstPost = DB::table('Ope_Postas')->where(['tenant_id' => $tenant, 'post_code' => 9])->firstOrFail();
 
-        $this->post('/operaciones/configuraciones', ['agency_id' => $agencyId, 'role' => 'troncal', 'template' => '{bultos} bultos'])->assertSessionHasNoErrors();
-        $this->assertSame(2, DB::table('Ope_GuiaConfiguraciones')->where('role', 'troncal')->count());
-        $transfer = DB::table('Ope_GuiaConfiguraciones')->where('coverage_id', $coverage)->where('role', 'troncal')->firstOrFail()->destination_id;
-        $this->post('/operaciones/configuraciones', ['agency_id' => $agencyId, 'role' => 'posta1', 'transfer_location_id' => $transfer, 'template' => '{bultos} bultos'])->assertSessionHasNoErrors();
-        $this->post('/operaciones/configuraciones', ['agency_id' => $agencyId, 'role' => 'posta2', 'template' => '{bultos} bultos'])->assertSessionHasNoErrors();
+        app(OperationWorkflow::class)->prepareGuideRoutes($tenant, $lot);
 
         $this->get('/operaciones/procesos/'.$lot.'/salidas')->assertOk()->assertSee('2 coberturas')->assertSee('Troncal Sur (Chillan-Concepcion)');
-        foreach (['troncal' => $trunk, 'posta1' => $firstPost, 'posta2' => $secondPost] as $role => $transport) {
+        foreach (['troncal' => $trunk, 'posta1' => $firstPost] as $role => $transport) {
             $configuration = DB::table('Ope_GuiaConfiguraciones')->where(['coverage_id' => $coverage, 'role' => $role])->firstOrFail();
             $this->post('/operaciones/procesos/'.$lot.'/salidas', [
                 'name' => 'Salida de prueba', 'departure_date' => '2026-09-28', 'configuration_ids' => [$configuration->id],
@@ -855,20 +919,235 @@ class OperationsWorkflowTest extends TestCase
             $this->post('/operaciones/salidas/'.$departure->id.'/aprobar', ['confirmed' => 1])->assertSessionHasNoErrors();
         }
 
-        $this->assertDatabaseCount('Ope_ProgramacionSalidas', 3);
-        $this->assertDatabaseCount('Ope_Guias', 3);
-        $finalLocation = DB::table('Ope_Ubicaciones')->where('id', DB::table('Ope_ProgramacionSalidas')->where('role', 'posta2')->value('destination_id'))->firstOrFail();
+        $this->assertDatabaseCount('Ope_ProgramacionSalidas', 2);
+        $this->assertDatabaseCount('Ope_Guias', 2);
+        $finalLocation = DB::table('Ope_Ubicaciones')->where('id', DB::table('Ope_ProgramacionSalidas')->where('role', 'posta1')->value('destination_id'))->firstOrFail();
         $this->assertSame('Gran Bretaña', $finalLocation->address);
         $this->assertSame('Concepcion', $finalLocation->commune);
 
         $approvedGuide = DB::table('Ope_Guias as guide')
             ->join('Ope_ProgramacionSalidas as departure', 'departure.id', '=', 'guide.departure_id')
-            ->where('departure.role', 'posta2')
+            ->where('departure.role', 'posta1')
             ->value('guide.snapshot');
         $this->put('/operaciones/agencias/'.$agencyId, ['address' => 'Nueva dirección 123', 'commune' => 'Concepcion'])->assertSessionHasNoErrors();
-        $newDestination = DB::table('Ope_Ubicaciones')->where('id', DB::table('Ope_GuiaConfiguraciones')->where(['coverage_id' => $coverage, 'role' => 'posta2'])->value('destination_id'))->firstOrFail();
+        $newDestination = DB::table('Ope_Ubicaciones')->where('id', DB::table('Ope_GuiaConfiguraciones')->where(['coverage_id' => $coverage, 'role' => 'posta1'])->value('destination_id'))->firstOrFail();
         $this->assertSame('Nueva dirección 123', $newDestination->address);
         $this->assertSame('Gran Bretaña', json_decode($approvedGuide, true)['destination']['address']);
+    }
+
+    public function test_air_cargo_shares_one_airport_guide_then_uses_separate_local_posts(): void
+    {
+        [$tenant, $user] = $this->member();
+        [$lot, $antofagasta] = $this->lot($tenant, $user, [], 'Antofagasta', 1);
+        $calama = $this->addAgencyPackage($tenant, $lot, 3, 'CALAMA-1');
+        $puntaArenas = $this->addAgencyPackage($tenant, $lot, 7, 'PUNTA-1');
+        app(OperationWorkflow::class)->prepareGuideRoutes($tenant, $lot);
+
+        $ids = DB::table('Ope_GuiaConfiguraciones')->whereIn('coverage_id', [$antofagasta, $calama, $puntaArenas])->pluck('id')->all();
+        $departures = app(OperationWorkflow::class)->createDepartures($tenant, $user, $lot, [
+            'name' => 'Aéreos', 'departure_date' => '2026-09-28', 'configuration_ids' => $ids,
+        ]);
+
+        $this->assertCount(4, $departures);
+        $trunk = DB::table('Ope_ProgramacionSalidas')->where(['lot_id' => $lot, 'role' => 'troncal'])->firstOrFail();
+        $this->assertSame(3, DB::table('Ope_BultoTramos')->where('departure_id', $trunk->id)->count());
+        $this->assertSame('Pudahuel', DB::table('Ope_Ubicaciones')->where('id', $trunk->destination_id)->value('commune'));
+        $this->assertSame(3, DB::table('Ope_ProgramacionSalidas')->where(['lot_id' => $lot, 'role' => 'posta1'])->count());
+        $this->assertSame('Camino a Mejillones S/N (Aeropuerto)', DB::table('Ope_Ubicaciones')->where('id', DB::table('Ope_ProgramacionSalidas')->where(['lot_id' => $lot, 'role' => 'posta1'])->where('name', 'like', 'Antofagasta%')->value('origin_id'))->value('address'));
+    }
+
+    public function test_south_consolidates_at_chillan_and_temuco_then_delivers_chonchi(): void
+    {
+        [$tenant, $user] = $this->member();
+        [$lot, $concepcion] = $this->lot($tenant, $user, [], 'Concepción', 15);
+        DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'agency_code' => 16])->update(['address' => 'Almagro 113']);
+        $codes = [8, 13, 14, 16, 17, 18, 19, 20, 21];
+        $coverages = [$concepcion];
+        foreach ($codes as $code) {
+            $coverages[] = $this->addAgencyPackage($tenant, $lot, $code, 'SUR-'.$code);
+        }
+        app(OperationWorkflow::class)->prepareGuideRoutes($tenant, $lot);
+        $ids = DB::table('Ope_GuiaConfiguraciones')->whereIn('coverage_id', $coverages)->pluck('id')->all();
+        $departures = app(OperationWorkflow::class)->createDepartures($tenant, $user, $lot, [
+            'name' => 'Sur completo', 'departure_date' => '2026-09-28', 'configuration_ids' => $ids,
+        ]);
+
+        $this->assertCount(13, $departures);
+        $transfer = DB::table('Ope_ProgramacionSalidas')->where('name', 'like', '%8 agencias%')->where('role', 'troncal')->firstOrFail();
+        $this->assertSame(8, DB::table('Ope_BultoTramos')->where('departure_id', $transfer->id)->count());
+        $this->assertSame('Cinco de Abril 399', DB::table('Ope_Ubicaciones')->where('id', $transfer->destination_id)->value('address'));
+        $sanCarlos = DB::table('Ope_GuiaConfiguraciones')->where('coverage_id', $coverages[3])->where('role', 'posta1')->firstOrFail();
+        $this->assertSame('Concepcion', DB::table('Ope_Ubicaciones')->where('id', $sanCarlos->destination_id)->value('commune'));
+        $this->assertSame('Cinco de Abril 399', DB::table('Ope_Ubicaciones')->where('id', $sanCarlos->origin_id)->value('address'));
+        $chonchi = DB::table('Ope_GuiaConfiguraciones')->where('coverage_id', end($coverages))->orderBy('sequence')->get();
+        $this->assertSame(['troncal', 'posta1', 'posta2', 'posta3'], $chonchi->pluck('role')->all());
+        $this->assertSame('Temuco', DB::table('Ope_Ubicaciones')->where('id', $chonchi[2]->origin_id)->value('commune'));
+        $this->assertSame('Puerto Montt', DB::table('Ope_Ubicaciones')->where('id', $chonchi[3]->origin_id)->value('commune'));
+        foreach ($departures as $departure) {
+            app(OperationWorkflow::class)->approve($tenant, $user, $departure);
+        }
+        $this->assertSame(13, DB::table('Ope_Guias')->count());
+    }
+
+    public function test_north_carries_vallenar_and_copiapo_to_coquimbo_then_unloads_in_order(): void
+    {
+        [$tenant, $user] = $this->member();
+        [$lot, $copiapo] = $this->lot($tenant, $user, [], 'Copiapó', 31);
+        $vallenar = $this->addAgencyPackage($tenant, $lot, 32, 'VALLENAR-1');
+        app(OperationWorkflow::class)->prepareGuideRoutes($tenant, $lot);
+        $routes = DB::table('Ope_GuiaConfiguraciones')->whereIn('coverage_id', [$copiapo, $vallenar])->get();
+        $this->assertSame([1, 2], $routes->where('role', 'posta1')->sortBy('stop_order')->pluck('stop_order')->all());
+        $ids = $routes->pluck('id')->all();
+        $departures = app(OperationWorkflow::class)->createDepartures($tenant, $user, $lot, [
+            'name' => 'Norte', 'departure_date' => '2026-09-28', 'configuration_ids' => $ids,
+        ]);
+
+        $this->assertCount(3, $departures);
+        $trunk = DB::table('Ope_ProgramacionSalidas')->where(['lot_id' => $lot, 'role' => 'troncal'])->firstOrFail();
+        $this->assertSame(2, DB::table('Ope_BultoTramos')->where('departure_id', $trunk->id)->count());
+        $this->assertSame('Coquimbo', DB::table('Ope_Ubicaciones')->where('id', $trunk->destination_id)->value('commune'));
+        $this->assertSame('Coquimbo', DB::table('Ope_Ubicaciones')->where('id', $routes->where('coverage_id', $vallenar)->where('role', 'posta1')->first()->origin_id)->value('commune'));
+    }
+
+    public function test_route_popup_can_change_one_trunk_departure_and_its_first_posts_without_changing_second_post_or_catalog(): void
+    {
+        [$tenant, $user] = $this->member();
+        [$lot, $concepcion] = $this->lot($tenant, $user, [], 'Concepción', 15);
+        $valdivia = $this->addAgencyPackage($tenant, $lot, 18, 'VALDIVIA-1');
+        app(OperationWorkflow::class)->prepareGuideRoutes($tenant, $lot);
+        $ids = DB::table('Ope_GuiaConfiguraciones')->whereIn('coverage_id', [$concepcion, $valdivia])->pluck('id')->all();
+        app(OperationWorkflow::class)->createDepartures($tenant, $user, $lot, [
+            'name' => 'Sur de prueba', 'departure_date' => '2026-09-28', 'configuration_ids' => $ids,
+        ]);
+
+        $agency = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'agency_code' => 15])->firstOrFail();
+        $trunk = DB::table('Ope_Troncales')->where('id', $agency->trunk_id)->firstOrFail();
+        $departure = DB::table('Ope_ProgramacionSalidas')->where(['lot_id' => $lot, 'role' => 'troncal'])->firstOrFail();
+        $secondPost = DB::table('Ope_ProgramacionSalidas')->where(['lot_id' => $lot, 'role' => 'posta2'])->firstOrFail();
+
+        $this->put('/operaciones/rutas/'.$agency->id.'/datos', [
+            'segment' => 'troncal', 'scope' => 'departure', 'departure_id' => $departure->id,
+            'plate' => 'ABCD12', 'driver_name' => 'Chofer de prueba', 'driver_rut' => '12.345.678-5',
+            'destination_address' => 'Terminal Chillán 123',
+        ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('Ope_ProgramacionSalidas', ['id' => $departure->id, 'plate' => 'ABCD12', 'driver_name' => 'Chofer de prueba']);
+        $this->assertSame('Terminal Chillán 123', app(OperationWorkflow::class)->preview($departure->id)['destination']['address']);
+        $firstPosts = DB::table('Ope_ProgramacionSalidas')->where(['lot_id' => $lot, 'role' => 'posta1'])->get();
+        $this->assertCount(2, $firstPosts);
+        foreach ($firstPosts as $firstPost) {
+            $this->assertSame('ABCD12', $firstPost->plate);
+            $this->assertSame('Chofer de prueba', $firstPost->driver_name);
+            $this->assertSame('Terminal Chillán 123', app(OperationWorkflow::class)->preview($firstPost->id)['origin']['address']);
+        }
+        $this->assertSame($secondPost->plate, DB::table('Ope_ProgramacionSalidas')->where('id', $secondPost->id)->value('plate'));
+        $this->assertSame($trunk->plate, DB::table('Ope_Troncales')->where('id', $trunk->id)->value('plate'));
+
+        app(OperationWorkflow::class)->approve($tenant, $user, $departure->id);
+        $this->put('/operaciones/rutas/'.$agency->id.'/datos', [
+            'segment' => 'troncal', 'scope' => 'departure', 'departure_id' => $departure->id,
+            'plate' => 'ABCD12', 'driver_name' => 'Chofer de prueba', 'driver_rut' => '12.345.678-5',
+            'destination_address' => 'Otra dirección 456',
+        ])->assertSessionHasErrors('departure_id');
+        $this->assertSame('Terminal Chillán 123', app(OperationWorkflow::class)->preview($departure->id)['destination']['address']);
+    }
+
+    public function test_permanent_trunk_route_change_updates_first_post_catalog_but_keeps_programmed_departures(): void
+    {
+        [$tenant, $user] = $this->member();
+        [$lot, $coverage] = $this->lot($tenant, $user, [], 'Concepción', 15);
+        app(OperationWorkflow::class)->prepareGuideRoutes($tenant, $lot);
+        $ids = DB::table('Ope_GuiaConfiguraciones')->where('coverage_id', $coverage)->pluck('id')->all();
+        app(OperationWorkflow::class)->createDepartures($tenant, $user, $lot, [
+            'name' => 'Sur de prueba', 'departure_date' => '2026-09-28', 'configuration_ids' => $ids,
+        ]);
+        $agency = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'agency_code' => 15])->firstOrFail();
+        $trunk = DB::table('Ope_Troncales')->where('id', $agency->trunk_id)->firstOrFail();
+        $firstPost = DB::table('Ope_Postas')->where('id', $agency->post_id)->firstOrFail();
+        $secondPost = DB::table('Ope_Postas')->where('id', $agency->second_post_id)->firstOrFail();
+        $departure = DB::table('Ope_ProgramacionSalidas')->where(['lot_id' => $lot, 'role' => 'troncal'])->firstOrFail();
+
+        $this->put('/operaciones/rutas/'.$agency->id.'/datos', [
+            'segment' => 'troncal', 'scope' => 'permanent',
+            'plate' => 'ABCD12', 'driver_name' => 'Chofer de prueba', 'driver_rut' => '12.345.678-5',
+            'destination_address' => 'Terminal Chillán 123',
+        ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('Ope_Troncales', ['id' => $trunk->id, 'plate' => 'ABCD12']);
+        $this->assertDatabaseHas('Ope_Postas', ['id' => $firstPost->id, 'plate' => 'ABCD12']);
+        $this->assertSame($secondPost->plate, DB::table('Ope_Postas')->where('id', $secondPost->id)->value('plate'));
+        $this->assertSame($departure->plate, DB::table('Ope_ProgramacionSalidas')->where('id', $departure->id)->value('plate'));
+        $this->assertDatabaseHas('Ope_Agencias', ['agency_code' => 13, 'address' => 'Terminal Chillán 123']);
+        $this->assertDatabaseHas('Ope_Troncales', ['id' => $trunk->id, 'destination_address' => 'Terminal Chillán 123']);
+    }
+
+    public function test_permanent_first_post_destination_change_updates_its_agency_without_changing_the_trunk(): void
+    {
+        [$tenant] = $this->member();
+        $agency = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'agency_code' => 32])->firstOrFail();
+        $trunk = DB::table('Ope_Troncales')->where('id', $agency->trunk_id)->firstOrFail();
+        $post = DB::table('Ope_Postas')->where('id', $agency->post_id)->firstOrFail();
+        $driver = DB::table('Ope_Choferes')->where('id', $post->driver_id)->firstOrFail();
+
+        $this->put('/operaciones/rutas/'.$agency->id.'/datos', [
+            'segment' => 'posta1', 'scope' => 'permanent',
+            'plate' => $post->plate, 'driver_name' => $driver->name, 'driver_rut' => $driver->rut,
+            'destination_address' => 'Nueva dirección Vallenar 123',
+        ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('Ope_Agencias', ['id' => $agency->id, 'address' => 'Nueva dirección Vallenar 123']);
+        $this->assertSame($trunk->plate, DB::table('Ope_Troncales')->where('id', $trunk->id)->value('plate'));
+    }
+
+    public function test_permanent_first_post_transport_change_updates_parent_trunk_and_its_destination(): void
+    {
+        [$tenant] = $this->member();
+        $agency = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'agency_code' => 32])->firstOrFail();
+        $trunk = DB::table('Ope_Troncales')->where('id', $agency->trunk_id)->firstOrFail();
+        $post = DB::table('Ope_Postas')->where('id', $agency->post_id)->firstOrFail();
+
+        $this->put('/operaciones/rutas/'.$agency->id.'/datos', [
+            'segment' => 'posta1', 'scope' => 'permanent',
+            'plate' => 'ABCD12', 'driver_name' => 'Chofer de prueba', 'driver_rut' => '12.345.678-5',
+            'destination_address' => 'Nueva dirección Vallenar 456',
+        ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('Ope_Troncales', ['id' => $trunk->id, 'plate' => 'ABCD12']);
+        $this->assertDatabaseHas('Ope_Postas', ['id' => $post->id, 'plate' => 'ABCD12']);
+        $this->assertDatabaseHas('Ope_Agencias', ['id' => $agency->id, 'address' => 'Nueva dirección Vallenar 456']);
+    }
+
+    public function test_route_edit_validation_error_is_shown_in_the_same_dialog(): void
+    {
+        [$tenant] = $this->member();
+        $agency = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'agency_code' => 32])->firstOrFail();
+
+        $this->followingRedirects()->from('/operaciones/rutas')->put('/operaciones/rutas/'.$agency->id.'/datos', [
+            'route_agency_id' => $agency->id,
+            'segment' => 'posta1', 'scope' => 'permanent',
+            'plate' => 'ABCD12', 'driver_name' => 'Chofer de prueba', 'driver_rut' => '12345678-9',
+            'destination_address' => 'Nueva dirección Vallenar 456',
+        ])->assertOk()
+            ->assertSee('data-route-edit-errors', false)
+            ->assertSee('El RUT del chofer no tiene un dígito verificador válido.')
+            ->assertSee('failedRouteNode', false);
+    }
+
+    public function test_old_draft_routes_remain_available_until_cancelled(): void
+    {
+        [$tenant, $user] = $this->member();
+        [$lot, $coverage] = $this->lot($tenant, $user, [], 'Concepción', 15);
+        DB::table('Ope_GuiaConfiguraciones')->where('coverage_id', $coverage)->update([
+            'group_code' => null, 'transport_kind' => null, 'transport_id' => null,
+        ]);
+        $configuration = DB::table('Ope_GuiaConfiguraciones')->where(['coverage_id' => $coverage, 'role' => 'troncal'])->firstOrFail();
+        $departure = $this->departure($tenant, $user, $lot, $configuration->id);
+
+        app(OperationWorkflow::class)->prepareGuideRoutes($tenant, $lot);
+        $this->assertNull(DB::table('Ope_GuiaConfiguraciones')->where('id', $configuration->id)->value('group_code'));
+        app(OperationWorkflow::class)->cancel($tenant, $user, $departure, 'Cambio de recorrido solicitado');
+        app(OperationWorkflow::class)->prepareGuideRoutes($tenant, $lot);
+        $this->assertSame('south:chillan:transfer', DB::table('Ope_GuiaConfiguraciones')->where('id', $configuration->id)->value('group_code'));
     }
 
     public function test_agency_without_second_post_finishes_at_its_delivery_address(): void
@@ -966,7 +1245,7 @@ class OperationsWorkflowTest extends TestCase
         $this->assertDatabaseCount('Ope_FilasFuente', 1);
     }
 
-    public function test_cancelling_draft_departure_restores_packages_to_reserve_with_audit(): void
+    public function test_cancelling_draft_departure_restores_packages_to_available_with_audit(): void
     {
         [$tenant,$user] = $this->member();
         [$lot,$coverage] = $this->lot($tenant, $user);
@@ -979,7 +1258,7 @@ class OperationsWorkflowTest extends TestCase
         $this->assertDatabaseCount('Ope_BultoTramos', 0);
         $this->assertDatabaseHas('Ope_Auditoria', ['action' => 'Cancelar salida']);
         $this->post('/operaciones/salidas/'.$departure.'/aprobar', ['confirmed' => 1])->assertSessionHasErrors('departure');
-        $this->get('/operaciones/procesos/'.$lot.'/salidas')->assertSee('Reserva');
+        $this->get('/operaciones/procesos/'.$lot.'/salidas')->assertSee('Disponible');
         $this->post('/operaciones/procesos/'.$lot.'/salidas', ['name' => 'Nueva', 'departure_date' => '2026-09-28', 'configuration_ids' => [$configuration]])->assertSessionHasNoErrors();
         $this->assertDatabaseCount('Ope_BultoTramos', 1);
     }
@@ -998,5 +1277,126 @@ class OperationsWorkflowTest extends TestCase
         $this->assertDatabaseHas('Ope_Cargas', ['status' => 'completed', 'sheet' => 'Sheet1', 'row_count' => 1]);
         $this->post('/operaciones/cargas/master', ['file' => UploadedFile::fake()->createWithContent('master.xlsx', $bytes), 'sheet' => 'Otra'])->assertSessionHasErrors('file');
         $this->assertDatabaseCount('Ope_FilasFuente', 1);
+    }
+
+    public function test_reservation_moves_unsent_cargo_into_a_later_process_and_uses_current_route_data(): void
+    {
+        [$tenant, $user] = $this->member();
+        [$sourceLot, $coverage] = $this->lot($tenant, $user, [], 'Concepción', 15);
+        app(OperationWorkflow::class)->prepareGuideRoutes($tenant, $sourceLot);
+        $configuration = DB::table('Ope_GuiaConfiguraciones')->where(['coverage_id' => $coverage, 'role' => 'troncal'])->firstOrFail();
+
+        $this->post('/operaciones/procesos/'.$sourceLot.'/reservas', [
+            'configuration_ids' => [$configuration->id],
+        ])->assertSessionHasNoErrors();
+        $reservation = DB::table('Ope_Reservas')->where('source_lot_id', $sourceLot)->firstOrFail();
+        $this->assertSame('pending', $reservation->status);
+        $this->assertSame(1, DB::table('Ope_Bultos')->where('id', $reservation->source_package_id)->value('excluded'));
+        $this->get('/operaciones/procesos/'.$sourceLot.'/salidas')->assertSee('Reservas guardadas');
+        $this->get('/operaciones/salidas')->assertSee('Reservas guardadas · 1 bulto');
+
+        $master = $this->source($tenant, $user, 'master', [['PKG-TODAY', 99, 'Concepción', 'Cliente Uno', 'Normal', 'Destino nuevo']]);
+        $reception = $this->source($tenant, $user, 'reception', [['2026-10-09', 'PKG-TODAY', 3, 'Operario Dos', '00124']]);
+        $targetLot = app(OperationWorkflow::class)->createLot($tenant, $user, [
+            'name' => 'Proceso siguiente', 'operation_date' => '2026-10-09',
+            'master_load_id' => $master, 'reception_load_ids' => [$reception],
+        ]);
+        $trunkId = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'agency_code' => 15])->value('trunk_id');
+        DB::table('Ope_Troncales')->where('id', $trunkId)->update(['plate' => 'ABCD12']);
+
+        $this->post('/operaciones/procesos/'.$targetLot.'/reservas/incluir', [
+            'batch_ids' => [$reservation->batch_id],
+        ])->assertSessionHasNoErrors();
+        $this->assertSame(2, DB::table('Ope_Bultos')->where(['lot_id' => $targetLot, 'excluded' => false])->count());
+        $this->assertDatabaseHas('Ope_Reservas', ['id' => $reservation->id, 'status' => 'included', 'included_lot_id' => $targetLot]);
+        $this->post('/operaciones/procesos/'.$targetLot.'/reservas/'.$reservation->batch_id.'/devolver')->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('Ope_Reservas', ['id' => $reservation->id, 'status' => 'pending', 'included_lot_id' => null]);
+        $this->assertSame(1, DB::table('Ope_Bultos')->where(['lot_id' => $targetLot, 'excluded' => false])->count());
+        $this->post('/operaciones/procesos/'.$targetLot.'/reservas/incluir', [
+            'batch_ids' => [$reservation->batch_id],
+        ])->assertSessionHasNoErrors();
+        $this->get('/operaciones/procesos/'.$targetLot.'/salidas')->assertOk();
+        $targetConfiguration = DB::table('Ope_GuiaConfiguraciones')->where(['coverage_id' => $coverage, 'role' => 'troncal'])->firstOrFail();
+        $this->post('/operaciones/procesos/'.$targetLot.'/salidas', [
+            'name' => 'Salida conjunta', 'departure_date' => '2026-10-09',
+            'configuration_ids' => [$targetConfiguration->id],
+        ])->assertSessionHasNoErrors();
+        $departure = DB::table('Ope_ProgramacionSalidas')->where('lot_id', $targetLot)->firstOrFail();
+        $this->assertSame('ABCD12', $departure->plate);
+        $this->assertSame(2, DB::table('Ope_BultoTramos')->where('departure_id', $departure->id)->count());
+        $this->assertSame(2, app(OperationWorkflow::class)->preview($departure->id)['count']);
+        $this->assertSame('7.125', app(OperationWorkflow::class)->preview($departure->id)['weight']);
+        $this->get('/operaciones/procesos/'.$targetLot.'/salidas')->assertSee('Programada en este proceso');
+        $this->post('/operaciones/procesos/'.$targetLot.'/reservas/incluir', [
+            'batch_ids' => [$reservation->batch_id],
+        ])->assertSessionHasErrors('batch_ids');
+    }
+
+    public function test_reserving_a_consolidated_air_leg_retains_every_agencys_packages(): void
+    {
+        [$tenant, $user] = $this->member();
+        [$lot, $antofagasta] = $this->lot($tenant, $user, [], 'Antofagasta', 1);
+        $this->addAgencyPackage($tenant, $lot, 3, 'CALAMA-1');
+        $this->addAgencyPackage($tenant, $lot, 7, 'PUNTA-1');
+        app(OperationWorkflow::class)->prepareGuideRoutes($tenant, $lot);
+        $configuration = DB::table('Ope_GuiaConfiguraciones')->where(['coverage_id' => $antofagasta, 'role' => 'troncal'])->firstOrFail();
+
+        $this->post('/operaciones/procesos/'.$lot.'/reservas', [
+            'configuration_ids' => [$configuration->id],
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame(3, DB::table('Ope_Reservas')->where(['source_lot_id' => $lot, 'status' => 'pending'])->count());
+        $this->assertSame(1, DB::table('Ope_Reservas')->where('source_lot_id', $lot)->distinct()->count('batch_id'));
+        $this->assertSame(3, DB::table('Ope_Bultos')->where(['lot_id' => $lot, 'excluded' => true])->count());
+        $this->assertDatabaseCount('Ope_ProgramacionSalidas', 0);
+        $batchId = DB::table('Ope_Reservas')->where('source_lot_id', $lot)->value('batch_id');
+        $this->post('/operaciones/procesos/'.$lot.'/reservas/'.$batchId.'/cancelar')->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('Ope_Reservas', 0);
+        $this->assertSame(3, DB::table('Ope_Bultos')->where(['lot_id' => $lot, 'excluded' => false])->count());
+    }
+
+    public function test_postal_cargo_returned_after_an_approved_trunk_restarts_at_the_warehouse(): void
+    {
+        [$tenant, $user] = $this->member();
+        [$sourceLot, $coverage] = $this->lot($tenant, $user, [], 'Concepción', 15);
+        app(OperationWorkflow::class)->prepareGuideRoutes($tenant, $sourceLot);
+        $trunk = DB::table('Ope_GuiaConfiguraciones')->where(['coverage_id' => $coverage, 'role' => 'troncal'])->firstOrFail();
+        $post = DB::table('Ope_GuiaConfiguraciones')->where(['coverage_id' => $coverage, 'role' => 'posta1'])->firstOrFail();
+        $this->post('/operaciones/procesos/'.$sourceLot.'/salidas', [
+            'name' => 'Primer viaje', 'departure_date' => '2026-09-28', 'configuration_ids' => [$trunk->id],
+        ])->assertSessionHasNoErrors();
+        $firstDeparture = DB::table('Ope_ProgramacionSalidas')->where('lot_id', $sourceLot)->firstOrFail();
+        $this->post('/operaciones/salidas/'.$firstDeparture->id.'/aprobar', ['confirmed' => 1])->assertSessionHasNoErrors();
+
+        $this->post('/operaciones/procesos/'.$sourceLot.'/reservas', [
+            'configuration_ids' => [$post->id],
+        ])->assertSessionHasErrors('warehouse_returned');
+        $this->post('/operaciones/procesos/'.$sourceLot.'/reservas', [
+            'configuration_ids' => [$post->id], 'warehouse_returned' => 1,
+        ])->assertSessionHasNoErrors();
+        $reservation = DB::table('Ope_Reservas')->where('source_lot_id', $sourceLot)->firstOrFail();
+        $this->assertNotNull($reservation->warehouse_confirmed_at);
+        $this->post('/operaciones/procesos/'.$sourceLot.'/reservas/'.$reservation->batch_id.'/cancelar')->assertSessionHasErrors('batch');
+        $this->assertDatabaseHas('Ope_ProgramacionSalidas', ['id' => $firstDeparture->id, 'status' => 'approved']);
+        $this->assertDatabaseCount('Ope_Guias', 1);
+
+        $master = $this->source($tenant, $user, 'master', [['PKG-TODAY', 99, 'Concepción', 'Cliente', 'Normal', 'Destino']]);
+        $reception = $this->source($tenant, $user, 'reception', [['2026-10-09', 'PKG-TODAY', 3, 'Operario', 'G1']]);
+        $targetLot = app(OperationWorkflow::class)->createLot($tenant, $user, [
+            'name' => 'Siguiente viaje', 'operation_date' => '2026-10-09',
+            'master_load_id' => $master, 'reception_load_ids' => [$reception],
+        ]);
+        $this->post('/operaciones/procesos/'.$targetLot.'/reservas/incluir', [
+            'batch_ids' => [$reservation->batch_id],
+        ])->assertSessionHasNoErrors();
+        $this->get('/operaciones/procesos/'.$targetLot.'/salidas')->assertOk();
+        $this->post('/operaciones/procesos/'.$targetLot.'/salidas', [
+            'name' => 'Nuevo viaje desde bodega', 'departure_date' => '2026-10-09', 'configuration_ids' => [$trunk->id],
+        ])->assertSessionHasNoErrors();
+        $secondDeparture = DB::table('Ope_ProgramacionSalidas')->where('lot_id', $targetLot)->firstOrFail();
+        $this->assertSame(2, DB::table('Ope_BultoTramos')->where('departure_id', $secondDeparture->id)->count());
+        $this->assertSame('Quilicura', app(OperationWorkflow::class)->preview($secondDeparture->id)['origin']['commune']);
+        $this->post('/operaciones/salidas/'.$secondDeparture->id.'/aprobar', ['confirmed' => 1])->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('Ope_Guias', 2);
     }
 }
