@@ -3,6 +3,9 @@
 @section('content')
 <h1>Salidas</h1>
 <p class="intro">Selecciona un proceso para programar las agencias que salen, revisar las guías y descargar su planilla general.</p>
+@if(\App\Modules\Operations\Services\OperationAccess::supervisor(request()))
+<p><a href="{{ route('operations.guides.bsale.index') }}">Ver historial de guías Bsale</a></p>
+@endif
 <div class="card" style="margin-bottom:18px"><h2>Reservas guardadas · {{ $reservationCount }} {{ $reservationCount === 1 ? 'bulto' : 'bultos' }}</h2><p class="note">La carga reservada está en bodega y puede incorporarse a un proceso posterior. Abre el proceso de la nueva salida para seleccionar las reservas y sumarlas a la recepción de ese día.</p></div>
 <div class="card table-wrap">
     <table class="ope-table">

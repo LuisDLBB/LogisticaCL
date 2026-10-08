@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Operations\Http\Controllers\OperationBsaleGuideController;
 use App\Modules\Operations\Http\Controllers\OperationDataCleanupController;
 use App\Modules\Operations\Http\Controllers\OperationDepartureController;
 use App\Modules\Operations\Http\Controllers\OperationLoadController;
@@ -59,6 +60,9 @@ Route::prefix('operaciones')->name('operations.')->group(function (): void {
     Route::post('/salidas/{departure}/aprobar', [OperationDepartureController::class, 'approve'])->whereNumber('departure')->name('departures.approve');
     Route::post('/salidas/{departure}/reabrir', [OperationDepartureController::class, 'reopen'])->whereNumber('departure')->name('departures.reopen');
     Route::post('/salidas/{departure}/cancelar', [OperationDepartureController::class, 'cancel'])->whereNumber('departure')->name('departures.cancel');
+    Route::get('/guias/bsale', [OperationBsaleGuideController::class, 'index'])->name('guides.bsale.index');
+    Route::post('/guias/bsale/{emission}/conciliar', [OperationBsaleGuideController::class, 'reconcile'])->whereNumber('emission')->name('guides.bsale.reconcile');
     Route::get('/guias/{guide}', [OperationDepartureController::class, 'guide'])->whereNumber('guide')->name('guides.show');
+    Route::post('/guias/{guide}/bsale', [OperationBsaleGuideController::class, 'store'])->whereNumber('guide')->name('guides.bsale.store');
     Route::get('/guias/{guide}/resumen.csv', [OperationDepartureController::class, 'export'])->whereNumber('guide')->name('guides.export');
 });

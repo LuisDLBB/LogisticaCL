@@ -268,7 +268,13 @@ class OperationDepartureController extends Controller
         $record = $this->guideRecord($request, $guide);
         $state = OperationAccess::departures($request)->where('id', $record->departure_id)->firstOrFail();
 
-        return view('operations::guide', ['guide' => $record, 'preview' => json_decode($record->snapshot, true), 'current' => $state->status === 'approved' && $state->version === $record->version]);
+        return view('operations::guide', [
+            'guide' => $record,
+            'preview' => json_decode($record->snapshot, true),
+            'current' => $state->status === 'approved' && $state->version === $record->version,
+            'canEmitBsale' => OperationAccess::supervisor($request),
+            'bsaleEmission' => DB::table('Ope_GuiasBsale')->where(['tenant_id' => OperationAccess::tenant($request), 'guide_id' => $record->id, 'version' => $record->version])->first(),
+        ]);
     }
 
     public function cancel(Request $request, int $departure, OperationWorkflow $workflow): RedirectResponse

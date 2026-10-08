@@ -40,4 +40,9 @@ return [
         'ca_bundle' => env('OPENROUTESERVICE_CA_BUNDLE'),
     ],
 
+    'bsale' => [
+        'demo_token' => env('BSALE_DEMO_TOKEN'),
+        'production_token' => env('BSALE_PRODUCTION_TOKEN'),
+    ],
+
 ];
