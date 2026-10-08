@@ -5,13 +5,14 @@
 <p class="intro">Las emisiones permanecen aquí aunque se limpie la guía interna o el proceso original.</p>
 <div class="card table-wrap">
 <table class="ope-table">
-<thead><tr><th>Fecha</th><th>Guía interna</th><th>Versión</th><th>Estado</th><th>Número Bsale</th><th>Documento</th></tr></thead>
+<thead><tr><th>Fecha</th><th>Guía interna</th><th>Versión</th><th>Hoja</th><th>Estado</th><th>Número Bsale</th><th>Documento</th></tr></thead>
 <tbody>
 @forelse($emissions as $emission)
 <tr id="bsale-{{ $emission->id }}">
 <td>{{ $emission->created_at }}</td>
 <td>@if($emission->internal_guide_id)<a href="{{ route('operations.guides.show', $emission->internal_guide_id) }}">#{{ $emission->guide_id }}</a>@else #{{ $emission->guide_id }} · guía interna limpiada @endif</td>
 <td>{{ $emission->version }}</td>
+<td>Hoja {{ $emission->sheet_number }} de {{ $emission->sheet_count }}</td>
 <td>{{ ucfirst($emission->estado) }}</td>
 <td>{{ $emission->numero ?: '—' }}</td>
 <td>
@@ -19,8 +20,18 @@
 @if($emission->url_publica && in_array(parse_url($emission->url_publica, PHP_URL_SCHEME), ['http', 'https'], true))<a href="{{ $emission->url_publica }}" target="_blank" rel="noopener noreferrer">Vista pública</a>@endif
 </td>
 </tr>
+@if($linesByEmission->has($emission->id))
+<tr><td colspan="7" style="text-align:left"><details><summary>Líneas {{ $emission->line_start }}–{{ $emission->line_end }} y códigos de bulto asociados @if($emission->numero)· GDE {{ $emission->numero }}@endif</summary>
+<div class="table-wrap"><table class="ope-table"><thead><tr><th>Línea</th><th>Glosa</th><th>Bultos</th><th>Códigos</th></tr></thead><tbody>
+@foreach($linesByEmission->get($emission->id) as $lineRecord)
+@php($line = json_decode($lineRecord->line_snapshot, true))
+<tr><td>{{ $lineRecord->line_number }}</td><td>{{ $line['description'] ?? '' }}</td><td>{{ $line['count'] ?? '' }}</td><td>{{ implode(', ', $line['packages'] ?? []) }}</td></tr>
+@endforeach
+</tbody></table></div>
+</details></td></tr>
+@endif
 @if($emission->estado === 'incierta')
-<tr><td colspan="6" style="text-align:left">
+<tr><td colspan="7" style="text-align:left">
 <p class="warning">Revisa en Bsale si la guía fue creada antes de reintentar.</p>
 <details class="card"><summary>Conciliar emisión incierta #{{ $emission->id }}</summary>
 <div class="ope-grid">
@@ -45,7 +56,7 @@
 </td></tr>
 @endif
 @empty
-<tr><td colspan="6" class="ope-empty">Todavía no hay guías enviadas a Bsale.</td></tr>
+<tr><td colspan="7" class="ope-empty">Todavía no hay guías enviadas a Bsale.</td></tr>
 @endforelse
 </tbody>
 </table>

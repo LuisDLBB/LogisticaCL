@@ -5,20 +5,36 @@
 @if(!$current)<p class="warning">Versión histórica. La salida fue reabierta o tiene una versión posterior.</p>@endif
 <p class="note">Documento interno de revisión operacional.</p>
 @if($canEmitBsale)<p><a href="{{ route('operations.guides.bsale.index') }}">Ver historial de guías Bsale</a></p>@endif
-@if($bsaleEmission?->estado === 'generada')
-<p class="success">GDE emitida en Bsale · número {{ $bsaleEmission->numero }}</p>
-<div class="ope-actions">
-@if($bsaleEmission->url_pdf && in_array(parse_url($bsaleEmission->url_pdf, PHP_URL_SCHEME), ['http', 'https'], true))<a href="{{ $bsaleEmission->url_pdf }}" target="_blank" rel="noopener noreferrer">Ver PDF de Bsale</a>@endif
-@if($bsaleEmission->url_publica && in_array(parse_url($bsaleEmission->url_publica, PHP_URL_SCHEME), ['http', 'https'], true))<a href="{{ $bsaleEmission->url_publica }}" target="_blank" rel="noopener noreferrer">Ver guía pública en Bsale</a>@endif
-</div>
-@elseif($bsaleEmission?->estado === 'incierta')
-<p class="warning">{{ \App\Modules\Operations\Services\OperationBsaleGuideService::UNCERTAIN_MESSAGE }}</p>
-@if($canEmitBsale)<p><a href="{{ route('operations.guides.bsale.index') }}#bsale-{{ $bsaleEmission->id }}">Conciliar esta emisión</a></p>@endif
-@elseif($bsaleEmission?->estado === 'enviando')
-<p class="note">El envío a Bsale está en curso. No se realizará otro envío de esta guía y versión.</p>
+@php($generatedSheets = $bsaleEmissions->where('estado', 'generada')->count())
+<p class="note">{{ $generatedSheets }} de {{ $bsaleSheetCount }} {{ $bsaleSheetCount === 1 ? 'hoja generada' : 'hojas generadas' }} en Bsale. Cada GDE incluye hasta 15 líneas de detalle.</p>
+@if($bsaleEmissions->isNotEmpty())
+<div class="card table-wrap"><table class="ope-table"><thead><tr><th>Hoja</th><th>Líneas</th><th>Estado</th><th>Número Bsale</th><th>Documentos</th></tr></thead><tbody>
+@foreach($bsaleEmissions as $emission)
+<tr><td>Hoja {{ $emission->sheet_number }} de {{ $emission->sheet_count }}</td><td>{{ $emission->line_start }}–{{ $emission->line_end }}</td><td>{{ ucfirst($emission->estado) }}</td><td>{{ $emission->numero ?: '—' }}</td><td>
+@if($emission->url_pdf && in_array(parse_url($emission->url_pdf, PHP_URL_SCHEME), ['http', 'https'], true))<a href="{{ $emission->url_pdf }}" target="_blank" rel="noopener noreferrer">PDF</a>@endif
+@if($emission->url_publica && in_array(parse_url($emission->url_publica, PHP_URL_SCHEME), ['http', 'https'], true))<a href="{{ $emission->url_publica }}" target="_blank" rel="noopener noreferrer">Vista pública</a>@endif
+</td></tr>
+@endforeach
+</tbody></table></div>
+@foreach($bsaleEmissions as $emission)
+@if($bsaleLinesByEmission->has($emission->id))
+<details class="card"><summary>Hoja {{ $emission->sheet_number }} de {{ $emission->sheet_count }} · líneas y bultos asociados @if($emission->numero)· GDE {{ $emission->numero }}@endif</summary>
+<div class="table-wrap"><table class="ope-table"><thead><tr><th>Línea</th><th>Glosa</th><th>Bultos</th><th>Códigos de bulto</th></tr></thead><tbody>
+@foreach($bsaleLinesByEmission->get($emission->id) as $lineRecord)
+@php($line = json_decode($lineRecord->line_snapshot, true))
+<tr><td>{{ $lineRecord->line_number }}</td><td>{{ $line['description'] ?? '' }}</td><td>{{ $line['count'] ?? '' }}</td><td>{{ implode(', ', $line['packages'] ?? []) }}</td></tr>
+@endforeach
+</tbody></table></div></details>
 @endif
-@if($current && $canEmitBsale && (!$bsaleEmission || $bsaleEmission->estado === 'error'))
-<form method="post" action="{{ route('operations.guides.bsale.store', $guide->id) }}">@csrf<button type="submit">Generar en Bsale</button></form>
+@endforeach
+@endif
+@foreach($bsaleEmissions->where('estado', 'incierta') as $emission)
+<p class="warning">Hoja {{ $emission->sheet_number }} de {{ $emission->sheet_count }}: {{ \App\Modules\Operations\Services\OperationBsaleGuideService::UNCERTAIN_MESSAGE }}</p>
+@if($canEmitBsale)<p><a href="{{ route('operations.guides.bsale.index') }}#bsale-{{ $emission->id }}">Conciliar esta hoja</a></p>@endif
+@endforeach
+@if($bsaleEmissions->contains('estado', 'enviando'))<p class="note">Hay una hoja en envío. No se enviarán más hasta conocer su resultado.</p>@endif
+@if($current && $canEmitBsale && $generatedSheets < $bsaleSheetCount && !$bsaleEmissions->contains('estado', 'incierta') && !$bsaleEmissions->contains('estado', 'enviando'))
+<form method="post" action="{{ route('operations.guides.bsale.store', $guide->id) }}">@csrf<button type="submit">{{ $generatedSheets ? 'Generar hojas restantes en Bsale' : 'Generar en Bsale' }}</button></form>
 @endif
 <div class="ope-actions"><a class="button" href="{{ route('operations.guides.export',$guide->id) }}">Descargar resumen CSV</a><button type="button" onclick="window.print()">Imprimir revisión</button><a href="{{ route('operations.departures.show',$guide->departure_id) }}">Volver a salida</a></div>
 @include('operations::guide-content',['preview'=>$preview])

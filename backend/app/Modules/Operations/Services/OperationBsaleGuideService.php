@@ -13,6 +13,8 @@ class OperationBsaleGuideService
 {
     private const ENDPOINT = 'https://api.bsale.io/v1/shippings.json';
 
+    public const LINES_PER_SHEET = 15;
+
     public const UNCERTAIN_MESSAGE = 'Revisa en Bsale si la guía fue creada antes de reintentar.';
 
     public function emit(int $tenantId, int $userId, int $guideId): object
@@ -22,7 +24,35 @@ class OperationBsaleGuideService
             throw ValidationException::withMessages(['bsale' => 'Falta configurar el token de producción de Bsale.']);
         }
 
-        [$recordId, $payload] = DB::transaction(function () use ($tenantId, $userId, $guideId): array {
+        $sheetNumber = 1;
+        $newlyGenerated = 0;
+        while (true) {
+            $prepared = $this->prepareSheet($tenantId, $userId, $guideId, $sheetNumber);
+            if ($prepared['complete']) {
+                if ($newlyGenerated === 0) {
+                    throw ValidationException::withMessages(['bsale' => 'Todas las hojas de esta guía y versión ya fueron generadas en Bsale.']);
+                }
+
+                return (object) ['estado' => 'generada', 'sheet_count' => $prepared['sheet_count'], 'generated_count' => $newlyGenerated];
+            }
+            if ($prepared['already_generated']) {
+                $sheetNumber++;
+
+                continue;
+            }
+
+            $emission = $this->sendSheet($prepared['record_id'], $token, $prepared['payload']);
+            if ($emission->estado !== 'generada') {
+                return (object) ['estado' => 'incierta', 'sheet_count' => $prepared['sheet_count'], 'generated_count' => $newlyGenerated];
+            }
+            $newlyGenerated++;
+            $sheetNumber++;
+        }
+    }
+
+    private function prepareSheet(int $tenantId, int $userId, int $guideId, int $sheetNumber): array
+    {
+        return DB::transaction(function () use ($tenantId, $userId, $guideId, $sheetNumber): array {
             DB::table('MBA_tenants')->where('id', $tenantId)->lockForUpdate()->firstOrFail();
             $guide = DB::table('Ope_Guias as guide')
                 ->join('Ope_ProgramacionSalidas as departure', 'departure.id', '=', 'guide.departure_id')
@@ -41,18 +71,46 @@ class OperationBsaleGuideService
             if (! is_array($snapshot)) {
                 throw ValidationException::withMessages(['bsale' => 'El snapshot de la guía interna no es válido.']);
             }
-            $payload = $this->payload($snapshot);
-            $existing = DB::table('Ope_GuiasBsale')->where(['guide_id' => $guideId, 'version' => $guide->version])->lockForUpdate()->first();
-            if ($existing && $existing->estado !== 'error') {
-                throw ValidationException::withMessages(['bsale' => $existing->estado === 'incierta'
-                    ? self::UNCERTAIN_MESSAGE
-                    : 'Esta guía y versión ya tiene una emisión en Bsale o un envío en curso.']);
+            $this->validateSnapshot($snapshot);
+            $lines = array_values($snapshot['lines']);
+            $sheetCount = (int) ceil(count($lines) / self::LINES_PER_SHEET);
+            $existing = DB::table('Ope_GuiasBsale')
+                ->where(['guide_id' => $guideId, 'version' => $guide->version])
+                ->orderBy('sheet_number')->lockForUpdate()->get();
+            foreach ($existing as $record) {
+                $start = ((int) $record->sheet_number - 1) * self::LINES_PER_SHEET + 1;
+                $end = min((int) $record->sheet_number * self::LINES_PER_SHEET, count($lines));
+                if ((int) $record->sheet_count !== $sheetCount || (int) $record->sheet_number > $sheetCount
+                    || ($record->line_start !== null && (int) $record->line_start !== $start)
+                    || ($record->line_end !== null && (int) $record->line_end !== $end)) {
+                    throw ValidationException::withMessages(['bsale' => 'Una emisión anterior no coincide con la división de 15 líneas. Revísala en Bsale antes de continuar.']);
+                }
             }
 
+            if ($sheetNumber > $sheetCount) {
+                return ['complete' => true, 'sheet_count' => $sheetCount];
+            }
+
+            $record = $existing->firstWhere('sheet_number', $sheetNumber);
+            if ($record?->estado === 'generada') {
+                return ['complete' => false, 'already_generated' => true, 'sheet_count' => $sheetCount];
+            }
+            if ($record && $record->estado !== 'error') {
+                throw ValidationException::withMessages(['bsale' => $record->estado === 'incierta'
+                    ? self::UNCERTAIN_MESSAGE
+                    : 'Esta hoja ya tiene un envío en curso.']);
+            }
+
+            $lineStart = ($sheetNumber - 1) * self::LINES_PER_SHEET + 1;
+            $lineEnd = min($sheetNumber * self::LINES_PER_SHEET, count($lines));
             $values = [
                 'tenant_id' => $tenantId,
                 'guide_id' => $guideId,
                 'version' => $guide->version,
+                'sheet_number' => $sheetNumber,
+                'sheet_count' => $sheetCount,
+                'line_start' => $lineStart,
+                'line_end' => $lineEnd,
                 'estado' => 'enviando',
                 'shipping_id' => null,
                 'document_id' => null,
@@ -63,15 +121,41 @@ class OperationBsaleGuideService
                 'user_id' => $userId,
                 'updated_at' => now(),
             ];
-            if ($existing) {
-                DB::table('Ope_GuiasBsale')->where('id', $existing->id)->update($values);
-                $recordId = $existing->id;
+            if ($record) {
+                DB::table('Ope_GuiasBsale')->where('id', $record->id)->update($values);
+                $recordId = $record->id;
             } else {
                 $recordId = DB::table('Ope_GuiasBsale')->insertGetId([...$values, 'created_at' => now()]);
             }
 
-            return [$recordId, $payload];
+            foreach (array_slice($lines, $lineStart - 1, self::LINES_PER_SHEET) as $index => $line) {
+                $lineNumber = $lineStart + $index;
+                DB::table('Ope_GuiasBsaleLineas')->insertOrIgnore([
+                    'emission_id' => $recordId,
+                    'line_number' => $lineNumber,
+                    'line_snapshot' => OperationAccess::json($line),
+                ]);
+                foreach (array_unique($line['packages'] ?? []) as $tracking) {
+                    DB::table('Ope_GuiasBsaleBultos')->insertOrIgnore([
+                        'emission_id' => $recordId,
+                        'line_number' => $lineNumber,
+                        'tracking' => $tracking,
+                    ]);
+                }
+            }
+
+            return [
+                'complete' => false,
+                'already_generated' => false,
+                'sheet_count' => $sheetCount,
+                'record_id' => $recordId,
+                'payload' => $this->payload($snapshot, $sheetNumber, $sheetCount),
+            ];
         });
+    }
+
+    private function sendSheet(int $recordId, string $token, array $payload): object
+    {
 
         try {
             $response = Http::connectTimeout(10)->timeout(60)
@@ -126,7 +210,7 @@ class OperationBsaleGuideService
         });
     }
 
-    private function payload(array $snapshot): array
+    private function validateSnapshot(array $snapshot): void
     {
         $validation = Validator::make($snapshot, [
             'departure.departure_date' => ['required', 'date_format:Y-m-d'],
@@ -142,9 +226,17 @@ class OperationBsaleGuideService
         if ($validation->fails()) {
             throw ValidationException::withMessages(['bsale' => 'El snapshot de la guía interna no contiene todos los datos requeridos por Bsale.']);
         }
+    }
 
+    private function payload(array $snapshot, int $sheetNumber, int $sheetCount): array
+    {
         $departure = $snapshot['departure'];
         $destination = $snapshot['destination'];
+        $details = array_map(fn (array $line): array => [
+            'comment' => $line['description'],
+            'quantity' => $line['count'],
+        ], array_slice($snapshot['lines'], ($sheetNumber - 1) * self::LINES_PER_SHEET, self::LINES_PER_SHEET));
+        $details[0]['comment'] .= "\nHoja {$sheetNumber} de {$sheetCount}";
 
         return [
             'documentTypeId' => 7,
@@ -163,10 +255,7 @@ class OperationBsaleGuideService
             'address' => $destination['address'],
             'municipality' => $destination['commune'],
             'city' => $destination['commune'],
-            'details' => array_map(fn (array $line): array => [
-                'comment' => $line['description'],
-                'quantity' => $line['count'],
-            ], $snapshot['lines']),
+            'details' => $details,
             'dynamicAttributes' => [
                 ['dynamicAttributeId' => 30, 'description' => $departure['plate']],
                 ['dynamicAttributeId' => 31, 'description' => $departure['driver_name']],

@@ -4,6 +4,7 @@ namespace App\Modules\Operations\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Operations\Services\OperationAccess;
+use App\Modules\Operations\Services\OperationBsaleGuideService;
 use App\Modules\Operations\Services\OperationGuideRoutePlanner;
 use App\Modules\Operations\Services\OperationReservationService;
 use App\Modules\Operations\Services\OperationWorkflow;
@@ -267,13 +268,23 @@ class OperationDepartureController extends Controller
     {
         $record = $this->guideRecord($request, $guide);
         $state = OperationAccess::departures($request)->where('id', $record->departure_id)->firstOrFail();
+        $preview = json_decode($record->snapshot, true);
+        $emissions = DB::table('Ope_GuiasBsale')->where([
+            'tenant_id' => OperationAccess::tenant($request),
+            'guide_id' => $record->id,
+            'version' => $record->version,
+        ])->orderBy('sheet_number')->get();
 
         return view('operations::guide', [
             'guide' => $record,
-            'preview' => json_decode($record->snapshot, true),
+            'preview' => $preview,
             'current' => $state->status === 'approved' && $state->version === $record->version,
             'canEmitBsale' => OperationAccess::supervisor($request),
-            'bsaleEmission' => DB::table('Ope_GuiasBsale')->where(['tenant_id' => OperationAccess::tenant($request), 'guide_id' => $record->id, 'version' => $record->version])->first(),
+            'bsaleEmissions' => $emissions,
+            'bsaleSheetCount' => (int) ceil(count($preview['lines']) / OperationBsaleGuideService::LINES_PER_SHEET),
+            'bsaleLinesByEmission' => DB::table('Ope_GuiasBsaleLineas')
+                ->whereIn('emission_id', $emissions->pluck('id'))
+                ->orderBy('line_number')->get()->groupBy('emission_id'),
         ]);
     }
 

@@ -16,14 +16,18 @@ class OperationBsaleGuideController extends Controller
     public function index(Request $request): View
     {
         OperationAccess::requireSupervisor($request);
+        $emissions = DB::table('Ope_GuiasBsale as emission')
+            ->leftJoin('Ope_Guias as guide', 'guide.id', '=', 'emission.guide_id')
+            ->where('emission.tenant_id', OperationAccess::tenant($request))
+            ->orderByDesc('emission.id')
+            ->select('emission.*', 'guide.id as internal_guide_id')
+            ->paginate(30);
 
         return view('operations::bsale-guides', [
-            'emissions' => DB::table('Ope_GuiasBsale as emission')
-                ->leftJoin('Ope_Guias as guide', 'guide.id', '=', 'emission.guide_id')
-                ->where('emission.tenant_id', OperationAccess::tenant($request))
-                ->orderByDesc('emission.id')
-                ->select('emission.*', 'guide.id as internal_guide_id')
-                ->paginate(30),
+            'emissions' => $emissions,
+            'linesByEmission' => DB::table('Ope_GuiasBsaleLineas')
+                ->whereIn('emission_id', $emissions->pluck('id'))
+                ->orderBy('line_number')->get()->groupBy('emission_id'),
         ]);
     }
 
@@ -34,7 +38,9 @@ class OperationBsaleGuideController extends Controller
         $emission = $bsale->emit(OperationAccess::tenant($request), $request->user()->id, $guide);
 
         return redirect()->route('operations.guides.show', $guide)->with('status', $emission->estado === 'generada'
-            ? 'Guía de Despacho Electrónica generada en Bsale.'
+            ? ((int) $emission->sheet_count === 1
+                ? 'Guía de Despacho Electrónica generada en Bsale.'
+                : $emission->sheet_count.' guías de despacho generadas en Bsale para esta salida.')
             : OperationBsaleGuideService::UNCERTAIN_MESSAGE);
     }
 

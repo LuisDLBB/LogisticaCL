@@ -24,7 +24,7 @@ class OperationsBsaleGuideTest extends TestCase
         ]);
     }
 
-    private function fixture(string $profile = 'Supervisor'): array
+    private function fixture(string $profile = 'Supervisor', int $lineCount = 1): array
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $user = User::factory()->create(['profile_name' => $profile]);
@@ -56,6 +56,16 @@ class OperationsBsaleGuideTest extends TestCase
             'version' => 1, 'status' => 'approved', 'approved_by' => $user->id, 'approved_at' => $now,
             'created_at' => $now, 'updated_at' => $now,
         ]);
+        $lines = [];
+        for ($number = 1; $number <= $lineCount; $number++) {
+            $lines[] = [
+                'agency' => 'Vallenar', 'merchant' => 'Cliente', 'service' => 'Normal',
+                'customer_guide' => '', 'reference' => '',
+                'description' => $lineCount === 1 ? 'Cliente: 2 bultos' : 'Glosa '.$number,
+                'count' => $lineCount === 1 ? 2 : 1, 'weight' => '12.000',
+                'packages' => $lineCount === 1 ? ['PKG-1', 'PKG-2'] : ['PKG-'.$number],
+            ];
+        }
         $snapshot = [
             'departure' => [
                 'name' => 'Salida aprobada', 'departure_date' => '2026-10-08', 'role' => 'troncal',
@@ -63,12 +73,8 @@ class OperationsBsaleGuideTest extends TestCase
             ],
             'origin' => ['name' => 'Bodega', 'address' => 'Galvarino 8481', 'commune' => 'Quilicura'],
             'destination' => ['name' => 'Agencia', 'address' => 'Victoria 1900', 'commune' => 'Vallenar'],
-            'lines' => [
-                ['agency' => 'Vallenar', 'merchant' => 'Cliente', 'service' => 'Normal',
-                    'customer_guide' => '', 'reference' => '', 'description' => 'Cliente: 2 bultos',
-                    'count' => 2, 'weight' => '12.000'],
-            ],
-            'packages' => [], 'count' => 2, 'weight' => '12.000',
+            'lines' => $lines,
+            'packages' => [], 'count' => $lineCount === 1 ? 2 : $lineCount, 'weight' => '12.000',
         ];
         $encoded = json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         $guide = DB::table('Ope_Guias')->insertGetId([
@@ -123,7 +129,7 @@ class OperationsBsaleGuideTest extends TestCase
                     'address' => 'Victoria 1900',
                     'municipality' => 'Vallenar',
                     'city' => 'Vallenar',
-                    'details' => [['comment' => 'Cliente: 2 bultos', 'quantity' => 2]],
+                    'details' => [['comment' => "Cliente: 2 bultos\nHoja 1 de 1", 'quantity' => 2]],
                     'dynamicAttributes' => [
                         ['dynamicAttributeId' => 30, 'description' => 'ABCD12'],
                         ['dynamicAttributeId' => 31, 'description' => 'María Soto'],
@@ -138,8 +144,134 @@ class OperationsBsaleGuideTest extends TestCase
             'url_publica' => 'https://example.test/guide',
         ]);
         $this->get(route('operations.guides.show', $guide))
-            ->assertOk()->assertSee('GDE emitida en Bsale')->assertSee('Ver PDF de Bsale')
+            ->assertOk()->assertSee('Hoja 1 de 1')->assertSee('741')->assertSee('Vista pública')
             ->assertDontSee('Generar en Bsale');
+    }
+
+    public function test_fifteen_lines_make_one_bsale_guide(): void
+    {
+        [, , , $oneSheetGuide] = $this->fixture(lineCount: 15);
+        Http::fake(['api.bsale.io/v1/shippings.json' => Http::response($this->bsaleResponse())]);
+        $this->post(route('operations.guides.bsale.store', $oneSheetGuide))->assertSessionHasNoErrors();
+        Http::assertSentCount(1);
+        $this->assertDatabaseHas('Ope_GuiasBsale', [
+            'guide_id' => $oneSheetGuide, 'sheet_number' => 1, 'sheet_count' => 1,
+            'line_start' => 1, 'line_end' => 15, 'estado' => 'generada',
+        ]);
+    }
+
+    public function test_sixteen_lines_make_two_guides_with_traceable_packages(): void
+    {
+        [$tenant, , , $twoSheetGuide] = $this->fixture(lineCount: 16);
+        $requests = [];
+        Http::fake(function ($request) use (&$requests) {
+            $requests[] = $request->data();
+            $number = count($requests);
+
+            return Http::response([
+                'id' => 500 + $number,
+                'guide' => [
+                    'id' => 600 + $number, 'number' => 740 + $number,
+                    'urlPdf' => 'https://example.test/'.$number.'.pdf',
+                    'urlPublicView' => 'https://example.test/'.$number,
+                ],
+            ], 201);
+        });
+        $this->post(route('operations.guides.bsale.store', $twoSheetGuide))->assertSessionHasNoErrors();
+
+        $this->assertCount(2, $requests);
+        $this->assertCount(15, $requests[0]['details']);
+        $this->assertCount(1, $requests[1]['details']);
+        $this->assertSame("Glosa 1\nHoja 1 de 2", $requests[0]['details'][0]['comment']);
+        $this->assertSame('Glosa 2', $requests[0]['details'][1]['comment']);
+        $this->assertSame("Glosa 16\nHoja 2 de 2", $requests[1]['details'][0]['comment']);
+        $this->assertSame('Victoria 1900', $requests[1]['address']);
+        $first = DB::table('Ope_GuiasBsale')->where(['guide_id' => $twoSheetGuide, 'sheet_number' => 1])->firstOrFail();
+        $second = DB::table('Ope_GuiasBsale')->where(['guide_id' => $twoSheetGuide, 'sheet_number' => 2])->firstOrFail();
+        $this->assertSame($tenant, $second->tenant_id);
+        $this->assertSame([1, 15, 16, 16], [$first->line_start, $first->line_end, $second->line_start, $second->line_end]);
+        $this->assertSame('741', $first->numero);
+        $this->assertSame('742', $second->numero);
+        $this->assertSame(15, DB::table('Ope_GuiasBsaleLineas')->where('emission_id', $first->id)->count());
+        $this->assertSame(1, DB::table('Ope_GuiasBsaleLineas')->where('emission_id', $second->id)->count());
+        $this->assertDatabaseHas('Ope_GuiasBsaleBultos', [
+            'emission_id' => $first->id, 'line_number' => 15, 'tracking' => 'PKG-15',
+        ]);
+        $this->assertDatabaseHas('Ope_GuiasBsaleBultos', [
+            'emission_id' => $second->id, 'line_number' => 16, 'tracking' => 'PKG-16',
+        ]);
+        $this->get(route('operations.guides.show', $twoSheetGuide))
+            ->assertOk()->assertSee('Hoja 1 de 2')->assertSee('Hoja 2 de 2')
+            ->assertSee('741')->assertSee('742')->assertSee('PKG-16');
+        $this->get(route('operations.guides.bsale.index'))
+            ->assertOk()->assertSee('Hoja 2 de 2')->assertSee('PKG-16');
+    }
+
+    public function test_thirty_one_lines_make_three_guides_in_order(): void
+    {
+        [, , , $guide] = $this->fixture(lineCount: 31);
+        $requests = [];
+        Http::fake(function ($request) use (&$requests) {
+            $requests[] = $request->data();
+
+            return Http::response($this->bsaleResponse(), 201);
+        });
+
+        $this->post(route('operations.guides.bsale.store', $guide))->assertSessionHasNoErrors();
+
+        $this->assertSame([15, 15, 1], array_map(fn (array $request): int => count($request['details']), $requests));
+        $this->assertSame("Glosa 31\nHoja 3 de 3", $requests[2]['details'][0]['comment']);
+        $this->assertDatabaseHas('Ope_GuiasBsale', [
+            'guide_id' => $guide, 'sheet_number' => 3, 'sheet_count' => 3,
+            'line_start' => 31, 'line_end' => 31, 'estado' => 'generada',
+        ]);
+        $this->assertDatabaseCount('Ope_GuiasBsale', 3);
+    }
+
+    public function test_uncertain_second_sheet_stops_the_third_until_manual_reconciliation(): void
+    {
+        [, , , $guide] = $this->fixture(lineCount: 31);
+        Http::fakeSequence()
+            ->push($this->bsaleResponse(), 201)
+            ->push(['message' => 'Resultado desconocido'], 500)
+            ->push([
+                'id' => 503,
+                'guide' => [
+                    'id' => 603, 'number' => 743,
+                    'urlPdf' => 'https://example.test/3.pdf',
+                    'urlPublicView' => 'https://example.test/3',
+                ],
+            ], 201);
+
+        $this->post(route('operations.guides.bsale.store', $guide))
+            ->assertSessionHas('status', 'Revisa en Bsale si la guía fue creada antes de reintentar.');
+        Http::assertSentCount(2);
+        $this->assertDatabaseCount('Ope_GuiasBsale', 2);
+        $this->assertDatabaseHas('Ope_GuiasBsale', ['guide_id' => $guide, 'sheet_number' => 1, 'estado' => 'generada']);
+        $this->assertDatabaseHas('Ope_GuiasBsale', ['guide_id' => $guide, 'sheet_number' => 2, 'estado' => 'incierta']);
+        $this->get(route('operations.guides.show', $guide))
+            ->assertOk()->assertSee('1 de 3 hojas generadas')->assertDontSee('Generar hojas restantes en Bsale');
+        $this->post(route('operations.guides.bsale.store', $guide))->assertSessionHasErrors('bsale');
+        Http::assertSentCount(2);
+
+        $second = DB::table('Ope_GuiasBsale')->where(['guide_id' => $guide, 'sheet_number' => 2])->firstOrFail();
+        $this->post(route('operations.guides.bsale.reconcile', $second->id), [
+            'outcome' => 'created', 'shipping_id' => 502, 'document_id' => 602,
+            'numero' => '742', 'url_pdf' => 'https://example.test/2.pdf',
+            'url_publica' => 'https://example.test/2',
+        ])->assertSessionHasNoErrors();
+        $this->get(route('operations.guides.show', $guide))->assertSee('Generar hojas restantes en Bsale');
+        $this->post(route('operations.guides.bsale.store', $guide))->assertSessionHasNoErrors();
+
+        Http::assertSentCount(3);
+        $this->assertDatabaseCount('Ope_GuiasBsale', 3);
+        $this->assertDatabaseHas('Ope_GuiasBsale', [
+            'guide_id' => $guide, 'sheet_number' => 3, 'line_start' => 31,
+            'line_end' => 31, 'numero' => '743', 'estado' => 'generada',
+        ]);
+        $this->assertDatabaseHas('Ope_GuiasBsaleBultos', [
+            'emission_id' => $second->id, 'line_number' => 30, 'tracking' => 'PKG-30',
+        ]);
     }
 
     public function test_existing_emission_is_never_sent_twice(): void
@@ -192,8 +324,11 @@ class OperationsBsaleGuideTest extends TestCase
 
         $this->assertDatabaseMissing('Ope_Guias', ['id' => $guide]);
         $this->assertDatabaseHas('Ope_GuiasBsale', ['guide_id' => $guide, 'estado' => 'generada', 'document_id' => 601]);
+        $emission = DB::table('Ope_GuiasBsale')->where('guide_id', $guide)->firstOrFail();
+        $this->assertDatabaseHas('Ope_GuiasBsaleLineas', ['emission_id' => $emission->id, 'line_number' => 1]);
+        $this->assertDatabaseHas('Ope_GuiasBsaleBultos', ['emission_id' => $emission->id, 'tracking' => 'PKG-2']);
         $this->get(route('operations.guides.bsale.index'))->assertOk()
-            ->assertSee('guía interna limpiada')->assertSee('741');
+            ->assertSee('guía interna limpiada')->assertSee('741')->assertSee('PKG-2');
     }
 
     public function test_connection_timeout_marks_uncertain_and_blocks_another_send(): void
