@@ -1,8 +1,10 @@
 <?php
 
 use App\Modules\Operations\Http\Controllers\OperationBsaleGuideController;
+use App\Modules\Operations\Http\Controllers\OperationDashboardController;
 use App\Modules\Operations\Http\Controllers\OperationDataCleanupController;
 use App\Modules\Operations\Http\Controllers\OperationDepartureController;
+use App\Modules\Operations\Http\Controllers\OperationDriverAccessController;
 use App\Modules\Operations\Http\Controllers\OperationLoadController;
 use App\Modules\Operations\Http\Controllers\OperationLotController;
 use App\Modules\Operations\Http\Controllers\OperationRouteController;
@@ -11,7 +13,8 @@ use App\Modules\Operations\Http\Controllers\OperationSystemReceptionController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('operaciones')->name('operations.')->group(function (): void {
-    Route::get('/', [OperationLotController::class, 'index'])->name('dashboard');
+    Route::get('/', [OperationDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/procesos', [OperationLotController::class, 'index'])->name('lots.index');
     Route::get('/cargas/{type}', [OperationLoadController::class, 'index'])->where('type', 'master|reception')->name('loads.index');
     Route::post('/cargas/{type}', [OperationLoadController::class, 'store'])->where('type', 'master|reception')->middleware('throttle:10,1')->name('loads.store');
     Route::get('/carga/{load}', [OperationLoadController::class, 'show'])->whereNumber('load')->name('loads.show');
@@ -27,10 +30,14 @@ Route::prefix('operaciones')->name('operations.')->group(function (): void {
     Route::post('/recepcion-sistema/{reception}/bultos', [OperationSystemReceptionController::class, 'scan'])->whereNumber('reception')->name('system-receptions.scan');
     Route::post('/recepcion-sistema/{reception}/cerrar', [OperationSystemReceptionController::class, 'complete'])->whereNumber('reception')->name('system-receptions.complete');
     Route::post('/procesos', [OperationLotController::class, 'store'])->name('lots.store');
+    Route::get('/recepciones/{load}/ajustar-cliente', [OperationLotController::class, 'clientAdjustment'])->whereNumber('load')->name('receptions.clients');
+    Route::post('/recepciones/{load}/ajustar-cliente', [OperationLotController::class, 'applyClientAdjustment'])->whereNumber('load')->name('receptions.clients.apply');
     Route::get('/procesos/{lot}', [OperationLotController::class, 'show'])->whereNumber('lot')->name('lots.show');
     Route::post('/procesos/{lot}/incidencias', [OperationLotController::class, 'resolveMany'])->whereNumber('lot')->name('issues.resolve-many');
     Route::post('/procesos/{lot}/incidencias/{issue}', [OperationLotController::class, 'resolve'])->whereNumber(['lot', 'issue'])->name('issues.resolve');
     Route::get('/configuracion', [OperationSetupController::class, 'index'])->name('setup');
+    Route::get('/accesos-choferes', [OperationDriverAccessController::class, 'index'])->name('drivers.access.index');
+    Route::post('/accesos-choferes/{driver}', [OperationDriverAccessController::class, 'store'])->whereNumber('driver')->name('drivers.access.store');
     Route::get('/origenes-postas', [OperationSetupController::class, 'postOrigins'])->name('post-origins');
     Route::get('/rutas', [OperationRouteController::class, 'index'])->name('routes');
     Route::put('/rutas/{agency}/datos', [OperationRouteController::class, 'updateData'])->whereNumber('agency')->name('routes.data.update');

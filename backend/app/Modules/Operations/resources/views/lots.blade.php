@@ -20,6 +20,7 @@
                         <strong>#{{ $load->id }} · {{ $profile === 'system' ? 'Recepción Sistema' : 'Archivo cargado' }}: {{ $load->filename }}</strong>
                     </label>
                     <p class="note">{{ \Carbon\Carbon::parse($load->created_at)->timezone('America/Santiago')->format('d-m-Y H:i') }} · {{ number_format($load->row_count, 0, ',', '.') }} {{ $load->row_count === 1 ? 'bulto' : 'bultos' }}</p>
+                    @if($loads->where('source_type','master')->isNotEmpty())<p><a class="button ope-secondary-button" href="{{ route('operations.receptions.clients',$load->id) }}">Ajustar cliente con Geolize</a></p>@endif
                     <div class="table-wrap"><table class="ope-table"><thead><tr><th>Cliente</th><th>Operario</th><th>Bultos</th></tr></thead><tbody>
                         @forelse($receptionSummaries[$load->id] ?? [] as $summary)
                             <tr><td>{{ $summary['client'] }}</td><td>{{ $summary['operator'] }}</td><td>{{ number_format($summary['count'], 0, ',', '.') }}</td></tr>

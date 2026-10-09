@@ -88,7 +88,7 @@ class OperationImporter
                 if ($loadId !== null) {
                     DB::table('Ope_FilasFuente')->where('load_id', $load)->delete();
                 }
-                DB::table('Ope_Cargas')->where('id', $load)->update(['status' => 'processing', 'row_count' => 0, 'invalid_count' => 0]);
+                DB::table('Ope_Cargas')->where('id', $load)->update(['status' => 'processing', 'row_count' => 0, 'invalid_count' => 0, 'comparison' => null]);
                 $count = $invalid = 0;
                 $found = false;
                 $buffer = [];
@@ -131,8 +131,9 @@ class OperationImporter
                 if ($buffer !== []) {
                     DB::table('Ope_FilasFuente')->insert($buffer);
                 }
-                DB::transaction(function () use ($load, $count, $invalid, $tenant, $user, $hash, $type, $mapping): void {
-                    DB::table('Ope_Cargas')->where('id', $load)->update(['row_count' => $count, 'invalid_count' => $invalid, 'status' => 'completed', 'error' => null, 'updated_at' => now()]);
+                $comparison = $type === 'master' ? app(OperationMasterComparator::class)->compare($tenant, $load) : null;
+                DB::transaction(function () use ($load, $count, $invalid, $tenant, $user, $hash, $type, $mapping, $comparison): void {
+                    DB::table('Ope_Cargas')->where('id', $load)->update(['row_count' => $count, 'invalid_count' => $invalid, 'comparison' => $comparison === null ? null : OperationAccess::json($comparison), 'status' => 'completed', 'error' => null, 'updated_at' => now()]);
                     OperationAccess::audit($tenant, $user, 'Carga Excel', 'carga', $load, ['sha256' => $hash, 'type' => $type, 'rows' => $count, 'invalid' => $invalid, 'mapping' => $mapping]);
                 });
 

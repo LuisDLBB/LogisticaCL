@@ -160,8 +160,8 @@ class OperationRouteController extends Controller
                     $nameChanged = trim((string) ($input['driver_name'] ?? '')) !== (string) ($segment['driver_name'] ?? '');
                     if (! $segment['inherited_transport'] || $plateChanged || $rutChanged || $nameChanged) {
                         app(OperationSetupController::class)->updateTransport($request,
-                            $segment['inherited_transport'] || $segment['transport_kind'] === 'trunk' ? 'troncal' : 'posta',
-                            $segment['inherited_transport'] ? $segment['trunk_id'] : $segment['transport_id']);
+                            $segment['transport_kind'] === 'trunk' ? 'troncal' : 'posta',
+                            $segment['transport_id']);
                     }
                 }
                 $this->updatePermanentDestination($request, $tenant, $segment, $address);

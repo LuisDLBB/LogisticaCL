@@ -123,15 +123,40 @@ class OperationsWorkflowTest extends TestCase
     {
         $this->member('Operario');
 
-        $this->get('/operaciones')->assertSee('Procesos Trabajados')->assertSee('Preparar proceso')
-            ->assertSeeInOrder(['Recepción Sistema', 'Maestro Geolize', 'Procesos', 'Programación de Rutas', 'Salidas', 'Generación de Guías', 'Configuración', 'Volver al inicio'])
+        $this->get('/operaciones')->assertSee('Resumen operativo')->assertSee('Tabla dinámica de movimientos')
+            ->assertSeeInOrder(['Resumen operativo', 'Recepción Sistema', 'Maestro Geolize', 'Procesos', 'Programación de Rutas', 'Salidas', 'Generación de Guías', 'Configuración', 'Volver al inicio'])
             ->assertDontSee('1. Recepción Sistema');
+        $this->get('/operaciones/procesos')->assertSee('Procesos Trabajados')->assertSee('Preparar proceso');
+        $this->get('/operaciones/recepcion-sistema')->assertOk()->assertSee('Cargar recepción desde Excel')
+            ->assertSee(route('operations.loads.store', 'reception'), false);
         $this->get('/operaciones/salidas')->assertOk()->assertSee('Todavía no hay procesos preparados');
         $this->get('/operaciones/cargas/master')->assertSee('Carga Maestro Geolize');
         $this->get('/operaciones/cargas/reception')->assertSee('Carga Recepción');
         $this->get('/operaciones/configuracion')->assertSee('Agencias y rutas de guías');
         $this->get('/modulos/operaciones')->assertRedirect(route('operations.dashboard'));
         $this->assertDatabaseHas('user_activities', ['module' => 'Operaciones']);
+    }
+
+    public function test_dashboard_counts_each_package_once_across_trunk_and_post_and_filters_by_reception_source(): void
+    {
+        [$tenant, $user] = $this->member();
+        [$lot, $coverage] = $this->lot($tenant, $user, [['2026-09-28', 'PKG-1', 4.9, 'Operario Uno', '00123']], 'Chillán', 15);
+        $configurations = DB::table('Ope_GuiaConfiguraciones')->where('coverage_id', $coverage)->orderBy('sequence')->pluck('id');
+        foreach ($configurations as $configuration) {
+            $this->departure($tenant, $user, $lot, $configuration);
+        }
+
+        $dashboard = $this->get('/operaciones?period=last')->assertOk()->viewData('dashboard');
+        $labels = array_column($dashboard['rows'], 'label');
+        $this->assertSame('2026-09-28', $dashboard['lastDate']);
+        $this->assertSame(1, $dashboard['totals']['count']);
+        $this->assertSame(4, $dashboard['totals']['weight']);
+        $this->assertSame(1, $dashboard['totals']['draft']);
+        $this->assertContains('Posta 1 · Troncal Sur (Chillan-Concepcion)', $labels);
+        $this->assertContains('Troncal', $labels);
+        $this->get('/operaciones?period=last&group=client')->assertOk()->assertSee('Cliente Uno');
+        $this->get('/operaciones?period=last&source=excel')->assertViewHas('dashboard', fn (array $dashboard): bool => $dashboard['totals']['count'] === 1);
+        $this->get('/operaciones?period=last&source=system')->assertViewHas('dashboard', fn (array $dashboard): bool => $dashboard['totals']['count'] === 0);
     }
 
     public function test_salidas_menu_lists_processes_with_their_scheduled_departures(): void
@@ -164,7 +189,7 @@ class OperationsWorkflowTest extends TestCase
         $this->assertNull($data['customer_guide']);
         $this->assertSame('MANIFIESTO 4N', $data['reference']);
         $this->get('/operaciones/carga/'.$row->load_id)->assertSee('MANIFIESTO 4N');
-        $this->get('/operaciones')->assertOk()->assertSee('Archivo cargado: operaciones.xlsx')
+        $this->get('/operaciones/procesos')->assertOk()->assertSee('Archivo cargado: operaciones.xlsx')
             ->assertSeeInOrder(['Cliente', 'Operario H', 'Total de la recepción']);
     }
 
@@ -180,10 +205,61 @@ class OperationsWorkflowTest extends TestCase
         $mapping = ['profile' => 'legacy', 'date' => 'A', 'tracking' => 'E', 'weight' => 'F', 'operator' => 'H', 'customer_guide' => null, 'reference' => 'I'];
         app(OperationImporter::class)->import($file->getPathname(), 'fixture', 'recepcion.xlsx', $tenant, $user, 'reception', 'Hoja1', $mapping);
 
-        $this->get('/operaciones')->assertOk()->assertSee('Archivo cargado: recepcion.xlsx')
+        $this->get('/operaciones/procesos')->assertOk()->assertSee('Archivo cargado: recepcion.xlsx')
             ->assertSee('<tr><td>Cliente A</td><td>Operario X</td><td>2</td></tr>', false)
             ->assertSee('<tr><td>Cliente B</td><td>Operario Y</td><td>1</td></tr>', false)
             ->assertSee('Total de la recepción');
+    }
+
+    public function test_client_adjustment_uses_geolize_only_after_review_and_leaves_unmatched_or_ambiguous_rows_untouched(): void
+    {
+        [$tenant, $user] = $this->member();
+        $master = $this->source($tenant, $user, 'master', [
+            ['PKG-1', 4, 'Chillán', 'Cliente Geolize', 'Normal', 'Destino'],
+            ['PKG-3', 4, 'Chillán', 'Cliente A', 'Normal', 'Destino'],
+            ['PKG-3', 4, 'Chillán', 'Cliente B', 'Normal', 'Destino'],
+        ]);
+        $file = $this->excel('Datos', [
+            ['Fecha', 'Código', 'Peso', 'Operario', 'Cliente'],
+            ['2026-10-08', 'PKG-1', 4, 'Operario Uno', 'Cliente Excel'],
+            ['2026-10-08', 'PKG-2', 4, 'Operario Uno', 'Cliente Excel'],
+            ['2026-10-08', 'PKG-3', 4, 'Operario Dos', 'Cliente Excel'],
+        ]);
+        $reception = app(OperationImporter::class)->import($file->getPathname(), 'fixture', 'recepcion.xlsx', $tenant, $user, 'reception', 'Datos', [
+            'profile' => 'custom', 'date' => 'A', 'tracking' => 'B', 'weight' => 'C', 'operator' => 'D', 'client' => 'E',
+        ]);
+
+        $this->get('/operaciones/procesos')->assertSee(route('operations.receptions.clients', $reception), false)->assertSee('Ajustar cliente con Geolize');
+        $this->get(route('operations.receptions.clients', ['load' => $reception, 'master_load_id' => $master]))
+            ->assertOk()->assertSee('Por ajustar: 1')->assertSee('Sin código en Geolize: 1')->assertSee('Cliente ambiguo: 1')
+            ->assertSee('Cliente Geolize');
+        $this->assertSame('Cliente Excel', json_decode(DB::table('Ope_FilasFuente')->where(['load_id' => $reception, 'tracking' => 'PKG-1'])->value('data'), true)['client_name']);
+
+        $this->post(route('operations.receptions.clients.apply', $reception), ['master_load_id' => $master])->assertRedirect();
+        $adjusted = json_decode(DB::table('Ope_FilasFuente')->where(['load_id' => $reception, 'tracking' => 'PKG-1'])->value('data'), true);
+        $this->assertSame('Cliente Geolize', $adjusted['client_name']);
+        $this->assertSame('Cliente Excel', $adjusted['client_name_original']);
+        $this->assertSame('geolize', $adjusted['client_name_source']);
+        foreach (['PKG-2', 'PKG-3'] as $tracking) {
+            $this->assertSame('Cliente Excel', json_decode(DB::table('Ope_FilasFuente')->where(['load_id' => $reception, 'tracking' => $tracking])->value('data'), true)['client_name']);
+        }
+        $this->get('/operaciones/procesos')->assertSee('Cliente Geolize')->assertSee('Cliente Excel');
+        $this->post(route('operations.receptions.clients.apply', $reception), ['master_load_id' => $master])->assertSessionHas('status', '0 clientes ajustados con Geolize. 2 códigos quedaron sin ajustar para revisión.');
+    }
+
+    public function test_only_supervisor_can_save_client_adjustment_and_other_tenants_loads_are_hidden(): void
+    {
+        [$tenant, $user] = $this->member('Operario');
+        $master = $this->source($tenant, $user, 'master', [['PKG-1', 4, 'Chillán', 'Cliente Geolize', 'Normal', 'Destino']]);
+        $reception = $this->source($tenant, $user, 'reception', [['2026-10-08', 'PKG-1', 4, 'Operario', 'Guía']]);
+
+        $this->get(route('operations.receptions.clients', ['load' => $reception, 'master_load_id' => $master]))->assertOk()->assertDontSee('Guardar 1 ajustes');
+        $this->post(route('operations.receptions.clients.apply', $reception), ['master_load_id' => $master])->assertForbidden();
+        $otherTenant = Tenant::factory()->create();
+        $otherMaster = $this->source($otherTenant->id, $user, 'master', [['PKG-1', 4, 'Chillán', 'Otro cliente', 'Normal', 'Destino']]);
+        $otherReception = $this->source($otherTenant->id, $user, 'reception', [['2026-10-08', 'PKG-1', 4, 'Operario', 'Guía']]);
+        $this->get(route('operations.receptions.clients', ['load' => $otherReception, 'master_load_id' => $master]))->assertNotFound();
+        $this->get(route('operations.receptions.clients', ['load' => $reception, 'master_load_id' => $otherMaster]))->assertNotFound();
     }
 
     public function test_identical_file_is_not_loaded_twice_and_does_not_leave_an_extra_upload(): void
@@ -198,6 +274,59 @@ class OperationsWorkflowTest extends TestCase
 
         $this->assertDatabaseCount('Ope_Cargas', 1);
         $this->assertCount(1, Storage::disk('local')->allFiles('operations'));
+    }
+
+    public function test_new_geolize_load_compares_valid_packages_with_previous_load_without_changing_process_data(): void
+    {
+        [$tenant, $user] = $this->member();
+        Coverage::factory()->create(['tenant_id' => $tenant, 'provider_id' => null, 'commune_name' => 'Chillán', 'effective_from' => '2026-01-01', 'effective_to' => null]);
+        $first = $this->source($tenant, $user, 'master', [
+            ['PKG-A', 4, 'Chillán', 'Cliente A', 'Normal', 'Destino A'],
+            ['PKG-B', 5, 'Chillán', 'Cliente B', 'Normal', 'Destino B'],
+            ['PKG-C', 6, 'Chillán', 'Cliente C', 'Normal', 'Destino C'],
+        ]);
+        $reception = $this->source($tenant, $user, 'reception', [['2026-10-08', 'PKG-B', 5, 'Operario', 'Guía']]);
+        $lot = app(OperationWorkflow::class)->createLot($tenant, $user, ['name' => 'Primer proceso', 'operation_date' => '2026-10-08', 'master_load_id' => $first, 'reception_load_ids' => [$reception]]);
+        $otherTenant = Tenant::factory()->create();
+        $this->source($otherTenant->id, $user, 'master', [['PKG-A', 99, 'Chillán', 'Otro cliente', 'Normal', 'Otro destino']]);
+        $second = $this->source($tenant, $user, 'master', [
+            ['PKG-B', 8, 'Chillán', 'Cliente B nuevo', 'Normal', 'Destino B'],
+            ['PKG-D', 7, 'Chillán', 'Cliente D', 'Normal', 'Destino D'],
+            ['PKG-A', 4, 'Chillán', 'Cliente A', 'Normal', 'Destino A'],
+        ]);
+
+        $this->assertNull(DB::table('Ope_Cargas')->where('id', $first)->value('comparison'));
+        $comparison = json_decode(DB::table('Ope_Cargas')->where('id', $second)->value('comparison'), true);
+        $this->assertSame($first, $comparison['previous_load_id']);
+        $this->assertSame([1, 1, 1, 1, 0], array_map(fn ($key) => $comparison[$key], ['new_count', 'changed_count', 'unchanged_count', 'missing_count', 'ambiguous_count']));
+        $this->assertSame(['PKG-D'], $comparison['new_samples']);
+        $this->assertSame(['PKG-C'], $comparison['missing_samples']);
+        $this->assertSame('Cliente B', $comparison['changed_samples'][0]['fields']['merchant']['before']);
+        $this->assertSame('Cliente B nuevo', $comparison['changed_samples'][0]['fields']['merchant']['after']);
+        $this->assertSame('Cliente B', DB::table('Ope_Bultos')->where('lot_id', $lot)->where('tracking', 'PKG-B')->value('merchant'));
+        $this->get(route('operations.loads.show', $second))->assertOk()->assertSee('Comparación con la carga anterior')->assertSee('Cliente B nuevo')->assertSee('PKG-C');
+    }
+
+    public function test_geolize_comparison_excludes_invalid_and_ambiguous_codes(): void
+    {
+        [$tenant, $user] = $this->member();
+        $first = $this->source($tenant, $user, 'master', [
+            ['PKG-DUP', 4, 'Chillán', 'Cliente', 'Normal', 'Destino'],
+            ['PKG-DUP', 4, 'Chillán', 'Cliente', 'Normal', 'Destino'],
+            ['PKG-OLD', 5, 'Chillán', 'Cliente', 'Normal', 'Destino'],
+        ]);
+        $second = $this->source($tenant, $user, 'master', [
+            ['PKG-DUP', 4, 'Chillán', 'Cliente', 'Normal', 'Destino'],
+            ['PKG-OLD', 5, '', 'Cliente', 'Normal', 'Destino'],
+            ['PKG-NEW', 6, 'Chillán', 'Cliente', 'Normal', 'Destino'],
+            ['PKG-NEW', 6, 'Chillán', 'Cliente', 'Normal', 'Destino'],
+        ]);
+
+        $comparison = json_decode(DB::table('Ope_Cargas')->where('id', $second)->value('comparison'), true);
+        $this->assertSame($first, $comparison['previous_load_id']);
+        $this->assertSame([0, 0, 0, 1, 2], array_map(fn ($key) => $comparison[$key], ['new_count', 'changed_count', 'unchanged_count', 'missing_count', 'ambiguous_count']));
+        $this->assertSame(['PKG-OLD'], $comparison['missing_samples']);
+        $this->assertSame(1, DB::table('Ope_Cargas')->where('id', $second)->value('invalid_count'));
     }
 
     public function test_lot_universe_and_weight_come_only_from_reception_and_decimal_weights_are_preserved(): void
@@ -1071,6 +1200,18 @@ class OperationsWorkflowTest extends TestCase
         $this->assertSame('Coquimbo', DB::table('Ope_Ubicaciones')->where('id', $routes->where('coverage_id', $vallenar)->where('role', 'posta1')->first()->origin_id)->value('commune'));
     }
 
+    public function test_vallenar_visual_node_opens_its_own_first_post_data(): void
+    {
+        [$tenant] = $this->member();
+        $agency = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'agency_code' => 32])->firstOrFail();
+        $html = $this->get('/operaciones/rutas')->assertOk()->getContent();
+
+        $this->assertSame(1, preg_match('/<button[^>]+data-route-node[^>]+aria-label="Ver datos de Vallenar"/s', $html, $matches));
+        $this->assertStringContainsString('data-route-agency-id="'.$agency->id.'"', $matches[0]);
+        $this->assertStringContainsString('data-route-segment="posta1"', $matches[0]);
+        $this->assertStringContainsString('data-route-destination="'.e($agency->address).', Vallenar"', $matches[0]);
+    }
+
     public function test_route_popup_can_change_one_trunk_departure_and_its_first_posts_without_changing_second_post_or_catalog(): void
     {
         [$tenant, $user] = $this->member();
@@ -1127,6 +1268,7 @@ class OperationsWorkflowTest extends TestCase
         $trunk = DB::table('Ope_Troncales')->where('id', $agency->trunk_id)->firstOrFail();
         $firstPost = DB::table('Ope_Postas')->where('id', $agency->post_id)->firstOrFail();
         $secondPost = DB::table('Ope_Postas')->where('id', $agency->second_post_id)->firstOrFail();
+        $laterPost = DB::table('Ope_Postas')->where(['tenant_id' => $tenant, 'post_code' => 11])->firstOrFail();
         $departure = DB::table('Ope_ProgramacionSalidas')->where(['lot_id' => $lot, 'role' => 'troncal'])->firstOrFail();
 
         $this->put('/operaciones/rutas/'.$agency->id.'/datos', [
@@ -1137,7 +1279,10 @@ class OperationsWorkflowTest extends TestCase
 
         $this->assertDatabaseHas('Ope_Troncales', ['id' => $trunk->id, 'plate' => 'ABCD12']);
         $this->assertDatabaseHas('Ope_Postas', ['id' => $firstPost->id, 'plate' => 'ABCD12']);
-        $this->assertSame($secondPost->plate, DB::table('Ope_Postas')->where('id', $secondPost->id)->value('plate'));
+        $this->assertDatabaseHas('Ope_Postas', ['post_code' => 9, 'plate' => 'ABCD12']);
+        $this->assertDatabaseHas('Ope_Postas', ['post_code' => 10, 'plate' => 'ABCD12']);
+        $this->assertDatabaseHas('Ope_Postas', ['id' => $secondPost->id, 'plate' => 'ABCD12']);
+        $this->assertSame($laterPost->plate, DB::table('Ope_Postas')->where('id', $laterPost->id)->value('plate'));
         $this->assertSame($departure->plate, DB::table('Ope_ProgramacionSalidas')->where('id', $departure->id)->value('plate'));
         $this->assertDatabaseHas('Ope_Agencias', ['agency_code' => 13, 'address' => 'Terminal Chillán 123']);
         $this->assertDatabaseHas('Ope_Troncales', ['id' => $trunk->id, 'destination_address' => 'Terminal Chillán 123']);
@@ -1148,7 +1293,7 @@ class OperationsWorkflowTest extends TestCase
         [$tenant] = $this->member();
         $agency = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'agency_code' => 32])->firstOrFail();
         $trunk = DB::table('Ope_Troncales')->where('id', $agency->trunk_id)->firstOrFail();
-        $post = DB::table('Ope_Postas')->where('id', $agency->post_id)->firstOrFail();
+        $post = DB::table('Ope_Postas')->where(['tenant_id' => $tenant, 'post_code' => 20])->firstOrFail();
         $driver = DB::table('Ope_Choferes')->where('id', $post->driver_id)->firstOrFail();
 
         $this->put('/operaciones/rutas/'.$agency->id.'/datos', [
@@ -1161,12 +1306,13 @@ class OperationsWorkflowTest extends TestCase
         $this->assertSame($trunk->plate, DB::table('Ope_Troncales')->where('id', $trunk->id)->value('plate'));
     }
 
-    public function test_permanent_first_post_transport_change_updates_parent_trunk_and_its_destination(): void
+    public function test_permanent_vallenar_transport_change_updates_its_shared_post_without_changing_trunk_or_other_posts(): void
     {
         [$tenant] = $this->member();
         $agency = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'agency_code' => 32])->firstOrFail();
         $trunk = DB::table('Ope_Troncales')->where('id', $agency->trunk_id)->firstOrFail();
-        $post = DB::table('Ope_Postas')->where('id', $agency->post_id)->firstOrFail();
+        $sharedPost = DB::table('Ope_Postas')->where(['tenant_id' => $tenant, 'post_code' => 20])->firstOrFail();
+        $otherPost = DB::table('Ope_Postas')->where(['tenant_id' => $tenant, 'post_code' => 18])->firstOrFail();
 
         $this->put('/operaciones/rutas/'.$agency->id.'/datos', [
             'segment' => 'posta1', 'scope' => 'permanent',
@@ -1174,9 +1320,30 @@ class OperationsWorkflowTest extends TestCase
             'destination_address' => 'Nueva dirección Vallenar 456',
         ])->assertSessionHasNoErrors();
 
-        $this->assertDatabaseHas('Ope_Troncales', ['id' => $trunk->id, 'plate' => 'ABCD12']);
-        $this->assertDatabaseHas('Ope_Postas', ['id' => $post->id, 'plate' => 'ABCD12']);
+        $this->assertDatabaseHas('Ope_Postas', ['id' => $sharedPost->id, 'plate' => 'ABCD12']);
+        $this->assertSame($trunk->plate, DB::table('Ope_Troncales')->where('id', $trunk->id)->value('plate'));
+        $this->assertSame($otherPost->plate, DB::table('Ope_Postas')->where('id', $otherPost->id)->value('plate'));
         $this->assertDatabaseHas('Ope_Agencias', ['id' => $agency->id, 'address' => 'Nueva dirección Vallenar 456']);
+        $html = $this->get('/operaciones/rutas')->assertOk()->getContent();
+        foreach (['Vallenar', 'Copiapo'] as $stop) {
+            $this->assertSame(1, preg_match('/<button[^>]+data-route-node[^>]+aria-label="Ver datos de '.$stop.'"/s', $html, $matches));
+            $this->assertStringContainsString('data-route-plate="ABCD12"', $matches[0]);
+        }
+    }
+
+    public function test_north_trunk_transport_change_reaches_the_planned_vallenar_copiapo_post(): void
+    {
+        [$tenant] = $this->member();
+        $agency = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'agency_code' => 27])->firstOrFail();
+        $sharedPost = DB::table('Ope_Postas')->where(['tenant_id' => $tenant, 'post_code' => 20])->firstOrFail();
+
+        $this->put('/operaciones/rutas/'.$agency->id.'/datos', [
+            'segment' => 'troncal', 'scope' => 'permanent',
+            'plate' => 'ABCD12', 'driver_name' => 'Chofer de prueba', 'driver_rut' => '12.345.678-5',
+            'destination_address' => $agency->address,
+        ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('Ope_Postas', ['id' => $sharedPost->id, 'plate' => 'ABCD12']);
     }
 
     public function test_route_edit_validation_error_is_shown_in_the_same_dialog(): void
@@ -1248,11 +1415,11 @@ class OperationsWorkflowTest extends TestCase
         [$tenant, $user] = $this->member();
         $master = $this->source($tenant, $user, 'master', [['PKG-1', 999, 'Chillán', 'Cliente Uno', 'Normal', 'Calle destino']]);
 
-        $this->get('/operaciones/carga/'.$master)->assertOk()->assertSee('/operaciones?load='.$master.'#preparar-proceso', false);
-        $this->get('/operaciones?load='.$master)->assertOk()->assertSee('value="'.$master.'" selected', false)->assertSeeText('Falta cargar Recepción de bultos para preparar el proceso.')->assertSee('<button disabled>Preparar y cruzar datos</button>', false);
+        $this->get('/operaciones/carga/'.$master)->assertOk()->assertSee('/operaciones/procesos?load='.$master.'#preparar-proceso', false);
+        $this->get('/operaciones/procesos?load='.$master)->assertOk()->assertSee('value="'.$master.'" selected', false)->assertSeeText('Falta cargar Recepción de bultos para preparar el proceso.')->assertSee('<button disabled>Preparar y cruzar datos</button>', false);
         $reception = $this->source($tenant, $user, 'reception', [['2026-09-28', 'PKG-1', 4.125, 'Operario Uno', '00123']]);
 
-        $this->get('/operaciones?load='.$reception)->assertOk()->assertSee('value="'.$reception.'" checked', false)->assertDontSeeText('Falta cargar Recepción de bultos para preparar el proceso.')->assertDontSee('<button disabled>Preparar y cruzar datos</button>', false);
+        $this->get('/operaciones/procesos?load='.$reception)->assertOk()->assertSee('value="'.$reception.'" checked', false)->assertDontSeeText('Falta cargar Recepción de bultos para preparar el proceso.')->assertDontSee('<button disabled>Preparar y cruzar datos</button>', false);
     }
 
     public function test_load_results_render_in_every_import_state(): void
@@ -1408,6 +1575,10 @@ class OperationsWorkflowTest extends TestCase
         ])->assertSessionHasNoErrors();
 
         $this->assertSame(3, DB::table('Ope_Reservas')->where(['source_lot_id' => $lot, 'status' => 'pending'])->count());
+        $dashboard = $this->get('/operaciones?period=last&status=reserve')->assertOk()->viewData('dashboard');
+        $this->assertSame(3, $dashboard['totals']['count']);
+        $this->assertSame(3, $dashboard['totals']['reserved']);
+        $this->assertSame(10, $dashboard['totals']['weight']);
         $this->assertSame(1, DB::table('Ope_Reservas')->where('source_lot_id', $lot)->distinct()->count('batch_id'));
         $this->assertSame(3, DB::table('Ope_Bultos')->where(['lot_id' => $lot, 'excluded' => true])->count());
         $this->assertDatabaseCount('Ope_ProgramacionSalidas', 0);

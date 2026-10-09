@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<title>@yield('title', 'Mi Ruta') · 4N</title>
+<link rel="icon" href="{{ asset('favicon.svg') }}">
+<style>
+:root{color-scheme:light;--navy:#061f20;--teal:#00878a;--soft:#e3f6f4;--line:#d6e4e4;--ink:#102c30;--muted:#5e767b;--yellow:#fff5dc}*{box-sizing:border-box}body{margin:0;background:#f4f8f8;color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px}header{position:sticky;top:0;z-index:5;background:var(--navy);color:#fff;padding:13px max(16px,env(safe-area-inset-left));display:flex;align-items:center;justify-content:space-between;gap:12px}header strong{font-size:18px}header small{display:block;color:#bbdede;font-size:12px}header a{color:#73eeee;text-decoration:none;font-weight:700;font-size:13px}main{max-width:760px;margin:0 auto;padding:20px 14px 110px}h1{font-size:26px;margin:0 0 8px}h2{font-size:19px;margin:0 0 10px}h3{font-size:16px;margin:0 0 8px}p{line-height:1.45}.muted{color:var(--muted)}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:17px;margin:13px 0;box-shadow:0 2px 10px #12363808}.route-card{border-left:5px solid var(--teal)}.eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--teal)}.status{display:inline-block;padding:5px 9px;background:var(--soft);border-radius:7px;font-size:12px;font-weight:800;color:#006e71}.status.pending{background:var(--yellow);color:#8b620f}.row{display:flex;justify-content:space-between;gap:10px;align-items:center}.button,button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:11px 16px;border:0;border-radius:10px;background:var(--teal);color:#fff;text-decoration:none;font:inherit;font-weight:750;cursor:pointer}.button.secondary,button.secondary{background:#e7eeee;color:var(--ink)}.button.full,button.full{width:100%}button:disabled{opacity:.55}.field{display:grid;gap:5px;margin:11px 0;font-size:13px;font-weight:750}.field input,.field select,.field textarea{width:100%;min-height:44px;border:1px solid #bdcfd0;border-radius:9px;padding:9px 11px;background:#fff;color:var(--ink);font:inherit}.field textarea{min-height:78px}.check{display:flex;gap:8px;align-items:center;margin:10px 0}.check input{width:19px;height:19px;accent-color:var(--teal)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.grid .field{margin:0}.notice{background:var(--yellow);border-left:4px solid #d99e27;padding:13px;border-radius:8px;margin:12px 0}.success{background:var(--soft);padding:13px;border-radius:8px;margin:12px 0}.error{background:#fff0ee;color:#8b2d25;padding:13px;border-radius:8px;margin:12px 0}.stop{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.stop:last-child{border-bottom:0}.bubble{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border-radius:50%;background:var(--teal);color:#fff;font-weight:800}.bubble.done{background:#2a9675}.stop strong{display:block}.stop small{color:var(--muted)}.evidence{display:flex;gap:8px;flex-wrap:wrap;margin:9px 0}.evidence a{font-size:12px}.signature{width:100%;height:150px;border:1px dashed #8eacad;border-radius:10px;touch-action:none;background:#fff}.footer{position:fixed;bottom:0;left:0;right:0;z-index:4;background:#fff;border-top:1px solid var(--line);padding:10px max(14px,env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:12px}.footer a{color:var(--teal);text-decoration:none;font-size:13px;font-weight:800}.offline{position:sticky;top:61px;z-index:4;background:#fff1c7;color:#654812;padding:10px 14px;font-size:13px;display:none}.offline.show{display:block}@media(max-width:460px){.grid{grid-template-columns:1fr}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<header><div><strong>4N · Mi Ruta</strong><small>{{ auth()->user()->name }}</small></div><a href="{{ route('portal.home') }}">Inicio</a></header>
+<div id="offline-banner" class="offline" role="status"></div>
+<main>
+@if(session('status'))<div class="success" role="status">{{ session('status') }}</div>@endif
+@if($errors->any())<div class="error" role="alert">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
+@yield('content')
+</main>
+<nav class="footer"><a href="{{ route('operations.driver.index') }}">Mis rutas</a><a href="{{ route('portal.profile') }}">Mi cuenta</a></nav>
+<script src="{{ asset('driver-offline.js') }}?v={{ filemtime(public_path('driver-offline.js')) }}" defer></script>
+@stack('scripts')
+</body></html>

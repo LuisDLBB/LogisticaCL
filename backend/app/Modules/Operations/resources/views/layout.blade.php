@@ -47,14 +47,15 @@
 <div class="shell"><aside class="sidebar" aria-label="Menú Operaciones">
 @php($receptionActive = request()->routeIs('operations.system-receptions.*') || (request()->routeIs('operations.loads.*') && (request()->route('type') === 'reception' || ($load->source_type ?? null) === 'reception')))
 @php($masterActive = request()->routeIs('operations.loads.*') && (request()->route('type') === 'master' || ($load->source_type ?? null) === 'master'))
-@php($processesActive = request()->routeIs('operations.dashboard','operations.lots.*','operations.issues.*'))
+@php($processesActive = request()->routeIs('operations.lots.*','operations.issues.*','operations.receptions.clients*'))
 @php($routesActive = request()->routeIs('operations.routes*'))
 @php($guideGenerationActive = request()->routeIs('operations.guide-generation.*') || request()->routeIs('operations.guides.bsale.*','operations.guides.show'))
 @php($departuresActive = request()->routeIs('operations.departures.*'))
 @php($configurationActive = request()->routeIs('operations.setup','operations.transport*','operations.post-origins*','operations.cleanup.*'))
+<a class="nav-link {{ request()->routeIs('operations.dashboard') ? 'active' : '' }}" href="{{ route('operations.dashboard') }}" @if(request()->routeIs('operations.dashboard')) aria-current="page" @endif>@include('portal.icon',['icon'=>'grid']) <span class="nav-text">Resumen operativo</span></a>
 <a class="nav-link {{ $receptionActive ? 'active' : '' }}" href="{{ route('operations.system-receptions.index') }}" @if($receptionActive) aria-current="page" @endif>@include('portal.icon',['icon'=>'truck']) <span class="nav-text">Recepción Sistema</span></a>
 <a class="nav-link {{ $masterActive ? 'active' : '' }}" href="{{ route('operations.loads.index','master') }}" @if($masterActive) aria-current="page" @endif>@include('portal.icon',['icon'=>'chart']) <span class="nav-text">Maestro Geolize</span></a>
-<a class="nav-link {{ $processesActive ? 'active' : '' }}" href="{{ route('operations.dashboard') }}" @if($processesActive) aria-current="page" @endif>@include('portal.icon',['icon'=>'grid']) <span class="nav-text">Procesos</span></a>
+<a class="nav-link {{ $processesActive ? 'active' : '' }}" href="{{ route('operations.lots.index') }}" @if($processesActive) aria-current="page" @endif>@include('portal.icon',['icon'=>'grid']) <span class="nav-text">Procesos</span></a>
 <a class="nav-link {{ $routesActive ? 'active' : '' }}" href="{{ route('operations.routes') }}" @if($routesActive) aria-current="page" @endif>@include('portal.icon',['icon'=>'truck']) <span class="nav-text">Programación de Rutas</span></a>
 <a class="nav-link {{ $departuresActive ? 'active' : '' }}" href="{{ route('operations.departures.overview') }}" @if($departuresActive) aria-current="page" @endif>@include('portal.icon',['icon'=>'truck']) <span class="nav-text">Salidas</span></a>
 <a class="nav-link {{ $guideGenerationActive ? 'active' : '' }}" href="{{ route('operations.guide-generation.overview') }}" @if($guideGenerationActive) aria-current="page" @endif>@include('portal.icon',['icon'=>'chart']) <span class="nav-text">Generación de Guías</span></a>
@@ -66,6 +67,7 @@
 <a class="{{ request()->routeIs('operations.transport') && request('type') === 'posta' ? 'active' : '' }}" href="{{ route('operations.transport') }}#postas">Posta 1 y Posta 2</a>
 <a class="{{ request()->routeIs('operations.post-origins') ? 'active' : '' }}" href="{{ route('operations.post-origins') }}">Orígenes de postas</a>
 @if(\App\Modules\Operations\Services\OperationAccess::supervisor(request()))
+<a class="{{ request()->routeIs('operations.drivers.access.*') ? 'active' : '' }}" href="{{ route('operations.drivers.access.index') }}">Accesos de choferes</a>
 <a class="{{ request()->routeIs('operations.cleanup.*') ? 'active' : '' }}" href="{{ route('operations.cleanup.index') }}">Limpiar datos</a>
 @endif
 </div></details>

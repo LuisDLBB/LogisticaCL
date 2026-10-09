@@ -418,7 +418,7 @@ class OperationsTransportCatalogTest extends TestCase
         $this->assertDatabaseHas('Ope_Choferes', ['id' => $post->driver_id, 'name' => 'Cristian Saldivia Guerrero']);
     }
 
-    public function test_trunk_transport_updates_only_its_first_posts_and_keeps_second_posts_editable(): void
+    public function test_trunk_transport_updates_first_posts_used_by_the_routes_and_keeps_later_posts_editable(): void
     {
         $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
         $user = User::factory()->create(['profile_name' => 'Administrador']);
@@ -426,11 +426,11 @@ class OperationsTransportCatalogTest extends TestCase
         $this->actingAs($user);
 
         $expectations = [
-            4 => ['plate' => 'ABCD12', 'rut' => '13012860-2', 'name' => 'Claudio Andres Castro Valenzuela', 'first_posts' => [8]],
+            4 => ['plate' => 'ABCD12', 'rut' => '13012860-2', 'name' => 'Claudio Andres Castro Valenzuela', 'first_posts' => [8, 9, 10]],
             5 => ['plate' => 'EFGH34', 'rut' => '10124367-2', 'name' => 'Nelson Luis Cisternas Rivera', 'first_posts' => [13, 14, 15, 16, 17]],
-            6 => ['plate' => 'IJKL56', 'rut' => '13172671-6', 'name' => 'Marcelo Alejandro Avendaño Tapia', 'first_posts' => [18, 19, 22, 23, 24]],
+            6 => ['plate' => 'IJKL56', 'rut' => '13172671-6', 'name' => 'Marcelo Alejandro Avendaño Tapia', 'first_posts' => [18, 19, 20, 22, 23, 24]],
         ];
-        $secondPostsBefore = DB::table('Ope_Postas')->where('tenant_id', $tenant->id)->whereIn('post_code', [9, 10, 11, 12, 20])->orderBy('post_code')->get(['post_code', 'plate', 'driver_id']);
+        $secondPostsBefore = DB::table('Ope_Postas')->where('tenant_id', $tenant->id)->whereIn('post_code', [11, 12])->orderBy('post_code')->get(['post_code', 'plate', 'driver_id']);
 
         foreach ($expectations as $trunkCode => $expected) {
             $trunk = DB::table('Ope_Troncales')->where(['tenant_id' => $tenant->id, 'trunk_code' => $trunkCode])->firstOrFail();
@@ -443,14 +443,14 @@ class OperationsTransportCatalogTest extends TestCase
             }
         }
 
-        $secondPostsAfter = DB::table('Ope_Postas')->where('tenant_id', $tenant->id)->whereIn('post_code', [9, 10, 11, 12, 20])->orderBy('post_code')->get(['post_code', 'plate', 'driver_id']);
+        $secondPostsAfter = DB::table('Ope_Postas')->where('tenant_id', $tenant->id)->whereIn('post_code', [11, 12])->orderBy('post_code')->get(['post_code', 'plate', 'driver_id']);
         $this->assertEquals($secondPostsBefore, $secondPostsAfter);
 
         $firstPost = DB::table('Ope_Postas')->where(['tenant_id' => $tenant->id, 'post_code' => 8])->firstOrFail();
         $this->put("/operaciones/transporte/posta/{$firstPost->id}", [
             'plate' => 'MNOP78', 'driver_rut' => '13012860-2', 'driver_name' => 'Claudio Andres Castro Valenzuela',
-        ])->assertSessionHasErrors('plate');
-        $this->assertDatabaseHas('Ope_Postas', ['id' => $firstPost->id, 'plate' => 'ABCD12']);
+        ])->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('Ope_Postas', ['id' => $firstPost->id, 'plate' => 'MNOP78']);
 
         $secondPost = DB::table('Ope_Postas')->where(['tenant_id' => $tenant->id, 'post_code' => 9])->firstOrFail();
         $this->put("/operaciones/transporte/posta/{$secondPost->id}", [
@@ -462,9 +462,9 @@ class OperationsTransportCatalogTest extends TestCase
             'plate' => 'QRST90', 'driver_rut' => '13012860-2', 'driver_name' => 'Claudio Andres Castro Valenzuela',
         ])->assertSessionHasNoErrors();
         $this->assertDatabaseHas('Ope_Postas', ['id' => $firstPost->id, 'plate' => 'QRST90']);
-        $this->assertDatabaseHas('Ope_Postas', ['id' => $secondPost->id, 'plate' => 'MNOP78']);
+        $this->assertDatabaseHas('Ope_Postas', ['id' => $secondPost->id, 'plate' => 'QRST90']);
         $this->get('/operaciones/transporte?type=posta&record='.$secondPost->id)->assertOk()->assertSee('Guardar transporte');
-        $this->get('/operaciones/transporte?type=posta&record='.$firstPost->id)->assertOk()->assertSee('Editar troncal')->assertDontSee('Guardar transporte');
+        $this->get('/operaciones/transporte?type=posta&record='.$firstPost->id)->assertOk()->assertSee('Editar troncal');
     }
 
     public function test_updating_an_air_trunk_requires_choosing_whether_to_extend_the_change(): void

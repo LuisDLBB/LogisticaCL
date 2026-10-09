@@ -53,6 +53,10 @@ class OperationLoadController extends Controller
             $query->where('errors', '<>', '[]');
         }
 
-        return view('operations::load-show', ['load' => $record, 'rows' => $query->orderBy('line')->paginate(40)->withQueryString()]);
+        return view('operations::load-show', [
+            'load' => $record,
+            'comparison' => $record->source_type === 'master' ? json_decode($record->comparison ?? '', true) : null,
+            'rows' => $query->orderBy('line')->paginate(40)->withQueryString(),
+        ]);
     }
 }

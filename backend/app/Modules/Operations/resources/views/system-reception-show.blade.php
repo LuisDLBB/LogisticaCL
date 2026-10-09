@@ -42,7 +42,7 @@
         <form method="POST" action="{{ route('operations.system-receptions.complete',$reception->id) }}" id="system-complete-form">@csrf<button type="submit" id="system-complete-button" @disabled($scanCount === 0)>Cerrar recepción y enviar a Operaciones</button></form>
     @else
         <p><strong>{{ $scanCount }} bultos registrados.</strong> La recepción ya está disponible para preparar un proceso de Operaciones.</p>
-        <a class="button" href="{{ route('operations.dashboard',['load'=>$reception->load_id]).'#preparar-proceso' }}">Preparar proceso con esta recepción</a>
+        <a class="button" href="{{ route('operations.lots.index',['load'=>$reception->load_id]).'#preparar-proceso' }}">Preparar proceso con esta recepción</a>
     @endif
 </section>
 @endif

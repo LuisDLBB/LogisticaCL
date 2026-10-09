@@ -75,7 +75,7 @@ class OperationsSystemReceptionTest extends TestCase
         $this->assertSame('4N202610076109-119', $source->tracking);
         $this->assertEquals(4.125, json_decode($source->data, true)['weight']);
         $this->assertSame('G-123', json_decode($source->data, true)['customer_guide']);
-        $this->get('/operaciones?load='.$closed->load_id)->assertOk()
+        $this->get('/operaciones/procesos?load='.$closed->load_id)->assertOk()
             ->assertSee('Recepción Sistema #'.$reception->id)
             ->assertSee($client->commercial_name)
             ->assertSee($user->name)

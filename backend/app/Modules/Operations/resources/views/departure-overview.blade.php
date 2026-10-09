@@ -23,7 +23,7 @@
                 <td><a href="{{ route('operations.departures.index', $lot->id) }}">Ver salidas y planilla</a></td>
             </tr>
         @empty
-            <tr><td colspan="7" class="ope-empty">Todavía no hay procesos preparados. <a href="{{ route('operations.dashboard') }}">Preparar un proceso</a>.</td></tr>
+            <tr><td colspan="7" class="ope-empty">Todavía no hay procesos preparados. <a href="{{ route('operations.lots.index') }}">Preparar un proceso</a>.</td></tr>
         @endforelse
         </tbody>
     </table>

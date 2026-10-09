@@ -4,7 +4,7 @@
 <h1>Proceso #{{ $lot->id }} · {{ $lot->name }}</h1><p class="intro">{{ $lot->operation_date }} · Maestro #{{ $lot->master_load_id }}</p>
 <div class="ope-grid"><div class="card"><span class="ope-stat">{{ $count }}</span>Bultos incluidos</div><div class="card"><span class="ope-stat">{{ number_format((float)$weight,3,',','.') }} kg</span>Peso de Operaciones y respaldo Geolize</div><div class="card"><span class="ope-stat">{{ $issues->whereNull('resolved_at')->count() }}</span>Incidencias pendientes</div></div>
 @if($issues->whereNull('resolved_at')->count())<p class="warning">El total de peso es provisional hasta resolver las incidencias. Las salidas quedan bloqueadas.</p>@endif
-<div class="ope-actions"><a class="button" href="{{ route('operations.departures.index',$lot->id) }}">Programar salidas</a><a href="{{ route('operations.dashboard') }}">Volver a procesos</a></div>
+<div class="ope-actions"><a class="button" href="{{ route('operations.departures.index',$lot->id) }}">Programar salidas</a><a href="{{ route('operations.lots.index') }}">Volver a procesos</a></div>
 <h2>Incidencias</h2>
 @if(\App\Modules\Operations\Services\OperationAccess::supervisor(request()) && $issues->whereNull('resolved_at')->where('code','!=','empty_lot')->isNotEmpty())
 <div class="ope-bulk-save no-print" data-resolutions-endpoint="{{ route('operations.issues.resolve-many',$lot->id) }}" data-csrf="{{ csrf_token() }}">

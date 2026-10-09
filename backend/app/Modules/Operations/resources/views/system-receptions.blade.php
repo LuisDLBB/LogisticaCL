@@ -2,7 +2,7 @@
 @section('title','Recepción Sistema')
 @section('content')
 <h1>Recepción Sistema</h1>
-<p class="intro">Registra la guía o factura, adjunta su respaldo y escanea los bultos. Al cerrar la recepción, aparecerá como fuente del proceso de Operaciones sin cargar un Excel.</p>
+<p class="intro">Registra la guía o factura y escanea los bultos, o importa la recepción desde Excel. Ambas opciones quedan disponibles para preparar el proceso de Operaciones.</p>
 <section class="card">
     <h2>Nueva recepción</h2>
     <form method="POST" action="{{ route('operations.system-receptions.store') }}" class="ope-form">@csrf
@@ -15,11 +15,16 @@
     </form>
     @if($clients->isEmpty())<p class="warning">No hay clientes activos para esta empresa.</p>@endif
 </section>
+<section class="card" id="cargar-excel" style="margin-top:16px">
+    <h2>Cargar recepción desde Excel</h2>
+    <p class="note">Usa tu archivo de recepciones .xlsx. Podrás revisar la importación y sus errores antes de preparar el proceso.</p>
+    @include('operations::reception-excel-form')
+    <p class="note"><a href="{{ route('operations.loads.index', 'reception') }}">Ver historial de archivos Excel</a></p>
+</section>
 <h2>Recepciones registradas</h2>
 <div class="card table-wrap"><table class="ope-table"><thead><tr><th>N.º</th><th>Fecha</th><th>Usuario</th><th>Cliente</th><th>Documento</th><th>Estado</th><th></th></tr></thead><tbody>
 @forelse($receptions as $record)<tr><td>#{{ $record->id }}</td><td>{{ $record->created_at }}</td><td>{{ $record->user_name }}</td><td>{{ $record->client_name }}</td><td>{{ $record->document_type === 'guia' ? 'Guía' : 'Factura' }} {{ $record->document_number }}</td><td>{{ ['awaiting_photo'=>'Falta respaldo','scanning'=>'Escaneando','completed'=>'Cerrada'][$record->status] ?? $record->status }}</td><td><a href="{{ route('operations.system-receptions.show',$record->id) }}">{{ $record->status === 'completed' ? 'Ver' : 'Continuar' }}</a></td></tr>
 @empty<tr><td colspan="7" class="ope-empty">Todavía no hay recepciones registradas.</td></tr>@endforelse
 </tbody></table></div>
 @include('operations::pager',['rows'=>$receptions])
-<p class="note">¿Buscas una carga anterior? <a href="{{ route('operations.loads.index','reception') }}">Ver recepciones cargadas desde Excel</a>.</p>
 @endsection

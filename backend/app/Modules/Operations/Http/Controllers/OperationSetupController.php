@@ -4,6 +4,7 @@ namespace App\Modules\Operations\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Operations\Services\OperationAccess;
+use App\Modules\Operations\Services\OperationGuideRoutePlanner;
 use App\Modules\Operations\Services\OperationWorkflow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -267,17 +268,6 @@ class OperationSetupController extends Controller
         }
 
         $table = $type === 'troncal' ? 'Ope_Troncales' : 'Ope_Postas';
-        if ($type === 'posta') {
-            $linkedTrunk = DB::table('Ope_Agencias as agency')
-                ->join('Ope_Troncales as trunk', 'trunk.id', '=', 'agency.trunk_id')
-                ->where('agency.tenant_id', $tenant)
-                ->where('agency.post_id', $record)
-                ->whereIn('trunk.trunk_code', [4, 5, 6])
-                ->value('trunk.name');
-            if ($linkedTrunk !== null) {
-                throw ValidationException::withMessages(['plate' => "Esta Posta 1 toma la patente y el chofer de {$linkedTrunk}. Edita la troncal para actualizarlos juntos."]);
-            }
-        }
         $name = DB::transaction(function () use ($request, $tenant, $table, $type, $record, $plate, $rut, $driverName, $extendToOtherAirRoutes): string {
             $before = DB::table($table)->where(['tenant_id' => $tenant, 'id' => $record])->lockForUpdate()->firstOrFail();
             $previousDriver = $before->driver_id ? DB::table('Ope_Choferes')->where(['tenant_id' => $tenant, 'id' => $before->driver_id])->first() : null;
@@ -323,13 +313,23 @@ class OperationSetupController extends Controller
             }
 
             if ($type === 'troncal' && in_array($before->trunk_code, [4, 5, 6], true)) {
-                $firstPostIds = DB::table('Ope_Agencias')
-                    ->where(['tenant_id' => $tenant, 'trunk_id' => $record])
-                    ->distinct()
-                    ->pluck('post_id');
+                $agencies = DB::table('Ope_Agencias')->where(['tenant_id' => $tenant, 'trunk_id' => $record])->get();
+                $allAgencies = DB::table('Ope_Agencias')->where('tenant_id', $tenant)->get()->keyBy('agency_code');
+                $allPosts = DB::table('Ope_Postas')->where('tenant_id', $tenant)->get();
+                $postsById = $allPosts->keyBy('id');
+                $postsByCode = $allPosts->keyBy('post_code');
+                $planner = app(OperationGuideRoutePlanner::class);
+                $firstPostIds = $agencies->pluck('post_id');
+                foreach ($agencies as $agency) {
+                    foreach ($planner->legs($agency, $before, $postsById, $postsByCode, $allAgencies) as $leg) {
+                        if ($leg['role'] === 'posta1' && $leg['transportKind'] === 'post') {
+                            $firstPostIds->push($leg['transportId']);
+                        }
+                    }
+                }
                 $firstPosts = DB::table('Ope_Postas')
                     ->where('tenant_id', $tenant)
-                    ->whereIn('id', $firstPostIds)
+                    ->whereIn('id', $firstPostIds->unique())
                     ->lockForUpdate()
                     ->get();
                 foreach ($firstPosts as $post) {

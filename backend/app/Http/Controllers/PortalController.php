@@ -56,8 +56,9 @@ class PortalController extends Controller
         ]);
     }
 
-    public function module(string $module): View|RedirectResponse
+    public function module(Request $request, string $module): View|RedirectResponse
     {
+        abort_if($request->attributes->get('portal_tenant')?->pivot?->role_code === 'driver', 403, 'Tu acceso de chofer solo permite consultar tus rutas.');
         if ($module === 'operaciones') {
             return redirect()->route('operations.dashboard');
         }
@@ -78,16 +79,16 @@ class PortalController extends Controller
         $user = $request->user();
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('MBA_users')->ignore($user->id)],
+            'email' => [$request->attributes->get('portal_tenant')?->pivot?->role_code === 'driver' ? 'nullable' : 'required', 'email', 'max:255', Rule::unique('MBA_users')->ignore($user->id)],
             'phone' => ['nullable', 'string', 'max:40'],
             'current_password' => ['required', 'current_password'],
         ], ['current_password.current_password' => 'La contraseña actual no es correcta.', 'current_password.required' => 'Confirma tu contraseña actual para guardar.', 'email.unique' => 'Ese correo ya está en uso.']);
         DB::transaction(function () use ($user, $data, $request): void {
-            if ($user->email !== $data['email']) {
+            if ($user->email !== ($data['email'] ?? null)) {
                 $user->email_verified_at = null;
             }
             $user->name = $data['name'];
-            $user->email = $data['email'];
+            $user->email = $data['email'] ?? null;
             $user->phone = $data['phone'];
             $user->save();
             $this->record($request, 'Datos personales actualizados', 'Mi cuenta');

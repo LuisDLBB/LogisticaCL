@@ -7,6 +7,7 @@
     $agencyId = $agencyId ?? null;
 @endphp
 <button class="route-visual-node route-visual-node-{{ $nodeType }}" type="button" data-route-node
+    data-route-stop="{{ $nodeLabel }}"
     data-route-title="{{ $routeLabel }}" data-route-driver="{{ $segment['driver_name'] ?? 'No aplica' }}"
     data-route-rut="{{ $segment['driver_rut'] ?? 'No aplica' }}" data-route-plate="{{ $segment['plate'] ?? 'No aplica' }}"
     data-route-origin="{{ $segment['origin'] }}" data-route-destination="{{ $segment['destination'] }}"

@@ -237,13 +237,14 @@ function refreshRouteForm(){
     routeForm.querySelector('[data-route-scope-note]').textContent=temporary
         ? 'Solo se modifica la salida elegida. Si es una troncal terrestre, sus Posta 1 relacionadas reciben la patente y el chofer; Posta 2 conserva los suyos.'
         : currentRouteNode.dataset.routeInherited==='1'
-            ? 'Patente y chofer se guardan en la troncal y se heredan a todas sus Posta 1. La dirección de destino se guarda solo para esta agencia. Las salidas ya programadas conservan sus datos.'
+            ? 'Patente y chofer se guardan en esta Posta 1 y se comparten con sus paradas. La troncal y las otras postas conservan sus datos. La dirección de destino se guarda solo para esta agencia. Las salidas ya programadas conservan sus datos.'
             : 'Los cambios permanentes se guardan en el catálogo. Las salidas ya programadas conservan sus datos.';
     routeForm.querySelectorAll('[data-route-transport-row] input').forEach(input=>{input.readOnly=currentRouteNode.dataset.routeInherited==='1'&&temporary});
     const values=temporary&&selected?{plate:selected.plate,driver_name:selected.driver_name,driver_rut:selected.driver_rut,destination_address:selected.destination_address}:{plate:currentRouteNode.dataset.routePlate,driver_name:currentRouteNode.dataset.routeDriver,driver_rut:currentRouteNode.dataset.routeRut,destination_address:currentRouteNode.dataset.routeAddress};
     for(const field of ['plate','driver_name','driver_rut','destination_address'])routeForm.querySelector(`[data-route-input="${field}"]`).value=values[field]==='No aplica'?'':values[field]||'';
 }
 document.querySelectorAll('[data-route-node]').forEach(node=>node.addEventListener('click',()=>{
+    routeDialog.querySelector('#route-visual-dialog-title').textContent='Datos del recorrido · '+node.dataset.routeStop;
     for(const field of ['title','driver','rut','plate','origin','destination','agencies']){
         routeDialog.querySelector(`[data-route-detail="${field}"]`).textContent=node.dataset[`route${field[0].toUpperCase()}${field.slice(1)}`]||'No aplica';
     }
@@ -265,7 +266,7 @@ document.querySelectorAll('[data-route-node]').forEach(node=>node.addEventListen
         departureSelect.replaceChildren(new Option('Selecciona una salida', ''));
         for(const departure of options)departureSelect.add(new Option(`#${departure.id} · ${departure.departure_date} · ${departure.name}`,departure.id));
         routeForm.querySelectorAll('[data-route-transport-row]').forEach(row=>{row.hidden=flight;row.querySelector('input').disabled=flight});
-        routeForm.querySelector('[data-route-commune-note]').textContent=flight?'En este punto se edita la dirección de origen de la posta aérea.':node.dataset.routeInherited==='1'?'Puedes cambiar aquí la dirección de destino de esta agencia. Para las próximas salidas también puedes cambiar la patente y el chofer; el cambio se heredará a la troncal y sus Posta 1.':options.length?'Selecciona «Solo una salida programada» para modificar una salida pendiente concreta.':'No hay salidas pendientes para este tramo; puedes cambiar el catálogo para futuras salidas.';
+        routeForm.querySelector('[data-route-commune-note]').textContent=flight?'En este punto se edita la dirección de origen de la posta aérea.':node.dataset.routeInherited==='1'?'La dirección corresponde a esta agencia. Patente y chofer de esta posta se comparten con sus otras paradas, si las tiene.':options.length?'Selecciona «Solo una salida programada» para modificar una salida pendiente concreta.':'No hay salidas pendientes para este tramo; puedes cambiar el catálogo para futuras salidas.';
         refreshRouteForm();
     }
     routeDialog.showModal();

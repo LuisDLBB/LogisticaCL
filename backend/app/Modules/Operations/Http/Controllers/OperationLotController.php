@@ -4,10 +4,12 @@ namespace App\Modules\Operations\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Operations\Services\OperationAccess;
+use App\Modules\Operations\Services\OperationClientAdjuster;
 use App\Modules\Operations\Services\OperationWorkflow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -81,6 +83,38 @@ class OperationLotController extends Controller
         }
 
         return $summaries;
+    }
+
+    public function clientAdjustment(Request $request, int $load, OperationClientAdjuster $adjuster): View
+    {
+        $tenant = OperationAccess::tenant($request);
+        $reception = DB::table('Ope_Cargas')->where(['id' => $load, 'tenant_id' => $tenant, 'source_type' => 'reception', 'status' => 'completed'])->firstOrFail();
+        $masters = DB::table('Ope_Cargas')->where(['tenant_id' => $tenant, 'source_type' => 'master', 'status' => 'completed'])->orderByDesc('id')->get(['id', 'filename', 'created_at']);
+        $masterId = $request->integer('master_load_id');
+        $preview = $masterId > 0 ? $adjuster->preview($tenant, $load, $masterId) : null;
+        $status = (string) $request->query('status', 'all');
+        if (! in_array($status, ['all', 'changed', 'unchanged', 'missing', 'ambiguous', 'invalid'], true)) {
+            $status = 'all';
+        }
+        $results = collect($preview['rows'] ?? []);
+        if ($status !== 'all') {
+            $results = $results->where('status', $status)->values();
+        }
+        $page = max(1, $request->integer('page', 1));
+        $rows = new LengthAwarePaginator($results->forPage($page, 50)->values(), $results->count(), 50, $page, ['path' => $request->url(), 'query' => $request->query()]);
+
+        return view('operations::client-adjustment', compact('reception', 'masters', 'masterId', 'preview', 'status', 'rows'));
+    }
+
+    public function applyClientAdjustment(Request $request, int $load, OperationClientAdjuster $adjuster): RedirectResponse
+    {
+        OperationAccess::requireSupervisor($request);
+        $input = $request->validate(['master_load_id' => ['required', 'integer']]);
+        $counts = $adjuster->apply(OperationAccess::tenant($request), $request->user()->id, $load, (int) $input['master_load_id']);
+        $unresolved = $counts['missing'] + $counts['ambiguous'] + $counts['invalid'];
+
+        return redirect()->route('operations.receptions.clients', ['load' => $load, 'master_load_id' => $input['master_load_id']])
+            ->with('status', $counts['changed'].' clientes ajustados con Geolize. '.$unresolved.' códigos quedaron sin ajustar para revisión.');
     }
 
     public function store(Request $request, OperationWorkflow $workflow): RedirectResponse
