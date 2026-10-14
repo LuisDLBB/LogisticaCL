@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Fleet\FleetAccess;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,7 +34,9 @@ class PortalController extends Controller
             $query->whereRaw('LOWER(username) = ?', [$identifier])->orWhereRaw('LOWER(email) = ?', [$identifier]);
         })->limit(2)->get();
         $user = $candidates->count() === 1 ? $candidates->first() : null;
-        if (! $user || ! Hash::check($data['password'], $user->password) || ! $user->tenants()->where('code', '4N')->where('MBA_tenants.is_active', true)->wherePivot('is_active', true)->exists()) {
+        $hasPortalAccess = $user?->tenants()->where('code', '4N')->where('MBA_tenants.is_active', true)->wherePivot('is_active', true)->exists() ?? false;
+        $hasFleetAccess = $user !== null && app(FleetAccess::class)->canEnter($user);
+        if (! $user || ! Hash::check($data['password'], $user->password) || (! $hasPortalAccess && ! $hasFleetAccess)) {
             RateLimiter::hit($key, 60);
             throw ValidationException::withMessages(['username' => 'Usuario o contraseña incorrectos, o acceso no habilitado.']);
         }
@@ -58,9 +61,15 @@ class PortalController extends Controller
 
     public function module(Request $request, string $module): View|RedirectResponse
     {
-        abort_if($request->attributes->get('portal_tenant')?->pivot?->role_code === 'driver', 403, 'Tu acceso de chofer solo permite consultar tus rutas.');
+        abort_if($request->attributes->get('portal_tenant')?->code !== '4N' && $module !== 'flota', 403);
+        abort_if($request->attributes->get('portal_tenant')?->pivot?->role_code === 'driver' && $module !== 'flota', 403, 'Tu acceso de chofer solo permite consultar tus rutas.');
         if ($module === 'operaciones') {
             return redirect()->route('operations.dashboard');
+        }
+        if ($module === 'flota') {
+            abort_unless(app(FleetAccess::class)->canEnter($request->user()), 403);
+
+            return redirect()->route('fleet.home');
         }
 
         $modules = ['comercial' => 'Comercial', 'post-venta' => 'Post Venta', 'flota' => 'Flota', 'operaciones' => 'Operaciones', 'finanzas' => 'Finanzas'];
@@ -129,7 +138,10 @@ class PortalController extends Controller
 
     private function record(Request $request, string $action, string $module): void
     {
-        $tenant = $request->attributes->get('portal_tenant') ?? $request->user()->tenants()->where('code', '4N')->firstOrFail();
+        $tenant = $request->attributes->get('portal_tenant')
+            ?? $request->user()->tenants()->where('code', '4N')->wherePivot('is_active', true)->first()
+            ?? app(FleetAccess::class)->availableTenants($request->user())->first();
+        abort_unless($tenant, 403);
         DB::table('user_activities')->insert(['user_id' => $request->user()->id, 'tenant_id' => $tenant->id, 'action' => $action, 'module' => $module, 'created_at' => now()]);
     }
 }

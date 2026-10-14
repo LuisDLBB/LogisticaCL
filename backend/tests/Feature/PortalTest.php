@@ -146,7 +146,17 @@ class PortalTest extends TestCase
 
     public function test_module_navigation_records_activity_and_invalid_module_is_not_found(): void
     {
-        $this->actingAs($this->member())->get('/modulos/flota')->assertOk()->assertSee('Flota');
+        $user = $this->member();
+        $tenant = Tenant::query()->where('code', '4N')->firstOrFail();
+        $membershipId = DB::table('MBA_tenant_users')->where('tenant_id', $tenant->id)->where('user_id', $user->id)->value('id');
+        $profileId = DB::table('fleet_profiles')->where('tenant_id', $tenant->id)->where('code', 'read_only')->value('id');
+        DB::table('fleet_membership_profiles')->insert([
+            'tenant_user_id' => $membershipId, 'fleet_profile_id' => $profileId,
+            'is_active' => true, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->actingAs($user)->get('/modulos/flota')->assertRedirect(route('fleet.home'));
+        $this->get('/control-flota')->assertOk();
         $this->assertDatabaseHas('user_activities', ['module' => 'Flota', 'action' => 'Consulta de Flota']);
         $this->get('/modulos/desconocido')->assertNotFound();
         $this->assertDatabaseCount('user_activities', 1);

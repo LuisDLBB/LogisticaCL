@@ -46,7 +46,7 @@
 <body>
 <header class="topbar">
     <a class="brand" href="{{ route('provider-payments.dashboard') }}"><span class="brand-mark">4N</span><span><strong>Pago Proveedores</strong><small>4N Logística · PMBC</small></span></a>
-    <div class="topbar-right">@yield('topbar-checklist')<div class="user-area"><a href="{{ route('portal.home') }}">Inicio</a> · <a href="{{ route('portal.profile') }}">{{ auth()->user()?->name }}</a><form method="POST" action="{{ route('logout') }}" style="display:inline">@csrf<button type="submit" style="border:0;background:none;color:inherit;cursor:pointer;font:inherit">Salir</button></form></div></div>
+    <div class="topbar-right">@yield('topbar-checklist')<div class="user-area"><a href="{{ route('portal.home') }}">Inicio</a>@if(auth()->user() && app(\App\Fleet\FleetAccess::class)->canEnter(auth()->user())) · <a href="{{ route('fleet.home') }}">Control de Flota</a>@endif · <a href="{{ route('portal.profile') }}">{{ auth()->user()?->name }}</a><form method="POST" action="{{ route('logout') }}" style="display:inline">@csrf<button type="submit" style="border:0;background:none;color:inherit;cursor:pointer;font:inherit">Salir</button></form></div></div>
 </header>
 <div class="shell">
     <aside class="sidebar" aria-label="Menú Pago Proveedores">
