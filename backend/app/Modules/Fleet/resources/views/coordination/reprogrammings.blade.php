@@ -7,9 +7,10 @@
 <div class="card">
     <h2><a href="{{ route('fleet.requests.show', $row->serviceRequest) }}">{{ $row->serviceRequest->ret_code }}</a> · {{ $row->serviceRequest->client_name_snapshot }}</h2>
     <p><strong>Punto:</strong> {{ $row->serviceRequest->point_name_snapshot }}<br><strong>Vigente:</strong> {{ $row->previous_date->format('d-m-Y') }} · {{ substr($row->previous_window_start,0,5) }}–{{ substr($row->previous_window_end,0,5) }}<br><strong>Propuesta:</strong> {{ $row->proposed_date->format('d-m-Y') }} · {{ substr($row->proposed_window_start,0,5) }}–{{ substr($row->proposed_window_end,0,5) }}<br><strong>Motivo:</strong> {{ $row->reason }}<br><strong>Solicitante:</strong> usuario #{{ $row->requested_by_user_id }}</p>
+    <p>Conductor propuesto: {{ \App\Models\User::find($row->proposed_driver_user_id)?->name ?? $row->serviceRequest->driver?->name }} · Vehículo propuesto: {{ \App\Models\Vehicle::find($row->proposed_vehicle_id)?->plate ?? $row->serviceRequest->vehicle?->plate }}</p>
     <form method="post" action="{{ route('fleet.reprogramming.decide', $row) }}">
         @csrf
-        <label>Respuesta del cliente</label><textarea name="customer_response" rows="2" required></textarea>
+        <label>Respuesta del cliente</label><textarea name="customer_response" rows="2" required>{{ $row->customer_response }}</textarea>
         <label>Observación de Postventa (opcional)</label><textarea name="decision_notes" rows="2"></textarea>
         <p><button name="decision" value="approved">Aprobar</button> <button name="decision" value="rejected">Rechazar</button></p>
     </form>

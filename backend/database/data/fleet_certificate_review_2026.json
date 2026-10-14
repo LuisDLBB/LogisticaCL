@@ -1,0 +1,1186 @@
+[
+  {
+    "sha256": "582968e8bcaa73e2b80912ece531fa7f4ca830ab73843ef10c5f8e00cbb71541",
+    "filename": "Dog_PLRL_48_sep2026.pdf",
+    "storage_path": "fleet/documents/582968e8bcaa73e2b80912ece531fa7f4ca830ab73843ef10c5f8e00cbb71541.pdf",
+    "tenant_code": null,
+    "kind": "inspection_bundle",
+    "title": "Revisión técnica y gases",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-08-07",
+    "expires_at": "2027-02-05",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Dog_PLRL_48_sep2026.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1jTUJ5XayfnHDTLWX2eZk-rj2w30RI9RZ/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "05/02/2027 / 05/02/2027",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "PLRL48": {
+        "page": 4,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2027-02-05",
+            "display": "05/02/2027",
+            "precision": "day",
+            "type": "technical_inspection",
+            "page": 4
+          },
+          "gas_certificate_expires_at": {
+            "date": "2027-02-05",
+            "display": "05/02/2027",
+            "precision": "day",
+            "type": "gas_certificate",
+            "page": 3
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "a48b6fd3743d2305f65e6c949adb690807f1751e4120f544c7f51c2f070f4d20",
+    "filename": "dog_RPVT_38_spt2026.pdf",
+    "storage_path": "fleet/documents/a48b6fd3743d2305f65e6c949adb690807f1751e4120f544c7f51c2f070f4d20.pdf",
+    "tenant_code": null,
+    "kind": "inspection_bundle",
+    "title": "Revisión técnica y gases",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-08-18",
+    "expires_at": "2027-02-18",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "dog_RPVT_38_spt2026.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1GVjcNiLYn14Jn6dixa3yoOXVnIN9xIat/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "18/02/2027 / 18/02/2027",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "RPVT38": {
+        "page": 4,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2027-02-18",
+            "display": "18/02/2027",
+            "precision": "day",
+            "type": "technical_inspection",
+            "page": 4
+          },
+          "gas_certificate_expires_at": {
+            "date": "2027-02-18",
+            "display": "18/02/2027",
+            "precision": "day",
+            "type": "gas_certificate",
+            "page": 3
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "161d25d2527a49f751de2e9baf0d0b40ed45927b4457f93fc60955edbc315d85",
+    "filename": "dog_TFLJ_42SEP2026.pdf",
+    "storage_path": "fleet/documents/161d25d2527a49f751de2e9baf0d0b40ed45927b4457f93fc60955edbc315d85.pdf",
+    "tenant_code": null,
+    "kind": "inspection_bundle",
+    "title": "Revisión técnica y gases",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-07-14",
+    "expires_at": "2027-01-14",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "dog_TFLJ_42SEP2026.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/16EIF-C-ft0c_WqPu2h1X4VAeMY75iQCa/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "14/01/2027 / 14/01/2027",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "TFLJ42": {
+        "page": 3,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2027-01-14",
+            "display": "14/01/2027",
+            "precision": "day",
+            "type": "technical_inspection",
+            "page": 3
+          },
+          "gas_certificate_expires_at": {
+            "date": "2027-01-14",
+            "display": "14/01/2027",
+            "precision": "day",
+            "type": "gas_certificate",
+            "page": 4
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "6d60578de5cedfcaf4e0eae83a8042d5102270341bb7fa9c001c6158cbf09e4c",
+    "filename": "Rev. tecnica Abril 2027 KLLX31.pdf",
+    "storage_path": "fleet/documents/6d60578de5cedfcaf4e0eae83a8042d5102270341bb7fa9c001c6158cbf09e4c.pdf",
+    "tenant_code": null,
+    "kind": "technical_inspection",
+    "title": "Revisión técnica",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-04-30",
+    "expires_at": "2027-04-30",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Rev. tecnica Abril 2027 KLLX31.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1sZluTubXfxsDxsv1wP2dKKXZY9Cfbe2J/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "abril 2027",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "KLLX31": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2027-04-30",
+            "display": "abril 2027",
+            "precision": "month",
+            "type": "technical_inspection",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "853a5899e5a0255ecf972b5a97e172cd028a1bd6acf8947233cf969c832e4de8",
+    "filename": "Contaminantes 23-09-2026 TRZJ37.pdf",
+    "storage_path": "fleet/documents/853a5899e5a0255ecf972b5a97e172cd028a1bd6acf8947233cf969c832e4de8.pdf",
+    "tenant_code": null,
+    "kind": "gas_certificate",
+    "title": "Emisiones contaminantes",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-03-23",
+    "expires_at": "2026-09-23",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Contaminantes 23-09-2026 TRZJ37.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1FrDIZlKOfwd1982vMrmQkqr0FQ33Y9xU/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "23/09/2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "TRZJ37": {
+        "page": 1,
+        "verified_expirations": {
+          "gas_certificate_expires_at": {
+            "date": "2026-09-23",
+            "display": "23/09/2026",
+            "precision": "day",
+            "type": "gas_certificate",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "4632c8a888288e1252b6342df2cc624dbf31d959d326877bc72c36f5041a8c3c",
+    "filename": "Rev. tecnica 23-09-2026 TRZJ37.pdf",
+    "storage_path": "fleet/documents/4632c8a888288e1252b6342df2cc624dbf31d959d326877bc72c36f5041a8c3c.pdf",
+    "tenant_code": null,
+    "kind": "technical_inspection",
+    "title": "Revisión técnica",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-03-23",
+    "expires_at": "2026-09-23",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Rev. tecnica 23-09-2026 TRZJ37.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1ZbAffpcKe1ByF7OFlIUTtdqYeIAhW2tM/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "23/09/2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "TRZJ37": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2026-09-23",
+            "display": "23/09/2026",
+            "precision": "day",
+            "type": "technical_inspection",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "a90a777d7f3344af75bae19c7f01794ce45055a85d3259d448ee88029b426a19",
+    "filename": "contaminantes 21-09-2026 VBPD72.pdf",
+    "storage_path": "fleet/documents/a90a777d7f3344af75bae19c7f01794ce45055a85d3259d448ee88029b426a19.pdf",
+    "tenant_code": null,
+    "kind": "gas_certificate",
+    "title": "Emisiones contaminantes",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-03-23",
+    "expires_at": "2026-09-21",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "contaminantes 21-09-2026 VBPD72.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1l_S89v-JxBKoPT8l5TdcyC3Lbn6SN5sO/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "21/09/2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "VBPD72": {
+        "page": 1,
+        "verified_expirations": {
+          "gas_certificate_expires_at": {
+            "date": "2026-09-21",
+            "display": "21/09/2026",
+            "precision": "day",
+            "type": "gas_certificate",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "f170b3ce47dea049722d5f4dfe294ac13fd4531bc1e73ea0862afd75e068b024",
+    "filename": "Rev. tecnica 21-09-2026 VBPD72.pdf",
+    "storage_path": "fleet/documents/f170b3ce47dea049722d5f4dfe294ac13fd4531bc1e73ea0862afd75e068b024.pdf",
+    "tenant_code": null,
+    "kind": "technical_inspection",
+    "title": "Revisión técnica",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-03-23",
+    "expires_at": "2026-09-21",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Rev. tecnica 21-09-2026 VBPD72.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1rjxn5NZNWVX5GJ94GP7zHY5jT-DPkxHb/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "21/09/2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "VBPD72": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2026-09-21",
+            "display": "21/09/2026",
+            "precision": "day",
+            "type": "technical_inspection",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "684f35836bdee7985009536e98efff7ee411e3657579404f7bbc2a4f993934ff",
+    "filename": "Contaminante octubre 2026 KLLX31.pdf",
+    "storage_path": "fleet/documents/684f35836bdee7985009536e98efff7ee411e3657579404f7bbc2a4f993934ff.pdf",
+    "tenant_code": null,
+    "kind": "gas_certificate",
+    "title": "Emisiones contaminantes",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-04-30",
+    "expires_at": "2026-10-31",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Contaminante octubre 2026 KLLX31.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1U_EUrEaeEBtdexPOGmBXdBnbh-MtOypY/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "octubre 2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "KLLX31": {
+        "page": 1,
+        "verified_expirations": {
+          "gas_certificate_expires_at": {
+            "date": "2026-10-31",
+            "display": "octubre 2026",
+            "precision": "month",
+            "type": "gas_certificate",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "4acc5ac397d4d5df3d34bc6df3c4fc4f383b2f50ef40a68bebf5d9f2eb102504",
+    "filename": "KLLX32-13.pdf",
+    "storage_path": "fleet/documents/4acc5ac397d4d5df3d34bc6df3c4fc4f383b2f50ef40a68bebf5d9f2eb102504.pdf",
+    "tenant_code": null,
+    "kind": "gas_certificate",
+    "title": "Emisiones contaminantes",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2025-05-15",
+    "expires_at": "2026-05-31",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "KLLX32_Gases.png",
+      "Enlace de origen": "https://drive.google.com/file/d/1hCwsjUvd3saYhV63oDrLnXZ4OnPdezfC/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "mayo 2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "KLLX32": {
+        "page": 1,
+        "verified_expirations": {
+          "gas_certificate_expires_at": {
+            "date": "2026-05-31",
+            "display": "mayo 2026",
+            "precision": "month",
+            "type": "gas_certificate",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "d679bf8228906e10ca6574078f8d8a0e32c172135837d4c81ce5724d68e3f92a",
+    "filename": "KLLX32-14.pdf",
+    "storage_path": "fleet/documents/d679bf8228906e10ca6574078f8d8a0e32c172135837d4c81ce5724d68e3f92a.pdf",
+    "tenant_code": null,
+    "kind": "technical_inspection",
+    "title": "Revisión técnica",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2025-05-15",
+    "expires_at": "2026-05-31",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "KLLX32_Revision Tecnica.png",
+      "Enlace de origen": "https://drive.google.com/file/d/1eO9Nen6KzgfhDw_UDQbI7GkMOBXHGH9k/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "mayo 2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "KLLX32": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2026-05-31",
+            "display": "mayo 2026",
+            "precision": "month",
+            "type": "technical_inspection",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "26d12122e2167b3413921fb7c0b8ad82546ab9a960de0a507b32761a6701d5b1",
+    "filename": "Contaminantes 30-09-2026 SGVB16.pdf",
+    "storage_path": "fleet/documents/26d12122e2167b3413921fb7c0b8ad82546ab9a960de0a507b32761a6701d5b1.pdf",
+    "tenant_code": null,
+    "kind": "gas_certificate",
+    "title": "Emisiones contaminantes",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-02-06",
+    "expires_at": "2026-09-30",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Contaminantes 30-09-2026 SGVB16.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1nluirhmydoG0XhN9RBJ2bAd5OqsNAi4w/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "septiembre 2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "SGVB16": {
+        "page": 1,
+        "verified_expirations": {
+          "gas_certificate_expires_at": {
+            "date": "2026-09-30",
+            "display": "septiembre 2026",
+            "precision": "month",
+            "type": "gas_certificate",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "fea7d26a1e832b48aacef98bf036aa2d8f5936be74d658ac8aba6feb86f1c485",
+    "filename": "REV. Tecnica 30-09-2027 SGVB16.pdf",
+    "storage_path": "fleet/documents/fea7d26a1e832b48aacef98bf036aa2d8f5936be74d658ac8aba6feb86f1c485.pdf",
+    "tenant_code": null,
+    "kind": "technical_inspection",
+    "title": "Revisión técnica",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-02-06",
+    "expires_at": "2027-09-30",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "REV. Tecnica 30-09-2027 SGVB16.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1NHMC5TEU39iRNLeoTb3vB9VfuzLsLbrJ/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "septiembre 2027",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "SGVB16": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2027-09-30",
+            "display": "septiembre 2027",
+            "precision": "month",
+            "type": "technical_inspection",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "24e42e6e5a1441470a664419da3c20e0f6875d1ce2ac8ec1b8ec1e5f74b43e8c",
+    "filename": "SPBC15-17.pdf",
+    "storage_path": "fleet/documents/24e42e6e5a1441470a664419da3c20e0f6875d1ce2ac8ec1b8ec1e5f74b43e8c.pdf",
+    "tenant_code": null,
+    "kind": "gas_certificate",
+    "title": "Emisiones contaminantes",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2024-11-13",
+    "expires_at": "2025-08-31",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "SPBC15_Gases.png",
+      "Enlace de origen": "https://drive.google.com/file/d/1Uc5o-YcZUSoM86YDIy8XBCbpxhBuRkMu/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "agosto 2025",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "SPBC15": {
+        "page": 1,
+        "verified_expirations": {
+          "gas_certificate_expires_at": {
+            "date": "2025-08-31",
+            "display": "agosto 2025",
+            "precision": "month",
+            "type": "gas_certificate",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "7815693ce484058d2af191d6c7192f9b7b97777f1eac5a50b7989f6cf1fb77f5",
+    "filename": "SPBC15-18.pdf",
+    "storage_path": "fleet/documents/7815693ce484058d2af191d6c7192f9b7b97777f1eac5a50b7989f6cf1fb77f5.pdf",
+    "tenant_code": null,
+    "kind": "technical_inspection",
+    "title": "Revisión técnica",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2024-11-13",
+    "expires_at": "2025-08-31",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "SPBC15_Revision_Tecnica.png",
+      "Enlace de origen": "https://drive.google.com/file/d/1r-6N2AhMXRcNgXAvUHz4H48uwJPQyhtB/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "agosto 2025",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "SPBC15": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2025-08-31",
+            "display": "agosto 2025",
+            "precision": "month",
+            "type": "technical_inspection",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "32c0f47d69eb362910c62d6df3b66f31a6b1817e4fd270c3b9ae0241edddffe1",
+    "filename": "contaminantes 17-07-2026 TFYF67.pdf",
+    "storage_path": "fleet/documents/32c0f47d69eb362910c62d6df3b66f31a6b1817e4fd270c3b9ae0241edddffe1.pdf",
+    "tenant_code": null,
+    "kind": "gas_certificate",
+    "title": "Emisiones contaminantes",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-01-17",
+    "expires_at": "2026-07-17",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "contaminantes 17-07-2026 TFYF67.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1whzcva9t31_CJqos0Rd3KwfvyZ1cdDnK/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "17/07/2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "TFYF67": {
+        "page": 1,
+        "verified_expirations": {
+          "gas_certificate_expires_at": {
+            "date": "2026-07-17",
+            "display": "17/07/2026",
+            "precision": "day",
+            "type": "gas_certificate",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "6f3b1dfdd9e5e2361727637c742a81588ba8a2bced3788f5c49ebe8861b2ae4e",
+    "filename": "Rev. tecnica 17-07-2026 TFYF67.pdf",
+    "storage_path": "fleet/documents/6f3b1dfdd9e5e2361727637c742a81588ba8a2bced3788f5c49ebe8861b2ae4e.pdf",
+    "tenant_code": null,
+    "kind": "technical_inspection",
+    "title": "Revisión técnica",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-01-17",
+    "expires_at": "2026-07-17",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Rev. tecnica 17-07-2026 TFYF67.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/126PC7t8dpUsyIiFbBbgQC0hCvuvBMccX/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "17/07/2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "TFYF67": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2026-07-17",
+            "display": "17/07/2026",
+            "precision": "day",
+            "type": "technical_inspection",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "eda7534376bb3d29b64ba32ea00a4594021f99e50d3e5ba21b9b9de64fa5a500",
+    "filename": "TJHJ76_HOMOLOGADO_SEPT2026.pdf",
+    "storage_path": "fleet/documents/eda7534376bb3d29b64ba32ea00a4594021f99e50d3e5ba21b9b9de64fa5a500.pdf",
+    "tenant_code": null,
+    "kind": "homologation",
+    "title": "Homologación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2024-03-13",
+    "expires_at": "2026-09-30",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "TJHJ76_HOMOLOGADO_SEPT2026.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1oGM3tDeOxHq2er2oiPwaCke8G1NE-UfV/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "septiembre 2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "TJHJ76": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2026-09-30",
+            "display": "septiembre 2026",
+            "precision": "month",
+            "type": "homologation",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "034779be59b67b44c02ba23f720a206f57bf9f3d54cd63df7ec649ef1907669a",
+    "filename": "Contaminantes 29-10-2026 TJGR16.pdf",
+    "storage_path": "fleet/documents/034779be59b67b44c02ba23f720a206f57bf9f3d54cd63df7ec649ef1907669a.pdf",
+    "tenant_code": null,
+    "kind": "gas_certificate",
+    "title": "Emisiones contaminantes",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-04-29",
+    "expires_at": "2026-10-29",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Contaminantes 29-10-2026 TJGR16.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1MCaLgSK7fkSZAFiBuHtBB3vyvhnXuiUI/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "29/10/2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "TJGR16": {
+        "page": 1,
+        "verified_expirations": {
+          "gas_certificate_expires_at": {
+            "date": "2026-10-29",
+            "display": "29/10/2026",
+            "precision": "day",
+            "type": "gas_certificate",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "30ed24b5be55331cb6f58d4a2e2dba1227f3a9be4165667e33f44fc269377853",
+    "filename": "Rev. tecnica 29-10-2026 TJGR16.pdf",
+    "storage_path": "fleet/documents/30ed24b5be55331cb6f58d4a2e2dba1227f3a9be4165667e33f44fc269377853.pdf",
+    "tenant_code": null,
+    "kind": "technical_inspection",
+    "title": "Revisión técnica",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-04-29",
+    "expires_at": "2026-10-29",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Rev. tecnica 29-10-2026 TJGR16.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1Hiv7HIg0FCb9k0leyhFQXMbtHvNye3mc/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "29/10/2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "TJGR16": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2026-10-29",
+            "display": "29/10/2026",
+            "precision": "day",
+            "type": "technical_inspection",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "cc1bbc417228e348551ab7ce41541c0dff343847c028391413a1add859b0d4a5",
+    "filename": "Contaminantes 04-11-2026 SVRB44.pdf",
+    "storage_path": "fleet/documents/cc1bbc417228e348551ab7ce41541c0dff343847c028391413a1add859b0d4a5.pdf",
+    "tenant_code": null,
+    "kind": "gas_certificate",
+    "title": "Emisiones contaminantes",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-05-06",
+    "expires_at": "2026-11-04",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Contaminantes 04-11-2026 SVRB44.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1ByHeUlrK38eYYFCpAVJ1VjXIzTz43rUc/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "04/11/2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "SVRB44": {
+        "page": 1,
+        "verified_expirations": {
+          "gas_certificate_expires_at": {
+            "date": "2026-11-04",
+            "display": "04/11/2026",
+            "precision": "day",
+            "type": "gas_certificate",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "4f07cd42bc0b963263d7f2c3de066112844beb1daeb85337a53e57a18d9cbb80",
+    "filename": "REv. Tecnica 04-11-2026 SVRB44.pdf",
+    "storage_path": "fleet/documents/4f07cd42bc0b963263d7f2c3de066112844beb1daeb85337a53e57a18d9cbb80.pdf",
+    "tenant_code": null,
+    "kind": "technical_inspection",
+    "title": "Revisión técnica",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-05-06",
+    "expires_at": "2026-11-04",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "REv. Tecnica 04-11-2026 SVRB44.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1rHD2gfIc-xZNNIeTEGC9dAmj5z78zhRP/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "04/11/2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "SVRB44": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2026-11-04",
+            "display": "04/11/2026",
+            "precision": "day",
+            "type": "technical_inspection",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "912b416be4283d8188bf64d080dec6086c9c6913623386ad530898eeac0bea8d",
+    "filename": "Contaminantes 25-08-2026 TDTJ76.pdf",
+    "storage_path": "fleet/documents/912b416be4283d8188bf64d080dec6086c9c6913623386ad530898eeac0bea8d.pdf",
+    "tenant_code": null,
+    "kind": "gas_certificate",
+    "title": "Emisiones contaminantes",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-02-25",
+    "expires_at": "2026-08-25",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Contaminantes 25-08-2026 TDTJ76.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1CYl_z9kHykzTKRgrlfe7m4GP_6EXenxx/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "25/08/2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "TDTJ76": {
+        "page": 1,
+        "verified_expirations": {
+          "gas_certificate_expires_at": {
+            "date": "2026-08-25",
+            "display": "25/08/2026",
+            "precision": "day",
+            "type": "gas_certificate",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "8bb3b62925448380fbe8684b26b61fd3518ced822075d651b0f0d1bf4db3d125",
+    "filename": "Rev. tecnica 25-08-2026 TDTJ76.pdf",
+    "storage_path": "fleet/documents/8bb3b62925448380fbe8684b26b61fd3518ced822075d651b0f0d1bf4db3d125.pdf",
+    "tenant_code": null,
+    "kind": "technical_inspection",
+    "title": "Revisión técnica",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-02-25",
+    "expires_at": "2026-08-25",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Rev. tecnica 25-08-2026 TDTJ76.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/168Vfj9SkwBdAqHfqGapPpOLsAEy_wXFC/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "25/08/2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "TDTJ76": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2026-08-25",
+            "display": "25/08/2026",
+            "precision": "day",
+            "type": "technical_inspection",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "f20bf2902202755e04dc6534f6cceceb402f8a2d79fcf05ff3473c62c95b080b",
+    "filename": "Rev. Tecnica 07-11-2026 PWZJ48.pdf",
+    "storage_path": "fleet/documents/f20bf2902202755e04dc6534f6cceceb402f8a2d79fcf05ff3473c62c95b080b.pdf",
+    "tenant_code": null,
+    "kind": "technical_inspection",
+    "title": "Revisión técnica",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-05-06",
+    "expires_at": "2026-11-04",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Rev. Tecnica 07-11-2026 PWZJ48.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1RZDm7kvVBW3PO_0A9aroE7JWvrzGEvqg/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "04/11/2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "PWZJ48": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2026-11-04",
+            "display": "04/11/2026",
+            "precision": "day",
+            "type": "technical_inspection",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "5b6c7930505ca5716863bba13be9cc1cb1d444033d8d25da671dc6a63150f56d",
+    "filename": "Rev. Tecnica Agosto 2026  PXGX13.pdf",
+    "storage_path": "fleet/documents/5b6c7930505ca5716863bba13be9cc1cb1d444033d8d25da671dc6a63150f56d.pdf",
+    "tenant_code": null,
+    "kind": "technical_inspection",
+    "title": "Revisión técnica",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-02-06",
+    "expires_at": "2026-08-06",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Rev. Tecnica Agosto 2026  PXGX13.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1l9sVEbBwUohAuck4WaLGGA-amE4eM7a2/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "06/08/2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "PXGX13": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2026-08-06",
+            "display": "06/08/2026",
+            "precision": "day",
+            "type": "technical_inspection",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "0f3cd61bda42aa75c9043799a86c12eff9b55bafeded70f2c1b7128adf40e10c",
+    "filename": "Emisiones Contaminantes agosto 2026.pdf",
+    "storage_path": "fleet/documents/0f3cd61bda42aa75c9043799a86c12eff9b55bafeded70f2c1b7128adf40e10c.pdf",
+    "tenant_code": null,
+    "kind": "gas_certificate",
+    "title": "Emisiones contaminantes",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-02-03",
+    "expires_at": "2026-08-31",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Emisiones Contaminantes agosto 2026.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1Nn-rVcFM9_939v5seb9x8GSGKj51eQ-9/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "agosto 2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "PYWJ20": {
+        "page": 1,
+        "verified_expirations": {
+          "gas_certificate_expires_at": {
+            "date": "2026-08-31",
+            "display": "agosto 2026",
+            "precision": "month",
+            "type": "gas_certificate",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "8f38b21c5dd4f53912ebfce8aaa0ded90197a7e76896b1b3faa43baf87ad3953",
+    "filename": "Rev. Tecnica febrero 2027.pdf",
+    "storage_path": "fleet/documents/8f38b21c5dd4f53912ebfce8aaa0ded90197a7e76896b1b3faa43baf87ad3953.pdf",
+    "tenant_code": null,
+    "kind": "technical_inspection",
+    "title": "Revisión técnica",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2026-02-03",
+    "expires_at": "2027-02-28",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Rev. Tecnica febrero 2027.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1_CbPptSXaLqcZoD574M6a39gl7T85gsa/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "febrero 2027",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "PYWJ20": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2027-02-28",
+            "display": "febrero 2027",
+            "precision": "month",
+            "type": "technical_inspection",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "1226d583395caa2da839738acb3286e30cd6e6708367bc61037f1f0423617a9c",
+    "filename": "RPCD80-34.pdf",
+    "storage_path": "fleet/documents/1226d583395caa2da839738acb3286e30cd6e6708367bc61037f1f0423617a9c.pdf",
+    "tenant_code": null,
+    "kind": "gas_certificate",
+    "title": "Emisiones contaminantes",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2025-03-27",
+    "expires_at": "2025-08-31",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "RPCD80_Gases.png",
+      "Enlace de origen": "https://drive.google.com/file/d/14n0UOyFqYKFdeN9QHmW7iQbYD3Ewzj4J/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "agosto 2025",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "RPCD80": {
+        "page": 1,
+        "verified_expirations": {
+          "gas_certificate_expires_at": {
+            "date": "2025-08-31",
+            "display": "agosto 2025",
+            "precision": "month",
+            "type": "gas_certificate",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "f037ef36ab991faa75675a90d88f9093cf6fbde1d3617e1185e258599f71d795",
+    "filename": "RPCD80-33.pdf",
+    "storage_path": "fleet/documents/f037ef36ab991faa75675a90d88f9093cf6fbde1d3617e1185e258599f71d795.pdf",
+    "tenant_code": null,
+    "kind": "technical_inspection",
+    "title": "Revisión técnica",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2025-03-27",
+    "expires_at": "2027-02-28",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "RPCD80_Rev_Tecnica.png",
+      "Enlace de origen": "https://drive.google.com/file/d/1xF0-fU7mkOrTmkPwU7WDKZxXeIFAcot3/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "febrero 2027",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "RPCD80": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2027-02-28",
+            "display": "febrero 2027",
+            "precision": "month",
+            "type": "technical_inspection",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "e62ae4c9478f0966d69858fab8367463d0f1a35e0b3c6d18c0a9fccfe807a001",
+    "filename": "TRWD80_HOMOLOGACION.pdf",
+    "storage_path": "fleet/documents/e62ae4c9478f0966d69858fab8367463d0f1a35e0b3c6d18c0a9fccfe807a001.pdf",
+    "tenant_code": null,
+    "kind": "homologation",
+    "title": "Homologación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2024-08-23",
+    "expires_at": "2027-02-28",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "TRWD80_HOMOLOGACION.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1lCkbm4gGV-MHUsdohxA9pz8Ivhm_uyz1/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "febrero 2027",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "TRWD80": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2027-02-28",
+            "display": "febrero 2027",
+            "precision": "month",
+            "type": "homologation",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "938a22520abd362e280c1e179c7df103a94ac50cad265f13c5ae763d4c283e25",
+    "filename": "Contaminantes 19-05-2026 TVHY33.pdf",
+    "storage_path": "fleet/documents/938a22520abd362e280c1e179c7df103a94ac50cad265f13c5ae763d4c283e25.pdf",
+    "tenant_code": null,
+    "kind": "gas_certificate",
+    "title": "Emisiones contaminantes",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2025-11-19",
+    "expires_at": "2026-05-19",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Contaminantes 19-05-2026 TVHY33.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1F6E_xZAGiJM-z7SVU7JnV9kvyfaF1QSH/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "19/05/2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "TVHY33": {
+        "page": 1,
+        "verified_expirations": {
+          "gas_certificate_expires_at": {
+            "date": "2026-05-19",
+            "display": "19/05/2026",
+            "precision": "day",
+            "type": "gas_certificate",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "0605a117935b99fa6eba92982bd1a9f3cab04ee213a9de3ff01c70b312b04dfc",
+    "filename": "Rev. tecnica 19-05-2026 TVHY33.pdf",
+    "storage_path": "fleet/documents/0605a117935b99fa6eba92982bd1a9f3cab04ee213a9de3ff01c70b312b04dfc.pdf",
+    "tenant_code": null,
+    "kind": "technical_inspection",
+    "title": "Revisión técnica",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2025-11-19",
+    "expires_at": "2026-05-19",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "Rev. tecnica 19-05-2026 TVHY33.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1kcTk01iV9KoZVrM8HfYbxkJnhX4V5n9G/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "19/05/2026",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "TVHY33": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2026-05-19",
+            "display": "19/05/2026",
+            "precision": "day",
+            "type": "technical_inspection",
+            "page": 1
+          }
+        }
+      }
+    }
+  },
+  {
+    "sha256": "239417ca6a2d99445dc31f41dc6375cc3fd0e66df5ac11580c747206598df3c7",
+    "filename": "RVSK21_REVISION_ABRIL2026.pdf",
+    "storage_path": "fleet/documents/239417ca6a2d99445dc31f41dc6375cc3fd0e66df5ac11580c747206598df3c7.pdf",
+    "tenant_code": null,
+    "kind": "inspection_bundle",
+    "title": "Revisión técnica y gases",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": "2024-05-23",
+    "expires_at": "2024-10-31",
+    "details": {
+      "Origen": "Carpeta documental por patente en Google Drive",
+      "Archivo original": "RVSK21_REVISION_ABRIL2026.pdf",
+      "Enlace de origen": "https://drive.google.com/file/d/1sMWEy7PI_RZrFqWde7fpvny5u4M78awP/view?usp=drivesdk",
+      "Revisado el": "10/10/2026",
+      "Vencimiento impreso": "abril 2026 / octubre 2024",
+      "Criterio de fecha": "Si el certificado indica solo mes y año, se usa el último día del mes para calcular la alerta y se muestra el mes original."
+    },
+    "vehicles": {
+      "RVSK21": {
+        "page": 1,
+        "verified_expirations": {
+          "technical_inspection_expires_at": {
+            "date": "2026-04-30",
+            "display": "abril 2026",
+            "precision": "month",
+            "type": "technical_inspection",
+            "page": 1
+          },
+          "gas_certificate_expires_at": {
+            "date": "2024-10-31",
+            "display": "octubre 2024",
+            "precision": "month",
+            "type": "gas_certificate",
+            "page": 1
+          }
+        }
+      }
+    }
+  }
+]

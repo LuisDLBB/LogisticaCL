@@ -1,0 +1,1001 @@
+[
+  {
+    "sha256": "6f9d6c75aaef48513af2f91beb09e2f7578e7cb0c8eaa46b73b188f9997ca66b",
+    "filename": "POL_226103017.pdf",
+    "storage_path": "fleet/documents/6f9d6c75aaef48513af2f91beb09e2f7578e7cb0c8eaa46b73b188f9997ca66b.pdf",
+    "kind": "company_policy",
+    "title": "Seguro de empresa",
+    "policy_number": "226103017",
+    "insurer": "Continental",
+    "starts_at": "2026-09-06",
+    "expires_at": "2027-09-06",
+    "tenant_code": "4N",
+    "details": {
+      "Ramo": "Responsabilidad civil"
+    },
+    "vehicles": {},
+    "duplicates": 0
+  },
+  {
+    "sha256": "c25f5cadab82f05ebb81f3291e862b6409ab9e24f7e3ebc955ee5d022cfb60a4",
+    "filename": "PP_226103017.pdf",
+    "storage_path": "fleet/documents/c25f5cadab82f05ebb81f3291e862b6409ab9e24f7e3ebc955ee5d022cfb60a4.pdf",
+    "kind": "payment_plan",
+    "title": "Plan de pago",
+    "policy_number": "226103017",
+    "insurer": "Continental",
+    "starts_at": "2026-09-06",
+    "expires_at": "2027-09-06",
+    "tenant_code": "4N",
+    "details": {
+      "Estado de pago": "Plan emitido; pagos posteriores no verificados."
+    },
+    "vehicles": {},
+    "duplicates": 0
+  },
+  {
+    "sha256": "784b7359b2527b0074f30a25d965a430c0d89c2b358b355158f9894d9a87be98",
+    "filename": "Cotizacion-25026-Responsabilidad Civil-4 NORTES LOGISTICA SPA 1.pdf",
+    "storage_path": "fleet/documents/784b7359b2527b0074f30a25d965a430c0d89c2b358b355158f9894d9a87be98.pdf",
+    "kind": "quotation",
+    "title": "Cotización",
+    "policy_number": "25026-V2",
+    "insurer": "Continental",
+    "starts_at": "2026-09-06",
+    "expires_at": "2027-09-06",
+    "tenant_code": "4N",
+    "details": {
+      "Documento": "Cotización; no acredita emisión de cobertura."
+    },
+    "vehicles": {},
+    "duplicates": 0
+  },
+  {
+    "sha256": "b1420113be63e2f54b1e0c319443af32d9435aaadb4e22e837661f2423df0d88",
+    "filename": "POL_12844.pdf",
+    "storage_path": "fleet/documents/b1420113be63e2f54b1e0c319443af32d9435aaadb4e22e837661f2423df0d88.pdf",
+    "kind": "vehicle_policy",
+    "title": "Póliza del vehículo",
+    "policy_number": "VEHC-12844-0",
+    "insurer": "Contempora",
+    "starts_at": "2026-08-29",
+    "expires_at": "2027-08-29",
+    "tenant_code": "PMCB",
+    "details": {
+      "Asistencia según póliza": "600 656 7000, opción 1 · 2 3242 6153",
+      "Denuncia según póliza": "600 656 7000, opción 2 · 2 3242 6155 · www.contemporaseguros.com",
+      "Contratante según póliza": "Transportes y Distribución PMCB SPA · 77.639.015-1"
+    },
+    "vehicles": {
+      "TJGR16": {
+        "Deducible según ítem": "UF 10 en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 2,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      },
+      "STWJ98": {
+        "Deducible según ítem": "UF 10 en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 4,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      }
+    },
+    "duplicates": 2
+  },
+  {
+    "sha256": "c4473a82ebbbf8a2bfe1f22e4495f03754a9f4064ad7b479cd78dd5948c47653",
+    "filename": "PP_12844.pdf",
+    "storage_path": "fleet/documents/c4473a82ebbbf8a2bfe1f22e4495f03754a9f4064ad7b479cd78dd5948c47653.pdf",
+    "kind": "payment_plan",
+    "title": "Plan de pago",
+    "policy_number": "VEHC-12844-0",
+    "insurer": "Contempora",
+    "starts_at": "2026-08-29",
+    "expires_at": "2027-08-29",
+    "tenant_code": "PMCB",
+    "details": {
+      "Estado de pago": "Plan emitido; pagos posteriores no verificados."
+    },
+    "vehicles": {
+      "TJGR16": {},
+      "STWJ98": {}
+    },
+    "duplicates": 2
+  },
+  {
+    "sha256": "3e283de591d05d20b7326536c8c641934f9234d28d641e3525f06b3e57bad5ef",
+    "filename": "POL_12837.pdf",
+    "storage_path": "fleet/documents/3e283de591d05d20b7326536c8c641934f9234d28d641e3525f06b3e57bad5ef.pdf",
+    "kind": "vehicle_policy",
+    "title": "Póliza del vehículo",
+    "policy_number": "VEHP-12837-0",
+    "insurer": "Contempora",
+    "starts_at": "2026-08-29",
+    "expires_at": "2027-08-29",
+    "tenant_code": "4N",
+    "details": {
+      "Asistencia según póliza": "600 656 7000, opción 1 · 2 3242 6153",
+      "Denuncia según póliza": "600 656 7000, opción 2 · 2 3242 6155 · www.contemporaseguros.com",
+      "Contratante según póliza": "4 Nortes Logística SPA · 77.346.078-7"
+    },
+    "vehicles": {
+      "SVRB44": {
+        "Deducible según ítem": "- UF 50.- en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 2,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      },
+      "VBPD72": {
+        "Deducible según ítem": "- UF 50.- en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 4,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      },
+      "RKTL35": {
+        "Deducible según ítem": "- UF 50.- en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 6,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      }
+    },
+    "duplicates": 2
+  },
+  {
+    "sha256": "5703d21c7d304a246d8f6630b8a0b061c5f46c92746bb780cb2844dd6bd85b3c",
+    "filename": "PP_12837.pdf",
+    "storage_path": "fleet/documents/5703d21c7d304a246d8f6630b8a0b061c5f46c92746bb780cb2844dd6bd85b3c.pdf",
+    "kind": "payment_plan",
+    "title": "Plan de pago",
+    "policy_number": "VEHP-12837-0",
+    "insurer": "Contempora",
+    "starts_at": "2026-08-29",
+    "expires_at": "2027-08-29",
+    "tenant_code": "4N",
+    "details": {
+      "Estado de pago": "Plan emitido; pagos posteriores no verificados."
+    },
+    "vehicles": {
+      "SVRB44": {},
+      "VBPD72": {},
+      "RKTL35": {}
+    },
+    "duplicates": 2
+  },
+  {
+    "sha256": "33a8c6bb26304eebc35ae425c97fe608508064327e7b42e2926554c1843e8271",
+    "filename": "POL_12839.pdf",
+    "storage_path": "fleet/documents/33a8c6bb26304eebc35ae425c97fe608508064327e7b42e2926554c1843e8271.pdf",
+    "kind": "vehicle_policy",
+    "title": "Póliza del vehículo",
+    "policy_number": "VEHP-12839-0",
+    "insurer": "Contempora",
+    "starts_at": "2026-08-29",
+    "expires_at": "2027-08-29",
+    "tenant_code": "PMCB",
+    "details": {
+      "Asistencia según póliza": "600 656 7000, opción 1 · 2 3242 6153",
+      "Denuncia según póliza": "600 656 7000, opción 2 · 2 3242 6155 · www.contemporaseguros.com",
+      "Contratante según póliza": "Transportes y Distribución PMCB SPA · 77.639.015-1"
+    },
+    "vehicles": {
+      "RPVT38": {
+        "Deducible según ítem": "UF 10 en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 2,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      },
+      "PLRL48": {
+        "Deducible según ítem": "UF 5 en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 4,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      },
+      "TFYF67": {
+        "Deducible según ítem": "UF 10 en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 6,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      },
+      "TRZJ37": {
+        "Deducible según ítem": "UF 10 en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 8,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      },
+      "VDSD30": {
+        "Deducible según ítem": "UF 10 en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 10,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      },
+      "PWZJ48": {
+        "Deducible según ítem": "UF 50.- en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 12,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      },
+      "TFLJ42": {
+        "Deducible según ítem": "UF 50.- en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 14,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      },
+      "PXGX13": {
+        "Deducible según ítem": "UF 50.- en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 16,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      }
+    },
+    "duplicates": 2
+  },
+  {
+    "sha256": "64ef273d3b033d1da401f2003eb0c3c436b9554ec389bae33edb7d427547fb46",
+    "filename": "PP_12839.pdf",
+    "storage_path": "fleet/documents/64ef273d3b033d1da401f2003eb0c3c436b9554ec389bae33edb7d427547fb46.pdf",
+    "kind": "payment_plan",
+    "title": "Plan de pago",
+    "policy_number": "VEHP-12839-0",
+    "insurer": "Contempora",
+    "starts_at": "2026-08-29",
+    "expires_at": "2027-08-29",
+    "tenant_code": "PMCB",
+    "details": {
+      "Estado de pago": "Plan emitido; pagos posteriores no verificados."
+    },
+    "vehicles": {
+      "RPVT38": {},
+      "PLRL48": {},
+      "TFYF67": {},
+      "TRZJ37": {},
+      "VDSD30": {},
+      "PWZJ48": {},
+      "TFLJ42": {},
+      "PXGX13": {}
+    },
+    "duplicates": 2
+  },
+  {
+    "sha256": "271f2a2e67d5b1a9d7fbf0accfd81168c453f98433f73364d79d284f90b1cc8e",
+    "filename": "POL_12841.pdf",
+    "storage_path": "fleet/documents/271f2a2e67d5b1a9d7fbf0accfd81168c453f98433f73364d79d284f90b1cc8e.pdf",
+    "kind": "vehicle_policy",
+    "title": "Póliza del vehículo",
+    "policy_number": "VEHC-12841-0",
+    "insurer": "Contempora",
+    "starts_at": "2026-08-29",
+    "expires_at": "2027-08-29",
+    "tenant_code": "4N",
+    "details": {
+      "Asistencia según póliza": "600 656 7000, opción 1 · 2 3242 6153",
+      "Denuncia según póliza": "600 656 7000, opción 2 · 2 3242 6155 · www.contemporaseguros.com",
+      "Contratante según póliza": "4 Nortes Logística SPA · 77.346.078-7"
+    },
+    "vehicles": {
+      "KLLX31": {
+        "Deducible según ítem": "UF 10 en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 2,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      },
+      "KLLX32": {
+        "Deducible según ítem": "UF 15 en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 4,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      },
+      "RVSK21": {
+        "Deducible según ítem": "UF 5 en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 6,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      },
+      "SGVB16": {
+        "Deducible según ítem": "UF 10 en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 8,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      },
+      "SGSS86": {
+        "Deducible según ítem": "UF 10 en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 10,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      },
+      "TJHJ76": {
+        "Deducible según ítem": "UF 10 en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 12,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      },
+      "SPBC15": {
+        "Deducible según ítem": "UF 10 en toda y cada perdida, con excepción de las coberturas de Responsabilidad Civil, Asiento Pasajero, Defensa Penal y Asistencia",
+        "page": 14,
+        "Coberturas principales": "Daños materiales, robo/hurto y responsabilidad civil; revisar límites, condiciones y exclusiones del ítem en PDF."
+      }
+    },
+    "duplicates": 2
+  },
+  {
+    "sha256": "63498913c899f20c5c39dcf4afadcc891bebda68284676e34a30cf8bf1938106",
+    "filename": "PP_12841.pdf",
+    "storage_path": "fleet/documents/63498913c899f20c5c39dcf4afadcc891bebda68284676e34a30cf8bf1938106.pdf",
+    "kind": "payment_plan",
+    "title": "Plan de pago",
+    "policy_number": "VEHC-12841-0",
+    "insurer": "Contempora",
+    "starts_at": "2026-08-29",
+    "expires_at": "2027-08-29",
+    "tenant_code": "4N",
+    "details": {
+      "Estado de pago": "Plan emitido; pagos posteriores no verificados."
+    },
+    "vehicles": {
+      "KLLX31": {},
+      "KLLX32": {},
+      "RVSK21": {},
+      "SGVB16": {},
+      "SGSS86": {},
+      "TJHJ76": {},
+      "SPBC15": {}
+    },
+    "duplicates": 2
+  },
+  {
+    "sha256": "b2bfcf6bf7656bdea29d5c4f4d281fcc8afe04ba7f31b14a14c69ac5cb38abbd",
+    "filename": "POL_12843.pdf",
+    "storage_path": "fleet/documents/b2bfcf6bf7656bdea29d5c4f4d281fcc8afe04ba7f31b14a14c69ac5cb38abbd.pdf",
+    "kind": "company_policy",
+    "title": "Seguro de empresa",
+    "policy_number": "IN-12843-00",
+    "insurer": "Contempora",
+    "starts_at": "2026-08-27",
+    "expires_at": "2027-08-27",
+    "tenant_code": "4N",
+    "details": {
+      "Ramo": "Incendio comercial"
+    },
+    "vehicles": {},
+    "duplicates": 1
+  },
+  {
+    "sha256": "b3a46fa7bd985ab2b77256743d2447be61f8f3a72ede92ad739e19faf89f4ff5",
+    "filename": "PP_12843.pdf",
+    "storage_path": "fleet/documents/b3a46fa7bd985ab2b77256743d2447be61f8f3a72ede92ad739e19faf89f4ff5.pdf",
+    "kind": "payment_plan",
+    "title": "Plan de pago",
+    "policy_number": "IN-12843-00",
+    "insurer": "Contempora",
+    "starts_at": "2026-08-27",
+    "expires_at": "2027-08-27",
+    "tenant_code": "4N",
+    "details": {
+      "Estado de pago": "Plan emitido; pagos posteriores no verificados."
+    },
+    "vehicles": {},
+    "duplicates": 1
+  },
+  {
+    "sha256": "d0348557d2fe874d90602dbab6b1d0c7cc6952548f540a1d4f52de0a9bd898c7",
+    "filename": "POL_261220-01.pdf",
+    "storage_path": "fleet/documents/d0348557d2fe874d90602dbab6b1d0c7cc6952548f540a1d4f52de0a9bd898c7.pdf",
+    "kind": "transport_policy",
+    "title": "Seguro de transporte / carga",
+    "policy_number": "261220-01",
+    "insurer": "Contempora",
+    "starts_at": "2026-08-27",
+    "expires_at": "2027-08-27",
+    "tenant_code": "4N",
+    "details": {
+      "Ramo": "Transporte terrestre responsabilidad máxima",
+      "Denuncia según póliza": "denuncias@contemporaseguros.com",
+      "Datos para denunciar": "Nombre del asegurado, fecha, número de póliza, descripción y ubicación del siniestro."
+    },
+    "vehicles": {
+      "KLLX31": {},
+      "KLLX32": {},
+      "PLRL48": {},
+      "PWZJ48": {},
+      "PXGX13": {},
+      "RKTL35": {},
+      "RPVT38": {},
+      "RVSK21": {},
+      "SGSS86": {},
+      "SGVB16": {},
+      "SPBC15": {},
+      "STWJ98": {},
+      "SVRB44": {},
+      "TFLJ42": {},
+      "TFYF67": {},
+      "TJGR16": {},
+      "TJHJ76": {},
+      "TRZJ37": {},
+      "VBPD72": {}
+    },
+    "duplicates": 2
+  },
+  {
+    "sha256": "74e82c1ae68914b09a8a049157dae47cec250f84b470e033b0497625ffab5b49",
+    "filename": "PP_261220-01.pdf",
+    "storage_path": "fleet/documents/74e82c1ae68914b09a8a049157dae47cec250f84b470e033b0497625ffab5b49.pdf",
+    "kind": "payment_plan",
+    "title": "Plan de pago",
+    "policy_number": "261220-01",
+    "insurer": "Contempora",
+    "starts_at": "2026-08-27",
+    "expires_at": "2027-08-27",
+    "tenant_code": "4N",
+    "details": {
+      "Estado de pago": "Plan emitido; pagos posteriores no verificados."
+    },
+    "vehicles": {
+      "KLLX31": {},
+      "KLLX32": {},
+      "PLRL48": {},
+      "PWZJ48": {},
+      "PXGX13": {},
+      "RKTL35": {},
+      "RPVT38": {},
+      "RVSK21": {},
+      "SGSS86": {},
+      "SGVB16": {},
+      "SPBC15": {},
+      "STWJ98": {},
+      "SVRB44": {},
+      "TFLJ42": {},
+      "TFYF67": {},
+      "TJGR16": {},
+      "TJHJ76": {},
+      "TRZJ37": {},
+      "VBPD72": {}
+    },
+    "duplicates": 2
+  },
+  {
+    "sha256": "26397d5d0b1f1b9b7565de6e8986442ec49687e980e22957110ac8d4aacd1711",
+    "filename": "127661491_RPVT38_77346078.pdf",
+    "storage_path": "fleet/documents/26397d5d0b1f1b9b7565de6e8986442ec49687e980e22957110ac8d4aacd1711.pdf",
+    "kind": "soap",
+    "title": "SOAP",
+    "policy_number": "127661491-2",
+    "insurer": "BCI Seguros",
+    "starts_at": "2026-09-08",
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Consultas de vigencia": "600 200 1010 · www.bciseguros.cl",
+      "Cobertura informada": "Accidentes personales: muerte, incapacidad y gastos médicos. Ver condiciones y límites en PDF.",
+      "En caso de accidente": "El certificado indica registrar la denuncia en Carabineros e identificar fecha, hora, lugar, afectados y vehículos.",
+      "Propietario según documento": "NORTES LOGISTICA SPA"
+    },
+    "vehicles": {
+      "RPVT38": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "413b84f1dddb6dec6ab51fe75e9cd5f1a306a11e899a6fae8f1a45dc3bc23b9b",
+    "filename": "127661492_PLRL48_77639015.pdf",
+    "storage_path": "fleet/documents/413b84f1dddb6dec6ab51fe75e9cd5f1a306a11e899a6fae8f1a45dc3bc23b9b.pdf",
+    "kind": "soap",
+    "title": "SOAP",
+    "policy_number": "127661492-0",
+    "insurer": "BCI Seguros",
+    "starts_at": "2026-09-08",
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Consultas de vigencia": "600 200 1010 · www.bciseguros.cl",
+      "Cobertura informada": "Accidentes personales: muerte, incapacidad y gastos médicos. Ver condiciones y límites en PDF.",
+      "En caso de accidente": "El certificado indica registrar la denuncia en Carabineros e identificar fecha, hora, lugar, afectados y vehículos.",
+      "Propietario según documento": "TRANSPORTES Y DISTRIBUCION PMCB SPA"
+    },
+    "vehicles": {
+      "PLRL48": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "27af2ac590631a172c4636222fe04bfb13b64bd54b73875a6b8ac0a6caddc4b5",
+    "filename": "127661493_SVRB44_76574810.pdf",
+    "storage_path": "fleet/documents/27af2ac590631a172c4636222fe04bfb13b64bd54b73875a6b8ac0a6caddc4b5.pdf",
+    "kind": "soap",
+    "title": "SOAP",
+    "policy_number": "127661493-9",
+    "insurer": "BCI Seguros",
+    "starts_at": "2026-09-08",
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Consultas de vigencia": "600 200 1010 · www.bciseguros.cl",
+      "Cobertura informada": "Accidentes personales: muerte, incapacidad y gastos médicos. Ver condiciones y límites en PDF.",
+      "En caso de accidente": "El certificado indica registrar la denuncia en Carabineros e identificar fecha, hora, lugar, afectados y vehículos.",
+      "Propietario según documento": "SCANIA FINANCE CHILE S A"
+    },
+    "vehicles": {
+      "SVRB44": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "33f0e78260c8cc380b6d3b9c3e3865c935b63bf23595679274231a0d821f82ff",
+    "filename": "127661494_PWZJ48_77639015.pdf",
+    "storage_path": "fleet/documents/33f0e78260c8cc380b6d3b9c3e3865c935b63bf23595679274231a0d821f82ff.pdf",
+    "kind": "soap",
+    "title": "SOAP",
+    "policy_number": "127661494-7",
+    "insurer": "BCI Seguros",
+    "starts_at": "2026-09-08",
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Consultas de vigencia": "600 200 1010 · www.bciseguros.cl",
+      "Cobertura informada": "Accidentes personales: muerte, incapacidad y gastos médicos. Ver condiciones y límites en PDF.",
+      "En caso de accidente": "El certificado indica registrar la denuncia en Carabineros e identificar fecha, hora, lugar, afectados y vehículos.",
+      "Propietario según documento": "TRANSPORTES Y DISTRIBUCION PMCB SPA"
+    },
+    "vehicles": {
+      "PWZJ48": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "e1590ffdb867d19d4937fa2bd2e177f26ac1e3799cdcc75bfe8e75839cb9d835",
+    "filename": "127661495_TFLJ42_77639015.pdf",
+    "storage_path": "fleet/documents/e1590ffdb867d19d4937fa2bd2e177f26ac1e3799cdcc75bfe8e75839cb9d835.pdf",
+    "kind": "soap",
+    "title": "SOAP",
+    "policy_number": "127661495-5",
+    "insurer": "BCI Seguros",
+    "starts_at": "2026-09-08",
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Consultas de vigencia": "600 200 1010 · www.bciseguros.cl",
+      "Cobertura informada": "Accidentes personales: muerte, incapacidad y gastos médicos. Ver condiciones y límites en PDF.",
+      "En caso de accidente": "El certificado indica registrar la denuncia en Carabineros e identificar fecha, hora, lugar, afectados y vehículos.",
+      "Propietario según documento": "TRANSPORTES Y DISTRIBUCION PMCB SPA"
+    },
+    "vehicles": {
+      "TFLJ42": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "33ff69b0015bcc91e38c4e1877cfdfc4a30b120dfdb5a860757fb8041faa7379",
+    "filename": "Permiso_de Circulacion_2026_RKTL35.pdf",
+    "storage_path": "fleet/documents/33ff69b0015bcc91e38c4e1877cfdfc4a30b120dfdb5a860757fb8041faa7379.pdf",
+    "kind": "circulation_permit",
+    "title": "Permiso de circulación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Periodo": "2026",
+      "Municipalidad": "Calama"
+    },
+    "vehicles": {
+      "RKTL35": {}
+    },
+    "duplicates": 1
+  },
+  {
+    "sha256": "f7316601307e0179a80c076af1c683a38f1fe3a9ce016ed1620f8fe8a0c49da5",
+    "filename": "Permiso_de Circulacion_2026_TFLJ42.pdf",
+    "storage_path": "fleet/documents/f7316601307e0179a80c076af1c683a38f1fe3a9ce016ed1620f8fe8a0c49da5.pdf",
+    "kind": "circulation_permit",
+    "title": "Permiso de circulación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Periodo": "2026",
+      "Municipalidad": "Santiago"
+    },
+    "vehicles": {
+      "TFLJ42": {}
+    },
+    "duplicates": 1
+  },
+  {
+    "sha256": "a3075207c924bcba7defcf8494ee95fb5ed86ae6c83e481d433ade62b0314318",
+    "filename": "Permiso_de Circulacion_2026_TRZJ37.pdf",
+    "storage_path": "fleet/documents/a3075207c924bcba7defcf8494ee95fb5ed86ae6c83e481d433ade62b0314318.pdf",
+    "kind": "circulation_permit",
+    "title": "Permiso de circulación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Periodo": "2026",
+      "Municipalidad": "Santiago"
+    },
+    "vehicles": {
+      "TRZJ37": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "7d8366199033016fe1c4fc7ace47359fce316dcbe5ddf8b65004b99e689e2291",
+    "filename": "Permiso_de Circulacion_2026_VBPD72.pdf",
+    "storage_path": "fleet/documents/7d8366199033016fe1c4fc7ace47359fce316dcbe5ddf8b65004b99e689e2291.pdf",
+    "kind": "circulation_permit",
+    "title": "Permiso de circulación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Periodo": "2026",
+      "Municipalidad": "Santiago"
+    },
+    "vehicles": {
+      "VBPD72": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "34b1a8acde974fbd19651b9aed95b2831174222b881b50d8d633c48d627681e2",
+    "filename": "Permiso_de_Circulacion_2026_-_PLRL48-4.pdf",
+    "storage_path": "fleet/documents/34b1a8acde974fbd19651b9aed95b2831174222b881b50d8d633c48d627681e2.pdf",
+    "kind": "circulation_permit",
+    "title": "Permiso de circulación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Periodo": "2026",
+      "Municipalidad": "La Florida",
+      "Propietario según permiso": "COMERCIALIZADORA BASFRA SPA · 77.235.107-0 (difiere del certificado de anotaciones adjunto)"
+    },
+    "vehicles": {
+      "PLRL48": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "695d33e6777f4f883655ca9c9eb0f8d79bb2ec9ff2078ecb5be4c5fc38729637",
+    "filename": "PermisoCirculacionColina_PWZJ48.pdf",
+    "storage_path": "fleet/documents/695d33e6777f4f883655ca9c9eb0f8d79bb2ec9ff2078ecb5be4c5fc38729637.pdf",
+    "kind": "circulation_permit",
+    "title": "Permiso de circulación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Periodo": "2026",
+      "Municipalidad": "Colina",
+      "Revisión técnica informada": "04/11/2026"
+    },
+    "vehicles": {
+      "PWZJ48": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "1e346d4c1d220857838122f99ed4fc85ca5dd297493a4430eb69db8a11ca9a5f",
+    "filename": "Pol_127661590_TRZJ37.pdf",
+    "storage_path": "fleet/documents/1e346d4c1d220857838122f99ed4fc85ca5dd297493a4430eb69db8a11ca9a5f.pdf",
+    "kind": "soap",
+    "title": "SOAP",
+    "policy_number": "127661590-0",
+    "insurer": "BCI Seguros",
+    "starts_at": "2026-09-08",
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Consultas de vigencia": "600 200 1010 · www.bciseguros.cl",
+      "Cobertura informada": "Accidentes personales: muerte, incapacidad y gastos médicos. Ver condiciones y límites en PDF.",
+      "En caso de accidente": "El certificado indica registrar la denuncia en Carabineros e identificar fecha, hora, lugar, afectados y vehículos.",
+      "Propietario según documento": "TRANSPORTES Y DISTRIBUCION PMCB SPA"
+    },
+    "vehicles": {
+      "TRZJ37": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "d2466587703e642414235fd1a6b98672bafb0ae113e8248e1e2f65e0a4a5a602",
+    "filename": "Pol_127661591_PXGX13.pdf",
+    "storage_path": "fleet/documents/d2466587703e642414235fd1a6b98672bafb0ae113e8248e1e2f65e0a4a5a602.pdf",
+    "kind": "soap",
+    "title": "SOAP",
+    "policy_number": "127661591-9",
+    "insurer": "BCI Seguros",
+    "starts_at": "2026-09-08",
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Consultas de vigencia": "600 200 1010 · www.bciseguros.cl",
+      "Cobertura informada": "Accidentes personales: muerte, incapacidad y gastos médicos. Ver condiciones y límites en PDF.",
+      "En caso de accidente": "El certificado indica registrar la denuncia en Carabineros e identificar fecha, hora, lugar, afectados y vehículos.",
+      "Propietario según documento": "TRANSPORTES Y DISTRIBUCION PMCB SPA"
+    },
+    "vehicles": {
+      "PXGX13": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "5ab5f3c1f104734b349dd73db1d3f79f5271484298117e04a43b091fba84b4eb",
+    "filename": "Pol_127661592_VBPD72.pdf",
+    "storage_path": "fleet/documents/5ab5f3c1f104734b349dd73db1d3f79f5271484298117e04a43b091fba84b4eb.pdf",
+    "kind": "soap",
+    "title": "SOAP",
+    "policy_number": "127661592-7",
+    "insurer": "BCI Seguros",
+    "starts_at": "2026-09-08",
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Consultas de vigencia": "600 200 1010 · www.bciseguros.cl",
+      "Cobertura informada": "Accidentes personales: muerte, incapacidad y gastos médicos. Ver condiciones y límites en PDF.",
+      "En caso de accidente": "El certificado indica registrar la denuncia en Carabineros e identificar fecha, hora, lugar, afectados y vehículos.",
+      "Propietario según documento": "NORTES LOGISTICA SPA"
+    },
+    "vehicles": {
+      "VBPD72": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "5f148df69a8e22275dbda9745a3ece11c3eefc7a0e12faddc5db1b4c28654293",
+    "filename": "Pol_127661593_VDSD30.pdf",
+    "storage_path": "fleet/documents/5f148df69a8e22275dbda9745a3ece11c3eefc7a0e12faddc5db1b4c28654293.pdf",
+    "kind": "soap",
+    "title": "SOAP",
+    "policy_number": "127661593-5",
+    "insurer": "BCI Seguros",
+    "starts_at": "2026-09-08",
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Consultas de vigencia": "600 200 1010 · www.bciseguros.cl",
+      "Cobertura informada": "Accidentes personales: muerte, incapacidad y gastos médicos. Ver condiciones y límites en PDF.",
+      "En caso de accidente": "El certificado indica registrar la denuncia en Carabineros e identificar fecha, hora, lugar, afectados y vehículos.",
+      "Propietario según documento": "TRANSPORTES Y DISTRIBUCION PMCB SPA"
+    },
+    "vehicles": {
+      "VDSD30": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "d5b137c5965f6c29541f14f537e56d060bd5ec08747cb72ddda193cc04329950",
+    "filename": "Pol_127661594_RKTL35.pdf",
+    "storage_path": "fleet/documents/d5b137c5965f6c29541f14f537e56d060bd5ec08747cb72ddda193cc04329950.pdf",
+    "kind": "soap",
+    "title": "SOAP",
+    "policy_number": "127661594-3",
+    "insurer": "BCI Seguros",
+    "starts_at": "2026-09-08",
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Consultas de vigencia": "600 200 1010 · www.bciseguros.cl",
+      "Cobertura informada": "Accidentes personales: muerte, incapacidad y gastos médicos. Ver condiciones y límites en PDF.",
+      "En caso de accidente": "El certificado indica registrar la denuncia en Carabineros e identificar fecha, hora, lugar, afectados y vehículos.",
+      "Propietario según documento": "BANCO DE CREDITO E INVERSIONES"
+    },
+    "vehicles": {
+      "RKTL35": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "7cd4583b04ab741ef804622ba7d9ae4e889a6938c8ea40fbc34a79ff83563664",
+    "filename": "RPVT3808.pdf",
+    "storage_path": "fleet/documents/7cd4583b04ab741ef804622ba7d9ae4e889a6938c8ea40fbc34a79ff83563664.pdf",
+    "kind": "circulation_permit",
+    "title": "Permiso de circulación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Periodo": "2026",
+      "Municipalidad": "Las Condes",
+      "Revisión técnica informada": "18/02/2027",
+      "Gases informados": "20/02/2027"
+    },
+    "vehicles": {
+      "RPVT38": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "734e805ef3b89428712161615eb4197bad3ca7755582f60cfa4ad2247518f23b",
+    "filename": "KLLX31-4_368973.pdf",
+    "storage_path": "fleet/documents/734e805ef3b89428712161615eb4197bad3ca7755582f60cfa4ad2247518f23b.pdf",
+    "kind": "circulation_permit",
+    "title": "Permiso de circulación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": "2027-03-31",
+    "tenant_code": null,
+    "details": {
+      "Periodo": "2026",
+      "Municipalidad": "Colina"
+    },
+    "vehicles": {
+      "KLLX31": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "7ee74d3d29b4c10851b5804636d0361f4d82154ba3632a51f6ba354ba59815f0",
+    "filename": "KLLX32-2_368969.pdf",
+    "storage_path": "fleet/documents/7ee74d3d29b4c10851b5804636d0361f4d82154ba3632a51f6ba354ba59815f0.pdf",
+    "kind": "circulation_permit",
+    "title": "Permiso de circulación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": "2027-03-31",
+    "tenant_code": null,
+    "details": {
+      "Periodo": "2026",
+      "Municipalidad": "Colina"
+    },
+    "vehicles": {
+      "KLLX32": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "03608aeca84d8cb1c6c4f4ad94b89cee77c2d0410f0ae90c057f109f4c343a81",
+    "filename": "RVSK21-0_368979.pdf",
+    "storage_path": "fleet/documents/03608aeca84d8cb1c6c4f4ad94b89cee77c2d0410f0ae90c057f109f4c343a81.pdf",
+    "kind": "circulation_permit",
+    "title": "Permiso de circulación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": "2027-03-31",
+    "tenant_code": null,
+    "details": {
+      "Periodo": "2026",
+      "Municipalidad": "Colina"
+    },
+    "vehicles": {
+      "RVSK21": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "bdea8451a2699b6d9d8802d33903852e13f4990421925593caa20b9a37e9d40c",
+    "filename": "SGSS86-7_368963.pdf",
+    "storage_path": "fleet/documents/bdea8451a2699b6d9d8802d33903852e13f4990421925593caa20b9a37e9d40c.pdf",
+    "kind": "circulation_permit",
+    "title": "Permiso de circulación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": "2027-03-31",
+    "tenant_code": null,
+    "details": {
+      "Periodo": "2026",
+      "Municipalidad": "Colina"
+    },
+    "vehicles": {
+      "SGSS86": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "cfd6f543c300c0b9c16c08b3e7be9097412d23df07449e0ec94d9df4f7294fcf",
+    "filename": "SGVB16-4_368975.pdf",
+    "storage_path": "fleet/documents/cfd6f543c300c0b9c16c08b3e7be9097412d23df07449e0ec94d9df4f7294fcf.pdf",
+    "kind": "circulation_permit",
+    "title": "Permiso de circulación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": "2027-03-31",
+    "tenant_code": null,
+    "details": {
+      "Periodo": "2026",
+      "Municipalidad": "Colina"
+    },
+    "vehicles": {
+      "SGVB16": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "6fd227b7306c786751c511d8915a436c8b93d88c4a63631665fbac13b97dd8be",
+    "filename": "SPBC15-8_368965.pdf",
+    "storage_path": "fleet/documents/6fd227b7306c786751c511d8915a436c8b93d88c4a63631665fbac13b97dd8be.pdf",
+    "kind": "circulation_permit",
+    "title": "Permiso de circulación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": "2027-03-31",
+    "tenant_code": null,
+    "details": {
+      "Periodo": "2026",
+      "Municipalidad": "Colina"
+    },
+    "vehicles": {
+      "SPBC15": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "ce3f953793346062f8fa2634ea795b088a766abc39ccc100415d537d1ad0000a",
+    "filename": "TFYF67-3_368980.pdf",
+    "storage_path": "fleet/documents/ce3f953793346062f8fa2634ea795b088a766abc39ccc100415d537d1ad0000a.pdf",
+    "kind": "circulation_permit",
+    "title": "Permiso de circulación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": "2027-03-31",
+    "tenant_code": null,
+    "details": {
+      "Periodo": "2026",
+      "Municipalidad": "Colina"
+    },
+    "vehicles": {
+      "TFYF67": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "cfe9fd1183164f7af1fe8d1ee8b976f97aa4b7080dfb92259c26b3737a3c365a",
+    "filename": "TJHJ76-4_368967.pdf",
+    "storage_path": "fleet/documents/cfe9fd1183164f7af1fe8d1ee8b976f97aa4b7080dfb92259c26b3737a3c365a.pdf",
+    "kind": "circulation_permit",
+    "title": "Permiso de circulación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": "2027-03-31",
+    "tenant_code": null,
+    "details": {
+      "Periodo": "2026",
+      "Municipalidad": "Colina"
+    },
+    "vehicles": {
+      "TJHJ76": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "5d4a00a91c5d5e859f285071715ecf2db302fec40ab83c7177d6e14cfd0e8722",
+    "filename": "Permiso_de_Circulacion_2026_-PXGX13_.pdf",
+    "storage_path": "fleet/documents/5d4a00a91c5d5e859f285071715ecf2db302fec40ab83c7177d6e14cfd0e8722.pdf",
+    "kind": "circulation_permit",
+    "title": "Permiso de circulación",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": "2027-09-30",
+    "tenant_code": null,
+    "details": {
+      "Periodo": "2026",
+      "Municipalidad": "Santiago"
+    },
+    "vehicles": {
+      "PXGX13": {}
+    },
+    "duplicates": 0
+  },
+  {
+    "sha256": "2108e60097d5feb6bb4d5a4cc62df3eaddfca235ebc6f69b25d7476831ab87c2",
+    "filename": "PLRL48_AnotacionesVigentes.pdf",
+    "storage_path": "fleet/documents/2108e60097d5feb6bb4d5a4cc62df3eaddfca235ebc6f69b25d7476831ab87c2.pdf",
+    "kind": "registration",
+    "title": "Certificado de anotaciones vigentes",
+    "policy_number": null,
+    "insurer": null,
+    "starts_at": null,
+    "expires_at": null,
+    "tenant_code": null,
+    "details": {
+      "Fecha de emisión": "01/09/2026",
+      "Propietario según certificado": "TRANSPORTES Y DISTRIBUCION PMCB SPA · 77.639.015-1",
+      "Limitaciones al dominio": "A la fecha de emisión no tiene anotaciones vigentes incorporadas al registro.",
+      "Dato histórico": "La póliza Liberty que aparece en este certificado es antecedente del 01/09/2026; no sustituye las pólizas posteriores."
+    },
+    "vehicles": {
+      "PLRL48": {}
+    },
+    "duplicates": 0
+  }
+]
