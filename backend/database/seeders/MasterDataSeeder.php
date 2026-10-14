@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class MasterDataSeeder extends Seeder
@@ -59,6 +60,26 @@ class MasterDataSeeder extends Seeder
                 'rut_empresa' => $row['RutEmpresa'], 'role_code' => Str::slug($row['Perfil'] ?: 'operator', '_'),
                 'is_active' => true, 'updated_at' => now(), 'created_at' => now(),
             ]);
+            if (Schema::hasTable('fleet_membership_profiles')) {
+                $fleetProfileCode = match (Str::slug((string) ($row['Perfil'] ?? ''), '_')) {
+                    'administrador' => 'administrator',
+                    'gerente' => 'management',
+                    'comercial' => 'commercial',
+                    'operaciones' => 'operations',
+                    'postventa' => 'after_sales',
+                    default => null,
+                };
+                if ($fleetProfileCode !== null) {
+                    $membershipId = DB::table('MBA_tenant_users')->where('tenant_id', $this->tenantId)->where('user_id', $userId)->value('id');
+                    $profileId = DB::table('fleet_profiles')->where('tenant_id', $this->tenantId)->where('code', $fleetProfileCode)->value('id');
+                    if ($membershipId && $profileId) {
+                        DB::table('fleet_membership_profiles')->insertOrIgnore([
+                            'tenant_user_id' => $membershipId, 'fleet_profile_id' => $profileId,
+                            'is_active' => true, 'created_at' => now(), 'updated_at' => now(),
+                        ]);
+                    }
+                }
+            }
         }
     }
 

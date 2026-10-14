@@ -5,7 +5,9 @@
 @else
 @foreach(['comercial'=>['Comercial','chart'],'post-venta'=>['Post Venta','support'],'flota'=>['Flota','truck'],'operaciones'=>['Operaciones','grid'],'pago-proveedores'=>['Pago Proveedores','money'],'finanzas'=>['Finanzas','chart']] as $slug => $item)
 @continue($slug === 'pago-proveedores' && ! auth()->user()->isProviderPaymentsAdministrator())
-<a class="{{ (request()->route('module') === $slug || ($slug === 'operaciones' && request()->routeIs('operations.*'))) ? 'active' : '' }}" href="{{ $slug === 'pago-proveedores' ? route('provider-payments.dashboard') : ($slug === 'operaciones' ? route('operations.dashboard') : route('portal.module', $slug)) }}" @if(request()->route('module') === $slug) aria-current="page" @endif>@include('portal.icon',['icon'=>$item[1]]) {{ $item[0] }}</a>
+@continue($slug === 'flota' && ! app(\App\Fleet\FleetAccess::class)->canEnter(auth()->user()))
+@continue(request()->attributes->get('portal_tenant')?->code !== '4N' && $slug !== 'flota')
+<a class="{{ (request()->route('module') === $slug || ($slug === 'operaciones' && request()->routeIs('operations.*')) || ($slug === 'flota' && request()->routeIs('fleet.*'))) ? 'active' : '' }}" href="{{ $slug === 'pago-proveedores' ? route('provider-payments.dashboard') : ($slug === 'operaciones' ? route('operations.dashboard') : ($slug === 'flota' ? route('fleet.home') : route('portal.module', $slug))) }}" @if(request()->route('module') === $slug) aria-current="page" @endif>@include('portal.icon',['icon'=>$item[1]]) {{ $item[0] }}</a>
 @endforeach
 @endif
 </nav><div class="sidebar-bottom"><a class="account" href="{{ route('portal.profile') }}"><span class="avatar">{{ mb_strtoupper(mb_substr(auth()->user()->name,0,1)) }}</span><span><strong>{{ auth()->user()->name }}</strong><small>Mi cuenta y configuración</small></span></a><form method="POST" action="{{ route('logout') }}">@csrf<button class="logout" type="submit">Cerrar sesión</button></form></div></aside>

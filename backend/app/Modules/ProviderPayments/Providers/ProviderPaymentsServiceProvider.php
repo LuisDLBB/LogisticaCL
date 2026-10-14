@@ -2,6 +2,7 @@
 
 namespace App\Modules\ProviderPayments\Providers;
 
+use App\Http\Middleware\EnsureFourNTenant;
 use App\Http\Middleware\EnsurePortalAccess;
 use App\Http\Middleware\EnsureProviderPaymentsAdministrator;
 use App\Http\Middleware\RecordUserActivity;
@@ -14,7 +15,7 @@ class ProviderPaymentsServiceProvider extends ServiceProvider
     {
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'provider-payments');
 
-        Route::middleware(['web', 'auth', 'auth.session', EnsurePortalAccess::class, EnsureProviderPaymentsAdministrator::class, RecordUserActivity::class])
+        Route::middleware(['web', 'auth', 'auth.session', EnsurePortalAccess::class, EnsureFourNTenant::class, EnsureProviderPaymentsAdministrator::class, RecordUserActivity::class])
             ->group(__DIR__.'/../routes/web.php');
     }
 }
