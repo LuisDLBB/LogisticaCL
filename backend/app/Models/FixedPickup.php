@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class FixedPickup extends Model
 {
     protected $fillable = [
+        'category', 'instructions', 'is_test',
         'tenant_id', 'client_id', 'client_branch_id', 'service_type_id', 'source_client_name',
         'source_point_name', 'association_status', 'weekdays', 'frequency_label', 'shift',
         'window_start', 'window_end', 'material', 'usual_packages', 'operational_emails',
@@ -17,7 +18,7 @@ class FixedPickup extends Model
 
     protected function casts(): array
     {
-        return ['weekdays' => 'array', 'is_active' => 'boolean', 'operational_email_pending' => 'boolean'];
+        return ['is_test' => 'boolean', 'weekdays' => 'array', 'is_active' => 'boolean', 'operational_email_pending' => 'boolean'];
     }
 
     public function client(): BelongsTo

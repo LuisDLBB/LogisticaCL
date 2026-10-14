@@ -3,8 +3,12 @@
 namespace App\Http\Controllers\Fleet;
 
 use App\Fleet\FleetAccess;
+use App\Fleet\MaintenanceHistoryExcel;
 use App\Fleet\MaintenanceService;
+use App\Fleet\MaintenanceTypes;
 use App\Fleet\VehicleCatalog;
+use App\Fleet\VehicleMaintenanceReference;
+use App\Fleet\WeeklyVehicleControl;
 use App\Http\Controllers\Controller;
 use App\Models\FleetDocument;
 use App\Models\Provider;
@@ -20,10 +24,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MaintenanceController extends Controller
 {
+    public function __construct(private MaintenanceTypes $types) {}
+
     public function index(Request $request, FleetAccess $access, MaintenanceService $service): View
     {
         $serviceTenant = $access->tenant($request);
@@ -54,6 +61,18 @@ class MaintenanceController extends Controller
         return view('fleet::maintenance.index', compact('rows', 'filters', 'shared', 'serviceTenant', 'companyCodes', 'latestClosedIds', 'settings', 'service'));
     }
 
+    public function export(Request $request, FleetAccess $access, MaintenanceService $service, MaintenanceHistoryExcel $excel): BinaryFileResponse
+    {
+        $rows = $this->index($request, $access, $service)->getData()['rows'];
+        $rows->load(['events.actor', 'documents', 'historicalImport']);
+        $path = $excel->create($rows);
+
+        return response()->download($path, 'historico-mantenciones-'.now()->format('Y-m-d').'.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'private, no-store',
+        ])->deleteFileAfterSend(true);
+    }
+
     public function create(Request $request, FleetAccess $access, VehicleCatalog $catalog): View
     {
         $vehicleId = $request->validate(['vehicle_id' => ['required', 'integer', 'exists:vehicles,id']])['vehicle_id'];
@@ -67,7 +86,7 @@ class MaintenanceController extends Controller
             'owner' => $owner,
             'maintenance' => null,
             'providers' => $this->providers($owner),
-            'responsibles' => $this->responsibles($owner),
+            'maintenanceTypes' => $this->types->options($owner->id),
         ]);
     }
 
@@ -78,13 +97,22 @@ class MaintenanceController extends Controller
         $owner = $catalog->owner($vehicle, Tenant::all());
         abort_unless($owner && $this->canViewTenant($request, $access, $owner), 404);
         abort_unless($access->allows($request->user(), $owner, 'operations.maintenance', 2), 403);
+        $request->request->remove('responsible_user_id');
         $data = $this->planningData($request, $owner);
+        $data['responsible_user_id'] = $request->user()->id;
+        $data['reported_odometer_km'] ??= $vehicle->odometer_km;
+        $data['next_due_at'] = null;
+        $data['next_due_km'] = null;
         $status = $request->validate(['status' => ['required', 'in:pending,scheduled']])['status'];
+        if ($request->boolean('schedule_on_save')) {
+            $status = 'scheduled';
+        }
         if ($status === 'scheduled' && empty($data['scheduled_at'])) {
             throw ValidationException::withMessages(['scheduled_at' => 'La fecha prevista es obligatoria al agendar.']);
         }
 
         $maintenance = DB::transaction(function () use ($vehicle, $owner, $data, $status, $request, $service): VehicleMaintenance {
+            $this->types->remember($owner->id, $data['maintenance_type'], $request->user()->id);
             $maintenance = VehicleMaintenance::create([
                 ...$data, 'vehicle_id' => $vehicle->id, 'tenant_id' => $owner->id,
                 'status' => $status, 'created_by_user_id' => $request->user()->id,
@@ -103,13 +131,13 @@ class MaintenanceController extends Controller
     public function show(Request $request, VehicleMaintenance $maintenance, FleetAccess $access, MaintenanceService $service): View
     {
         $this->authorizeView($request, $maintenance, $access);
-        $maintenance->load(['vehicle', 'tenant', 'provider', 'responsible', 'events.actor', 'documents']);
+        $maintenance->load(['vehicle', 'tenant', 'provider', 'responsible', 'events.actor', 'documents', 'historicalImport']);
         $settings = DB::table('fleet_maintenance_settings')->where('tenant_id', $maintenance->tenant_id)->first();
 
         return view('fleet::maintenance.show', [
             'maintenance' => $maintenance,
             'providers' => $this->providers($maintenance->tenant),
-            'responsibles' => $this->responsibles($maintenance->tenant),
+            'maintenanceTypes' => $this->types->options($maintenance->tenant_id, $maintenance->maintenance_type),
             'canEdit' => $access->allows($request->user(), $maintenance->tenant, 'operations.maintenance', 2),
             'canClose' => $access->allows($request->user(), $maintenance->tenant, 'operations.maintenance.close', 2),
             'canCorrect' => $access->allows($request->user(), $maintenance->tenant, 'operations.maintenance.correct', 3),
@@ -122,7 +150,12 @@ class MaintenanceController extends Controller
         $this->authorizeView($request, $maintenance, $access);
         abort_unless($access->allows($request->user(), $maintenance->tenant, 'operations.maintenance', 2), 403);
         abort_if(in_array($maintenance->status, ['closed', 'cancelled'], true), 409);
+        $request->request->remove('responsible_user_id');
         $data = $this->planningData($request, $maintenance->tenant);
+        $data['responsible_user_id'] = $maintenance->responsible_user_id ?? $maintenance->created_by_user_id;
+        $data['reported_odometer_km'] ??= $maintenance->reported_odometer_km;
+        $data['next_due_at'] = $maintenance->next_due_at;
+        $data['next_due_km'] = $maintenance->next_due_km;
         $state = $request->validate([
             'status' => ['required', Rule::in(array_keys(MaintenanceService::STATUSES))],
             'change_reason' => ['nullable', 'string', 'max:2000'],
@@ -137,11 +170,13 @@ class MaintenanceController extends Controller
         }
 
         DB::transaction(function () use ($maintenance, $request, $data, $state, $service): void {
+            $this->types->remember($maintenance->tenant_id, $data['maintenance_type'], $request->user()->id);
             $before = $maintenance->only([...array_keys($data), 'status']);
             $oldStatus = $maintenance->status;
             $maintenance->fill([...$data, 'status' => $state['status']]);
             if ($oldStatus !== 'in_progress' && $state['status'] === 'in_progress') {
                 $maintenance->started_at = now();
+                $maintenance->reported_odometer_km = Vehicle::query()->lockForUpdate()->findOrFail($maintenance->vehicle_id)->odometer_km;
             }
             $changes = $maintenance->getDirty();
             $maintenance->save();
@@ -243,14 +278,48 @@ class MaintenanceController extends Controller
         return Storage::disk('local')->download($document->path, $document->original_name);
     }
 
-    public function settings(Request $request, FleetAccess $access): View
+    public function settings(Request $request, FleetAccess $access, VehicleCatalog $catalog, WeeklyVehicleControl $control, VehicleMaintenanceReference $reference): View
     {
         $tenant = $access->tenant($request);
+
+        $vehicles = $control->vehicles($request, $access, $catalog)->filter(fn ($entry): bool => $access->allows($request->user(), $entry['owner'], 'admin.permissions', 3));
+        $references = $reference->forVehicles($vehicles->pluck('vehicle.id'), today('America/Santiago')->startOfWeek());
+        $parameterHistory = DB::table('VEH_maintenance_parameters as parameters')->leftJoin('users', 'users.id', '=', 'parameters.actor_user_id')->join('vehicles', 'vehicles.id', '=', 'parameters.vehicle_id')->whereIn('parameters.vehicle_id', $vehicles->pluck('vehicle.id'))->orderByDesc('parameters.effective_from')->orderByDesc('parameters.id')->get(['parameters.*', 'users.name as actor_name', 'vehicles.plate']);
 
         return view('fleet::maintenance.settings', [
             'tenant' => $tenant,
             'settings' => DB::table('fleet_maintenance_settings')->where('tenant_id', $tenant->id)->first(),
+            'documentAlertSettings' => DB::table('VEH_document_alert_settings')->where('tenant_id', $tenant->id)->first(),
+            'documentMailReady' => ! in_array(config('mail.default'), ['log', 'array'], true),
+            'parameterVehicles' => $vehicles, 'references' => $references, 'parameterHistory' => $parameterHistory,
         ]);
+    }
+
+    public function updateInterval(Request $request, Vehicle $vehicle, FleetAccess $access, VehicleCatalog $catalog): RedirectResponse
+    {
+        $tenant = $access->tenant($request);
+        $owner = $catalog->owner($vehicle, Tenant::all());
+        abort_unless($owner && $access->allows($request->user(), $owner, 'admin.permissions', 3), 403);
+        abort_unless($catalog->canView($owner, $tenant, $catalog->canSeeSharedPool($request->user(), $tenant, $access), false), 403);
+        $data = $request->validate([
+            'interval_km' => ['nullable', 'integer', 'between:1,1000000'],
+            'reason' => ['required', 'string', 'max:2000'],
+            'expected_id' => ['nullable', 'integer'],
+        ]);
+        DB::transaction(function () use ($vehicle, $owner, $request, $data): void {
+            Vehicle::query()->whereKey($vehicle->id)->lockForUpdate()->firstOrFail();
+            $current = DB::table('VEH_maintenance_parameters')->where('vehicle_id', $vehicle->id)->orderByDesc('effective_from')->orderByDesc('id')->first();
+            if ((int) ($current?->id ?? 0) !== (int) ($data['expected_id'] ?? 0)) {
+                throw ValidationException::withMessages(['interval_km' => 'El intervalo cambió mientras revisabas la pantalla. Actualiza antes de guardar.']);
+            }
+            DB::table('VEH_maintenance_parameters')->insert([
+                'vehicle_id' => $vehicle->id, 'tenant_id' => $owner->id, 'actor_user_id' => $request->user()->id,
+                'effective_from' => today('America/Santiago')->toDateString(), 'interval_km' => $data['interval_km'] ?? null,
+                'reason' => $data['reason'], 'created_at' => now(), 'updated_at' => now(),
+            ]);
+        });
+
+        return back()->with('status', 'Intervalo actualizado para '.$vehicle->plate.'. El historial anterior se conserva.');
     }
 
     public function updateSettings(Request $request, FleetAccess $access): RedirectResponse
@@ -274,13 +343,18 @@ class MaintenanceController extends Controller
 
     private function planningData(Request $request, Tenant $owner): array
     {
+        if ($request->input('maintenance_type') === '__other__') {
+            $new = $request->validate(['new_maintenance_type' => ['required', 'string', 'min:2', 'max:100']]);
+            $request->merge(['maintenance_type' => trim(preg_replace('/\s+/u', ' ', $new['new_maintenance_type']))]);
+        }
         $data = $request->validate([
             'maintenance_type' => ['required', 'string', 'max:100'],
             'execution_type' => ['required', 'in:internal,external'],
             'scheduled_at' => ['nullable', 'date'],
             'reported_odometer_km' => ['nullable', 'integer', 'between:0,999999999'],
-            'provider_id' => ['nullable', Rule::exists('providers', 'id')->where('tenant_id', $owner->id)->where('is_active', 1)],
+            'provider_id' => ['nullable', Rule::exists('providers', 'id')->whereIn('tenant_id', [$owner->id, Tenant::where('code', '4N')->value('id')])->where('is_active', 1)],
             'estimated_cost' => ['nullable', 'numeric', 'between:0,999999999999.99'],
+            'quotation_number' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:10000'],
             'next_due_at' => ['nullable', 'date'],
             'next_due_km' => ['nullable', 'integer', 'between:0,999999999'],
@@ -291,7 +365,7 @@ class MaintenanceController extends Controller
         }
 
         return array_replace(array_fill_keys([
-            'scheduled_at', 'reported_odometer_km', 'provider_id', 'estimated_cost',
+            'scheduled_at', 'reported_odometer_km', 'provider_id', 'estimated_cost', 'quotation_number',
             'notes', 'next_due_at', 'next_due_km', 'responsible_user_id',
         ], null), $data);
     }
@@ -302,7 +376,7 @@ class MaintenanceController extends Controller
             'execution_type' => ['required', 'in:internal,external'],
             'closed_at' => ['required', 'date', 'before_or_equal:now'],
             'closed_odometer_km' => ['required', 'integer', 'between:0,999999999'],
-            'provider_id' => ['nullable', Rule::exists('providers', 'id')->where('tenant_id', $maintenance->tenant_id)->where('is_active', 1)],
+            'provider_id' => ['nullable', Rule::exists('providers', 'id')->whereIn('tenant_id', [$maintenance->tenant_id, Tenant::where('code', '4N')->value('id')])->where('is_active', 1)],
             'actual_cost' => ['required', 'numeric', 'between:0,999999999999.99'],
             'document_type' => ['nullable', 'in:invoice,receipt,work_order,other'],
             'document_number' => ['nullable', 'string', 'max:100'],
@@ -334,7 +408,7 @@ class MaintenanceController extends Controller
 
     private function providers(Tenant $owner)
     {
-        return Provider::query()->where('tenant_id', $owner->id)->where('is_active', true)->orderBy('legal_name')->get();
+        return Provider::query()->whereIn('tenant_id', [$owner->id, Tenant::where('code', '4N')->value('id')])->where('is_active', true)->whereRaw('LOWER(operator_type) IN (?, ?, ?, ?, ?)', ['vehículos', 'vehiculos', 'taller', 'concesionaria', 'automotriz'])->orderBy('legal_name')->get();
     }
 
     private function responsibles(Tenant $owner)

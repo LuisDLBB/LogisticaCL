@@ -44,6 +44,19 @@ class FleetMaintenanceTest extends TestCase
         $this->get('/control-flota/operaciones/mantenciones/'.$id)->assertOk()->assertSee('Cerrada')->assertSee('Lectura de kilometraje');
     }
 
+    public function test_planning_window_schedules_and_saves_reported_odometer(): void
+    {
+        [$operator, $tenant, $vehicle] = $this->setupVehicle('operations');
+        $this->actingAs($operator)->withSession(['fleet_tenant_id' => $tenant->id]);
+        $data = [...$this->planning($vehicle, 'pending'), 'schedule_on_save' => '1', 'reported_odometer_km' => 999999];
+        $this->post(route('fleet.maintenance.store'), $data)->assertSessionHasNoErrors();
+        $maintenance = VehicleMaintenance::where('vehicle_id', $vehicle->id)->firstOrFail();
+        $this->assertSame('scheduled', $maintenance->status);
+        $this->assertSame(999999, $maintenance->reported_odometer_km);
+        $this->assertDatabaseHas('vehicle_maintenance_events', ['vehicle_maintenance_id' => $maintenance->id, 'event_type' => 'created']);
+        $this->post(route('fleet.maintenance.store'), [...$data, 'scheduled_at' => null])->assertSessionHasErrors('scheduled_at');
+    }
+
     public function test_external_close_requires_existing_tenant_provider_and_document_number_only_when_type_selected(): void
     {
         [$admin, $fourN, $vehicle] = $this->setupVehicle('administrator');
@@ -133,7 +146,7 @@ class FleetMaintenanceTest extends TestCase
         [$admin, $fourN, $vehicle] = $this->setupVehicle('administrator');
         Storage::fake('local');
         $this->actingAs($admin)->withSession(['fleet_tenant_id' => $fourN->id]);
-        $this->get('/control-flota/administrador/parametros-mantenciones')->assertOk()->assertSee('Alertas de mantenciones');
+        $this->get('/control-flota/administrador/parametros-mantenciones')->assertOk()->assertSee('Parámetros de mantenciones');
         $this->put('/control-flota/administrador/parametros-mantenciones', ['warning_days' => 45, 'warning_km' => 1500])->assertRedirect();
         $this->assertSame(45, DB::table('fleet_maintenance_settings')->where('tenant_id', $fourN->id)->value('warning_days'));
         $this->post('/control-flota/operaciones/mantenciones', $this->planning($vehicle, 'pending'))->assertRedirect();

@@ -2,20 +2,32 @@
 @section('title', 'Mantención '.$maintenance->vehicle->plate)
 @push('styles')
 <style>
-    .maintenance-form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.maintenance-form-grid label{margin:0}.maintenance-form-grid input,.maintenance-form-grid select,.maintenance-form-grid textarea{width:100%}.maintenance-form-grid .wide{grid-column:1/-1}textarea{font:inherit;border:1px solid #b7c9ca;border-radius:7px;padding:9px 11px;max-width:100%}.maintenance-alert{display:inline-block;border-radius:99px;padding:5px 10px;font-size:12px;font-weight:700;background:#eef3f3;color:#49666a}.maintenance-alert.upcoming{background:#fff0b8;color:#674700}.maintenance-alert.overdue{background:#fbd5d1;color:#9b211a}.maintenance-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.maintenance-facts div{border-bottom:1px solid #e5eeee;padding:8px 0}.maintenance-facts dt{font-size:13px;color:#60757a}.maintenance-facts dd{margin:3px 0;font-weight:700}.maintenance-event{border-left:3px solid #b7c9ca;padding:8px 12px;margin:10px 0}.maintenance-event small{color:#60757a}
+    .maintenance-form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.maintenance-form-grid label{margin:0}.maintenance-form-grid input,.maintenance-form-grid select,.maintenance-form-grid textarea{width:100%}.maintenance-form-grid .wide{grid-column:1/-1}.maintenance-form-grid [hidden]{display:none!important}textarea{font:inherit;border:1px solid #b7c9ca;border-radius:7px;padding:9px 11px;max-width:100%}.maintenance-alert{display:inline-block;border-radius:99px;padding:5px 10px;font-size:12px;font-weight:700;background:#eef3f3;color:#49666a}.maintenance-alert.upcoming{background:#fff0b8;color:#674700}.maintenance-alert.overdue{background:#fbd5d1;color:#9b211a}.maintenance-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.maintenance-facts div{border-bottom:1px solid #e5eeee;padding:8px 0}.maintenance-facts dt{font-size:13px;color:#60757a}.maintenance-facts dd{margin:3px 0;font-weight:700}.maintenance-event{border-left:3px solid #b7c9ca;padding:8px 12px;margin:10px 0}.maintenance-event small{color:#60757a}
 </style>
 @endpush
 @section('content')
 <a href="{{ route('fleet.page.operations-maintenance') }}">← Mantenciones</a> · <a href="{{ route('fleet.vehicles.show', $maintenance->vehicle) }}">Ficha {{ $maintenance->vehicle->plate }}</a>
-<h1>Mantención · {{ $maintenance->vehicle->plate }}</h1>
+<h1>Mantención · {{ $maintenance->vehicle->plate }}</h1><p class="muted">{{ $maintenance->is_test ? 'Registro de prueba' : 'Antecedente de la base inicial' }}</p>
 <p>{{ $maintenance->maintenance_type }} · {{ $maintenance->execution_type === 'internal' ? 'Interna' : 'Externa' }} · <strong>{{ \App\Fleet\MaintenanceService::STATUSES[$maintenance->status] }}</strong> · Propietaria {{ $maintenance->tenant->code }}</p>
 <span class="maintenance-alert {{ $alert['level'] }}">{{ $alert['label'] }}</span>@if($alert['missing_reading']) <span class="muted">Kilometraje actual: Sin lectura</span>@endif
 
+@if($maintenance->historicalImport)
+<section class="card"><h2>Antecedentes de la planilla histórica</h2><dl class="maintenance-facts">
+<div><dt>Fecha de solicitud</dt><dd>{{ $maintenance->historicalImport->requested_at->format('d/m/Y') }}</dd></div>
+<div><dt>Fecha de emisión del documento</dt><dd>{{ $maintenance->historicalImport->document_issued_at?->format('d/m/Y') ?? 'Sin informar' }}</dd></div>
+<div><dt>Empresa facturada</dt><dd>{{ $maintenance->historicalImport->billed_company ?: 'Sin informar' }}</dd></div>
+<div><dt>Documento / folio</dt><dd>{{ $maintenance->document_type ?: 'Sin documento' }} · {{ $maintenance->document_number ?: 'Sin folio' }}</dd></div>
+<div><dt>Monto neto</dt><dd>{{ $maintenance->historicalImport->net_amount !== null ? '$'.number_format($maintenance->historicalImport->net_amount, 0, ',', '.') : 'Sin informar' }}</dd></div>
+<div><dt>IVA</dt><dd>{{ $maintenance->historicalImport->vat_amount !== null ? '$'.number_format($maintenance->historicalImport->vat_amount, 0, ',', '.') : 'Sin informar' }}</dd></div>
+<div><dt>Presupuesto / proforma</dt><dd>{{ $maintenance->historicalImport->source_data['Presupuesto/Proforma'] ?: 'Sin informar' }}</dd></div>
+</dl><p class="muted">Estado según planilla. La fecha y el kilometraje exactos de cierre no fueron informados; la fecha de factura se conserva como fecha del documento.</p></section>
+@endif
 <section class="card"><h2>Datos y planificación</h2><dl class="maintenance-facts">
-    <div><dt>Fecha prevista</dt><dd>{{ $maintenance->scheduled_at?->format('d/m/Y H:i') ?? 'Sin agendar' }}</dd></div>
+    <div><dt>Fecha prevista</dt><dd>{{ $maintenance->scheduled_at?->format('d/m/Y') ?? 'Sin agendar' }}</dd></div>
     <div><dt>Kilometraje informado</dt><dd>{{ $maintenance->reported_odometer_km !== null ? number_format($maintenance->reported_odometer_km, 0, ',', '.').' km' : 'Sin lectura' }}</dd></div>
     <div><dt>Proveedor</dt><dd>{{ $maintenance->provider?->operational_name ?: ($maintenance->provider?->legal_name ?? ($maintenance->execution_type === 'internal' ? 'Ejecución interna' : 'Sin asignar')) }}</dd></div>
     <div><dt>Responsable</dt><dd>{{ $maintenance->responsible?->name ?? 'Sin asignar' }}</dd></div>
+    <div><dt>Presupuesto / cotización</dt><dd>{{ $maintenance->quotation_number ?: 'Sin presupuesto' }}</dd></div>
     <div><dt>Costo estimado</dt><dd>{{ $maintenance->estimated_cost !== null ? '$'.number_format($maintenance->estimated_cost, 0, ',', '.') : 'Sin estimación' }}</dd></div>
     <div><dt>Próxima fecha</dt><dd>{{ $maintenance->next_due_at?->format('d/m/Y') ?? 'Sin definir' }}</dd></div>
     <div><dt>Próximo kilometraje</dt><dd>{{ $maintenance->next_due_km !== null ? number_format($maintenance->next_due_km, 0, ',', '.').' km' : 'Sin definir' }}</dd></div>
@@ -24,8 +36,8 @@
 
 @if($maintenance->status === 'closed')
 <section class="card"><h2>Cierre</h2><dl class="maintenance-facts">
-    <div><dt>Fecha real</dt><dd>{{ $maintenance->closed_at?->format('d/m/Y H:i') }}</dd></div>
-    <div><dt>Kilometraje de cierre</dt><dd>{{ number_format($maintenance->closed_odometer_km, 0, ',', '.') }} km</dd></div>
+    <div><dt>Fecha real</dt><dd>{{ $maintenance->closed_at?->format('d/m/Y H:i') ?? 'No informada' }}</dd></div>
+    <div><dt>Kilometraje de cierre</dt><dd>{{ $maintenance->closed_odometer_km !== null ? number_format($maintenance->closed_odometer_km, 0, ',', '.').' km' : 'No informado' }}</dd></div>
     <div><dt>Costo real</dt><dd>${{ number_format($maintenance->actual_cost, 0, ',', '.') }}</dd></div>
     <div><dt>Comprobante</dt><dd>{{ $maintenance->document_number ?: 'Sin documento' }}</dd></div>
 </dl>@if($maintenance->closing_notes)<p><strong>Observaciones de cierre:</strong> {{ $maintenance->closing_notes }}</p>@endif</section>

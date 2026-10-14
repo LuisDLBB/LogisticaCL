@@ -32,7 +32,7 @@
             <label>RUT<input name="tax_id" value="{{ old('tax_id') }}" required placeholder="12345678-5"></label>
             <label>Razón social<input name="legal_name" value="{{ old('legal_name') }}" required></label>
             <label>Nombre operacional<input name="operational_name" value="{{ old('operational_name') }}"></label>
-            <label>Tipo operador<input name="operator_type" value="{{ old('operator_type', 'Courier') }}" required></label>
+            <label>Tipo operador<input name="operator_type" value="{{ old('operator_type', request()->query('flota') === '1' ? 'Vehículos' : 'Courier') }}" required></label>
             <label>Tipo documento<input name="tax_document_type" value="{{ old('tax_document_type') }}"></label>
             <label>Comuna<input name="commercial_commune_name" value="{{ old('commercial_commune_name') }}"></label>
             <label class="wide">Dirección comercial<input name="commercial_address" value="{{ old('commercial_address') }}"></label>

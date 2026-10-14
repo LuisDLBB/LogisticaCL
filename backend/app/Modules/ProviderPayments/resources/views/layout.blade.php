@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ asset('images/logo4n.png') }}" type="image/png">
     <title>@yield('title', 'Pago a Proveedores') · 4N Logística</title>
     <style>
         :root { --navy:#061f20; --ink:#102a2d; --muted:#60757a; --turquoise:#28c9c8; --turquoise-dark:#007f82; --turquoise-soft:#d9f5f4; --paper:#f4f7f7; --line:#d7e1e2; --white:#fff; }
@@ -11,7 +11,7 @@
         body { margin:0; min-height:100vh; background:var(--paper); color:var(--ink); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
         .topbar { position:sticky; top:0; z-index:20; height:76px; display:flex; align-items:center; justify-content:space-between; padding:0 22px; background:var(--navy); color:#fff; }
         .brand { display:flex; align-items:center; gap:12px; color:#fff; text-decoration:none; }
-        .brand-mark { width:44px; height:44px; display:grid; place-items:center; border-radius:11px; background:var(--turquoise); color:var(--navy); font-size:20px; font-weight:900; }
+        .brand-mark { width:72px; height:44px; display:grid; place-items:center; border-radius:11px; background:#fff; color:var(--navy); font-size:20px; font-weight:900; }
         .brand strong,.brand small { display:block; }.brand strong{font-size:16px}.brand small{margin-top:2px;color:#c9eeee;font-size:12px}.user-area{font-size:13px}.user-area a{margin-left:18px;color:var(--turquoise);text-decoration:none}
         .shell { display:grid; grid-template-columns:222px minmax(0,1fr); min-height:calc(100vh - 76px); }
         .sidebar { padding:23px 9px; border-right:1px solid var(--line); background:#fff; }
@@ -34,7 +34,7 @@
 </head>
 <body>
 <header class="topbar">
-    <a class="brand" href="{{ route('provider-payments.dashboard') }}"><span class="brand-mark">4N</span><span><strong>Pago Proveedores</strong><small>4N Logística · PMBC</small></span></a>
+    <a class="brand" href="{{ route('provider-payments.dashboard') }}"><span class="brand-mark"><img src="{{ asset('images/logo4n.png') }}" alt="4N Logística" width="62" height="30"></span><span><strong>Pago Proveedores</strong><small>4N Logística · PMBC</small></span></a>
     <div class="user-area">Administrador 4N · Administrador <a href="#">Salir</a></div>
 </header>
 <div class="shell">

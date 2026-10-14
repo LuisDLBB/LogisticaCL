@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Fleet\RetCode;
 use App\Models\Client;
 use App\Models\ClientBranch;
 use App\Models\ClientBranchContact;
@@ -10,6 +11,7 @@ use App\Models\ServiceRequest;
 use App\Models\ServiceType;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -51,6 +53,7 @@ class FleetCoordinationTest extends TestCase
             'commercial_name' => 'Cliente prueba', 'legal_name' => 'Cliente prueba SPA', 'is_active' => true,
         ]);
         $retireType = ServiceType::create(['service_code' => 1, 'name' => 'Retiro', 'is_active' => true]);
+        DB::table('client_service_type')->insert(['client_id' => $this->client->id, 'service_type_id' => $retireType->id, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         $this->point = ClientBranch::create([
             'client_id' => $this->client->id, 'code' => 'P1', 'name' => 'Punto prueba',
             'address' => 'Calle 123', 'commune_name' => 'Santiago',
@@ -77,7 +80,7 @@ class FleetCoordinationTest extends TestCase
         $this->post(route('fleet.fixed.convert'), $payload + ['packages' => [$this->fixed->id => 3]])
             ->assertRedirect(route('fleet.page.coordination-fixed-pickups', ['fecha' => '2026-09-28']));
         $ret = ServiceRequest::firstOrFail();
-        $this->assertSame('RET-'.str_pad((string) $ret->id, 5, '0', STR_PAD_LEFT), $ret->ret_code);
+        $this->assertSame(RetCode::format($ret->id), $ret->ret_code);
         $this->assertSame(3, $ret->packages);
         $this->assertSame('Cajas', $ret->material);
         $this->assertNull($ret->operational_emails_snapshot);
@@ -110,6 +113,7 @@ class FleetCoordinationTest extends TestCase
             'packages' => [$this->fixed->id => 2],
         ]);
         $ret = ServiceRequest::firstOrFail();
+        $this->assignResources($ret);
         $this->post(route('fleet.requests.schedule', $ret))->assertRedirect();
         $this->post(route('fleet.requests.reprogram', $ret), [
             'reason' => 'Cliente solicita cambio', 'proposed_date' => '2026-09-29',
@@ -157,12 +161,14 @@ class FleetCoordinationTest extends TestCase
         $this->get(route('fleet.page.coordination-fixed-pickups'))->assertOk()->assertDontSee('Cliente prueba');
     }
 
-    public function test_same_point_can_have_two_windows_and_matrix_marks_original_occurrences(): void
+    public function test_only_pending_fixed_pickups_for_the_selected_day_are_listed(): void
     {
         $second = $this->fixed->replicate();
         $second->window_start = '15:00';
         $second->window_end = '16:00';
         $second->save();
+        $this->get(route('fleet.page.coordination-fixed-pickups', ['fecha' => '2026-09-28']))
+            ->assertOk()->assertSee('data-confirm-generate', false)->assertSee('09:00')->assertSee('15:00');
         $this->post(route('fleet.fixed.convert'), [
             'service_date' => '2026-09-28', 'action' => 'all',
             'packages' => [$this->fixed->id => 2, $second->id => 4],
@@ -170,12 +176,12 @@ class FleetCoordinationTest extends TestCase
         $this->assertDatabaseCount('service_requests', 2);
         $this->assertSame(2, ServiceRequest::distinct()->count('ret_code'));
         $this->get(route('fleet.page.coordination-fixed-pickups', ['fecha' => '2026-09-28']))
-            ->assertOk()->assertSee('En solicitudes');
+            ->assertOk()->assertSee('No hay retiros fijos pendientes de pasar a Solicitudes para esta fecha.');
         $this->get(route('fleet.page.coordination-fixed-pickups', ['fecha' => '2026-09-29']))
-            ->assertOk()->assertSee('Otro día');
+            ->assertOk()->assertSee('No hay retiros fijos pendientes de pasar a Solicitudes para esta fecha.');
         $this->fixed->update(['is_active' => false]);
         $this->get(route('fleet.page.coordination-fixed-pickups', ['fecha' => '2026-10-05']))
-            ->assertOk()->assertSee('Inactivo');
+            ->assertOk()->assertSee('15:00')->assertDontSee('09:00');
         $this->post(route('fleet.fixed.convert'), [
             'service_date' => '2026-10-05', 'single_id' => $this->fixed->id,
             'packages' => [$this->fixed->id => 2],
@@ -189,6 +195,7 @@ class FleetCoordinationTest extends TestCase
             'packages' => [$this->fixed->id => 2],
         ]);
         $ret = ServiceRequest::firstOrFail();
+        $this->assignResources($ret);
         $this->post(route('fleet.requests.schedule', $ret));
         $this->post(route('fleet.requests.reprogram', $ret), [
             'reason' => 'Cambio solicitado', 'proposed_date' => '2026-09-29',
@@ -213,5 +220,27 @@ class FleetCoordinationTest extends TestCase
         $this->post(route('fleet.reprogramming.decide', $decision), [
             'decision' => 'approved', 'customer_response' => 'Intento no autorizado',
         ])->assertForbidden();
+    }
+
+    private function assignResources(ServiceRequest $ret): void
+    {
+        $driver = User::factory()->create();
+        $driver->profile_name = 'App Conductor';
+        $driver->license_type = 'B';
+        $driver->save();
+        DB::table('tenant_users')->insert([
+            'tenant_id' => $this->fourN->id, 'user_id' => $driver->id,
+            'role_code' => 'app_conductor', 'is_active' => true,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $vehicle = Vehicle::create([
+            'tenant_id' => $this->fourN->id, 'rut_empresa' => $this->fourN->tax_id,
+            'company_source' => '4N', 'internal_code' => 'TEST-1', 'plate' => 'TEST11',
+            'max_weight_kg' => 3500, 'vehicle_type' => 'Furgón', 'ownership_type' => 'Propio',
+            'operational_status' => 'Activa', 'is_active' => true,
+        ]);
+        $this->post(route('fleet.scheduling.assign', $ret), [
+            'driver_user_id' => $driver->id, 'vehicle_id' => $vehicle->id,
+        ])->assertRedirect();
     }
 }
