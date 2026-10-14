@@ -8,6 +8,7 @@
     <link rel="icon" href="{{ asset('images/logo4n.png') }}" type="image/png">
     <link rel="stylesheet" href="{{ asset('css/fleet.css') }}">
     @stack('styles')
+    <link rel="stylesheet" href="{{ asset('css/fleet-theme.css') }}">
 </head>
 <body>
 @php($fleetAccess = app(\App\Fleet\FleetAccess::class))
