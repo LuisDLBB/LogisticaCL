@@ -1,0 +1,1 @@
+<h2>{{ $plate }} · {{ $company }}</h2><p>{{ $document['label'] }}: {{ $document['expired'] ? 'vencido' : 'por vencer' }} el {{ $document['display'] }}.</p><p>Gestiona su renovación y adjunta el PDF actualizado en la ficha del vehículo.</p><p><a href="{{ $vehicleUrl }}">Abrir ficha del vehículo</a></p>

@@ -25,6 +25,7 @@ class ClientBranch extends Model
         'longitude',
         'is_active',
         'operational_emails',
+        'postventa_cc',
         'operational_email_pending',
         'address_status',
         'source_street',

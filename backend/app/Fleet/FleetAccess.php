@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\DB;
 class FleetAccess
 {
     public const SCOPES = [
+        'warehouse.inventory' => 'WMS · stock y movimientos',
+        'warehouse.configure' => 'WMS · parámetros y reportes',
+        'operations.feasibility' => 'Evaluación operativa',
+        'finance.feasibility.validate' => 'Validar costos',
+        'commercial.feasibility.approve' => 'Aprobación comercial final',
         'admin.area' => 'Administrador', 'admin.users' => 'Usuarios', 'admin.permissions' => 'Permisos',
         'admin.masters' => 'Maestros', 'admin.procedures' => 'Procedimientos',
         'management.area' => 'Gerencia', 'management.executive' => 'Informe ejecutivo', 'management.consolidated' => 'Consolidado',
@@ -20,12 +25,14 @@ class FleetAccess
         'operations.area' => 'Operaciones', 'operations.fleet' => 'Flota', 'operations.maintenance' => 'Mantenciones',
         'operations.scheduling' => 'Programación', 'operations.fuel' => 'Combustible', 'operations.mail' => 'Correos', 'operations.tag' => 'TAG',
         'operations.vehicle_pool' => 'Pool operacional compartido 4N / PMCB',
+        'operations.scheduling.overload.approve' => 'Autorizar sobrecarga de programación',
         'operations.maintenance.close' => 'Cerrar mantenciones',
         'operations.maintenance.correct' => 'Corregir mantenciones cerradas',
         'commercial.area' => 'Comercial', 'commercial.feasibility' => 'Factibilidad comercial', 'finance.feasibility' => 'Revisión financiera',
     ];
 
     public const PAGES = [
+        'operations.feasibility' => ['area' => 'Operaciones', 'title' => 'Factibilidad', 'slug' => 'operaciones/factibilidad'],
         'admin.masters' => ['area' => 'Administrador', 'title' => 'Maestros', 'slug' => 'administrador/maestros'],
         'admin.procedures' => ['area' => 'Administrador', 'title' => 'Procedimientos', 'slug' => 'administrador/procedimientos'],
         'management.executive' => ['area' => 'Gerencia', 'title' => 'Informe ejecutivo de flota', 'slug' => 'gerencia/ejecutivo'],
@@ -39,7 +46,7 @@ class FleetAccess
         'operations.mail' => ['area' => 'Operaciones', 'title' => 'Correos', 'slug' => 'operaciones/correos'],
         'operations.tag' => ['area' => 'Operaciones', 'title' => 'TAG', 'slug' => 'operaciones/tag'],
         'commercial.feasibility' => ['area' => 'Comercial', 'title' => 'Factibilidad', 'slug' => 'comercial/factibilidad'],
-        'finance.feasibility' => ['area' => 'Coordinación', 'title' => 'Revisión financiera de factibilidad', 'slug' => 'coordinacion/revision-financiera'],
+        'finance.feasibility' => ['area' => 'Coordinación', 'title' => 'Revisión financiera', 'slug' => 'coordinacion/revision-financiera'],
     ];
 
     public function availableTenants(User $user): Collection

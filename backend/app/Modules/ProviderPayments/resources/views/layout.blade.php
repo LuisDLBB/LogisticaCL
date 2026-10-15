@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ asset('images/logo4n.png') }}" type="image/png">
     <title>@yield('title', 'Pago a Proveedores') · 4N Logística</title>
     <style>
         :root { --navy:#061f20; --ink:#102a2d; --muted:#60757a; --turquoise:#28c9c8; --turquoise-dark:#007f82; --turquoise-soft:#d9f5f4; --paper:#f4f7f7; --line:#d7e1e2; --white:#fff; }

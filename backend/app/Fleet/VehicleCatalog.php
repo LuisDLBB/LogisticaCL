@@ -10,6 +10,8 @@ use Illuminate\Support\Collection;
 
 class VehicleCatalog
 {
+    public function __construct(private VehicleBoardAlerts $alerts) {}
+
     public function owner(Vehicle $vehicle, Collection $tenants): ?Tenant
     {
         $companyTaxId = $this->normalizeTaxId($vehicle->rut_empresa);
@@ -44,10 +46,31 @@ class VehicleCatalog
 
     public function isOperational(Vehicle $vehicle, ?Tenant $owner): bool
     {
-        return $owner !== null
-            && (bool) $vehicle->is_active
-            && in_array(mb_strtolower(trim((string) $vehicle->operational_status)), ['activa', 'available'], true)
-            && ! VehicleMaintenance::query()->where('vehicle_id', $vehicle->id)->where('status', 'in_progress')->exists();
+        return $this->unavailabilityReason($vehicle, $owner) === null;
+    }
+
+    public function unavailabilityReason(Vehicle $vehicle, ?Tenant $owner): ?string
+    {
+        if ($owner === null) {
+            return 'Empresa del vehículo pendiente de verificar';
+        }
+        if (! $vehicle->is_active) {
+            return 'Vehículo inactivo';
+        }
+        if (VehicleMaintenance::query()->where('vehicle_id', $vehicle->id)->where('status', 'in_progress')->exists()) {
+            return 'En mantención';
+        }
+        $status = mb_strtolower(trim((string) $vehicle->operational_status));
+        if (in_array($status, ['activa', 'available'], true)) {
+            return collect($this->alerts->paperwork($vehicle))->where('expired', true)->isNotEmpty() ? 'Papeles vencidos' : null;
+        }
+
+        return match ($status) {
+            'maintenance', 'in_maintenance', 'mantencion', 'mantención', 'en mantención', 'en mantencion' => 'En mantención',
+            'repair', 'in_repair', 'reparacion', 'reparación', 'en reparación', 'en reparacion' => 'En reparación',
+            'out_of_service', 'fuera de servicio' => 'Fuera de servicio',
+            default => filled($vehicle->operational_status) ? $vehicle->operational_status : 'Disponibilidad pendiente de confirmar',
+        };
     }
 
     private function normalizeTaxId(?string $taxId): string

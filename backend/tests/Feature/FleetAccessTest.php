@@ -92,7 +92,7 @@ class FleetAccessTest extends TestCase
             'username' => $user->email, 'password' => 'ClaveLocalSegura123',
         ])->assertRedirect('/inicio');
         $this->get('/inicio')->assertOk()->assertSee('Flota');
-        $this->get('/control-flota')->assertOk();
+        $this->get('/control-flota')->assertOk()->assertDontSee('Pago Proveedores');
         $this->get('/operaciones')->assertForbidden();
         $this->get('/pago-proveedores')->assertForbidden();
     }
@@ -143,7 +143,7 @@ class FleetAccessTest extends TestCase
         $access = app(FleetAccess::class);
 
         $this->assertSame($access->level($first, $fourN, 'operations.fleet'), $access->level($second, $fourN, 'operations.fleet'));
-        $this->actingAs($first)->get('/control-flota/operaciones/flota')->assertOk()->assertSee('No hay vehículos para estos filtros.');
+        $this->actingAs($first)->get('/control-flota/operaciones/flota')->assertOk()->assertSee('No hay vehículos para mostrar.');
         $this->get('/control-flota/administrador/usuarios')->assertForbidden();
         $this->post('/control-flota/empresa', ['tenant_id' => $pmcb->id])->assertForbidden();
         $this->assertSame(0, $access->level($first, $pmcb, 'operations.fleet'));

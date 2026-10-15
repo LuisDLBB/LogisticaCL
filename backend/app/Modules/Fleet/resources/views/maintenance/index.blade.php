@@ -1,12 +1,12 @@
 @extends('fleet::layout')
-@section('title', 'Mantenciones')
+@section('title', 'Histórico de mantenciones y reparaciones')
 @push('styles')
 <style>
     .maintenance-alert{display:inline-block;border-radius:99px;padding:4px 9px;font-size:12px;font-weight:700;background:#eef3f3;color:#49666a}.maintenance-alert.upcoming{background:#fff0b8;color:#674700}.maintenance-alert.overdue{background:#fbd5d1;color:#9b211a}.maintenance-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.maintenance-filter{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end}.maintenance-filter label{margin:0}.maintenance-filter button{align-self:end}
 </style>
 @endpush
 @section('content')
-<div class="maintenance-actions"><h1>Mantenciones</h1><a class="button" href="{{ route('fleet.page.operations-fleet') }}">Elegir vehículo en Flota</a></div>
+<div class="maintenance-actions"><h1>Histórico de mantenciones y reparaciones</h1><a class="button" href="{{ route('fleet.page.operations-fleet') }}">Elegir vehículo en Flota</a><a class="button" href="{{ route('fleet.maintenance.export') }}">Exportar todo a Excel</a>@if(collect($filters)->filter(fn ($value) => filled($value))->isNotEmpty())<a href="{{ route('fleet.maintenance.export', $filters) }}">Exportar resultado filtrado</a>@endif</div>
 <p class="muted">Historial de mantenciones por vehículo. Cada registro conserva su empresa propietaria y los eventos de cambio.</p>
 <form class="card maintenance-filter" method="get" aria-label="Filtros de mantenciones">
     @if(count($companyCodes) > 1)<label>Empresa<select name="empresa"><option value="">4N + PMCB</option>@foreach($companyCodes as $code)<option value="{{ $code }}" @selected(($filters['empresa'] ?? '') === $code)>{{ $code }}</option>@endforeach</select></label>@endif
