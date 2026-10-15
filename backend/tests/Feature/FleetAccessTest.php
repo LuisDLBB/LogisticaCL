@@ -92,7 +92,7 @@ class FleetAccessTest extends TestCase
             'username' => $user->email, 'password' => 'ClaveLocalSegura123',
         ])->assertRedirect('/inicio');
         $this->get('/inicio')->assertOk()->assertSee('Flota');
-        $this->get('/control-flota')->assertOk();
+        $this->get('/control-flota')->assertOk()->assertDontSee('Pago Proveedores');
         $this->get('/operaciones')->assertForbidden();
         $this->get('/pago-proveedores')->assertForbidden();
     }

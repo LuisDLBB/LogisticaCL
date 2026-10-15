@@ -183,7 +183,7 @@
         </details>
         <div class="sidebar-footer">
             <a class="nav-link" href="{{ route('portal.home') }}"><span class="nav-icon" aria-hidden="true">⌂</span>Portal 4N</a>
-            @if(app(\App\Fleet\FleetAccess::class)->canEnter(auth()->user()) && \Illuminate\Support\Facades\Route::has('provider-payments.dashboard'))<a class="nav-link" href="{{ route('provider-payments.dashboard') }}"><span class="nav-icon" aria-hidden="true">↗</span>Pago Proveedores</a>@endif
+            @if(auth()->user()?->isProviderPaymentsAdministrator() && \Illuminate\Support\Facades\Route::has('provider-payments.dashboard'))<a class="nav-link" href="{{ route('provider-payments.dashboard') }}"><span class="nav-icon" aria-hidden="true">↗</span>Pago Proveedores</a>@endif
             <div class="sidebar-user"><span class="user-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}</span><span><strong>{{ auth()->user()->name }}</strong><small>{{ $fleetTenant?->name }}</small></span></div>
         </div>
     </aside>
