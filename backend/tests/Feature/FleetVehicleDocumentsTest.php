@@ -56,7 +56,7 @@ class FleetVehicleDocumentsTest extends TestCase
         $this->get(route('fleet.vehicles.documents.show', ['vehicle' => $second, 'document' => $id]))->assertNotFound();
         $foreign = $this->vehicle(Tenant::where('code', 'PMCB')->firstOrFail(), 'FOREIGNDOC');
         $foreignUser = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $foreignUser->id, 'role_code' => 'read_only', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $foreignUser->id, 'role_code' => 'read_only', 'is_active' => true]);
         $this->actingAs($foreignUser);
         $this->get(route('fleet.vehicles.documents.show', ['vehicle' => $foreign, 'document' => $id]))->assertNotFound();
         $this->actingAs($user);
@@ -89,7 +89,7 @@ class FleetVehicleDocumentsTest extends TestCase
         Storage::fake('local');
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $user = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => 'administrator', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => 'administrator', 'is_active' => true]);
         $this->actingAs($user)->withSession(['fleet_tenant_id' => $tenant->id]);
 
         return [$tenant, $user];
@@ -97,7 +97,7 @@ class FleetVehicleDocumentsTest extends TestCase
 
     private function vehicle(Tenant $tenant, string $plate): Vehicle
     {
-        $id = DB::table('vehicles')->insertGetId(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'company_source' => $tenant->code, 'plate' => $plate, 'internal_code' => $plate, 'vehicle_type' => 'Camioneta', 'ownership_type' => 'Propio', 'operational_status' => 'Activa', 'is_active' => true]);
+        $id = DB::table('MBA_vehicles')->insertGetId(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'company_source' => $tenant->code, 'plate' => $plate, 'internal_code' => $plate, 'vehicle_type' => 'Camioneta', 'ownership_type' => 'Propio', 'operational_status' => 'Activa', 'is_active' => true]);
 
         return Vehicle::findOrFail($id);
     }

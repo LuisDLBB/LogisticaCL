@@ -6,7 +6,6 @@ use App\Fleet\MicrosoftRetMail;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -22,7 +21,7 @@ class MicrosoftRetMailTest extends TestCase
         Http::preventStrayRequests();
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $actor = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $actor->id, 'role_code' => 'administrator', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $actor->id, 'role_code' => 'administrator', 'is_active' => true]);
         $this->actingAs($actor)->withSession(['fleet_tenant_id' => $tenant->id]);
 
         return $tenant;
@@ -48,7 +47,7 @@ class MicrosoftRetMailTest extends TestCase
         $tenant = $this->administrator();
         $this->put(route('fleet.microsoft-mail.configure'), ['directory_id' => 'https://other.example', 'client_id' => 'invalid'])->assertSessionHasErrors(['directory_id', 'client_id']);
         $user = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => 'app_conductor', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => 'app_conductor', 'is_active' => true]);
         $this->actingAs($user)->get(route('fleet.microsoft-mail.index'))->assertForbidden();
         Http::assertNothingSent();
     }

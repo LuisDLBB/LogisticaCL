@@ -285,15 +285,14 @@ class CoordinationController extends Controller
         ]);
         $client = Client::query()->where('tenant_id', $tenant->id)->where('is_active', true)->findOrFail($data['client_id']);
         $branch = ClientBranch::query()->where('client_id', $client->id)->findOrFail($data['client_branch_id']);
-        $type = filled($data['service_type_id'] ?? null)
-            ? ServiceType::query()->where('is_active', true)->findOrFail($data['service_type_id'])
+        $configuredTypes = DB::table('PPR_client_service_type')->where('client_id', $client->id)->where('is_active', true)->pluck('service_type_id');
+        $selectedTypeId = $configuredTypes->contains($data['service_type_id'] ?? null)
+            ? $data['service_type_id'] : $configuredTypes->first();
+        $type = $selectedTypeId
+            ? ServiceType::query()->where('is_active', true)->findOrFail($selectedTypeId)
             : ServiceType::query()->where('is_active', true)->where('name', 'Retiro')->orderBy('id')->first();
         if ($type === null) {
             throw ValidationException::withMessages(['service_type_id' => 'Falta configurar el tipo de servicio Retiro en el maestro.']);
-        }
-        $configuredTypes = DB::table('PPR_client_service_type')->where('client_id', $client->id)->where('is_active', true)->pluck('service_type_id');
-        if ($configuredTypes->isNotEmpty() && ! $configuredTypes->contains($type->id)) {
-            throw ValidationException::withMessages(['service_type_id' => 'El servicio no está habilitado para este cliente.']);
         }
         $data['requesting_area'] = $this->requestingArea($request, $tenant->id);
         $data['pickup_kind'] = 'Variable';

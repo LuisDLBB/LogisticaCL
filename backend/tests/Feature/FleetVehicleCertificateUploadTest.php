@@ -24,9 +24,9 @@ class FleetVehicleCertificateUploadTest extends TestCase
         Storage::fake('local');
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $user = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => $role, 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => $role, 'is_active' => true]);
         $this->actingAs($user)->withSession(['fleet_tenant_id' => $tenant->id]);
-        $id = DB::table('vehicles')->insertGetId(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'company_source' => $tenant->code, 'plate' => 'TEST31', 'internal_code' => 'TEST31', 'vehicle_type' => 'Camioneta', 'ownership_type' => 'Propio', 'operational_status' => 'Activa', 'odometer_km' => 150000, 'is_active' => true, 'technical_inspection_expires_at' => '2026-04-30', 'gas_certificate_expires_at' => '2026-04-30']);
+        $id = DB::table('MBA_vehicles')->insertGetId(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'company_source' => $tenant->code, 'plate' => 'TEST31', 'internal_code' => 'TEST31', 'vehicle_type' => 'Camioneta', 'ownership_type' => 'Propio', 'operational_status' => 'Activa', 'odometer_km' => 150000, 'is_active' => true, 'technical_inspection_expires_at' => '2026-04-30', 'gas_certificate_expires_at' => '2026-04-30']);
 
         return Vehicle::findOrFail($id);
     }

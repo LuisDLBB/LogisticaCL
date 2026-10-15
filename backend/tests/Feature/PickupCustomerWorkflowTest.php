@@ -33,7 +33,7 @@ class PickupCustomerWorkflowTest extends TestCase
         Http::preventStrayRequests();
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $actor = User::factory()->create(['email' => 'ejecutivo@example.test']);
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $actor->id, 'role_code' => 'administrator', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $actor->id, 'role_code' => 'administrator', 'is_active' => true]);
         $this->actingAs($actor)->withSession(['fleet_tenant_id' => $tenant->id]);
         $client = Client::create(['tenant_id' => $tenant->id, 'commercial_name' => 'Cliente prueba', 'legal_name' => 'Cliente SPA', 'tax_id' => '76543210-0', 'tax_id_number' => '76543210', 'tax_id_check_digit' => '0', 'is_active' => true]);
         $point = ClientBranch::create(['client_id' => $client->id, 'code' => 'CP01', 'name' => 'Bodega', 'address' => 'Dorsal 3225', 'commune_name' => 'Renca', 'address_status' => 'ready', 'operational_emails' => 'cliente@example.test', 'is_active' => true]);
@@ -70,7 +70,7 @@ class PickupCustomerWorkflowTest extends TestCase
         $this->assertSame('ready', $c['point']->fresh()->address_status);
         $this->postJson($url, ['point_id' => $c['point']->id, 'name' => 'Bodega', 'address' => 'Otra 100', 'commune' => 'Renca'])->assertStatus(409);
         $response = $this->postJson($url, ['name' => 'Segundo punto', 'address' => 'Otra 100', 'commune' => 'Renca'])->assertOk();
-        $this->assertDatabaseHas('client_branches', ['id' => $response->json('id'), 'client_id' => $c['client']->id, 'address_status' => 'ready']);
+        $this->assertDatabaseHas('PPR_client_branches', ['id' => $response->json('id'), 'client_id' => $c['client']->id, 'address_status' => 'ready']);
         $this->getJson(route('fleet.clients.points', $c['client']))->assertJsonCount(2);
     }
 
@@ -210,7 +210,7 @@ class PickupCustomerWorkflowTest extends TestCase
         $this->post(route('fleet.requests.requester-reschedule', $ret), ['reason_code' => 'other', 'proposed_date' => '2026-10-03', 'proposed_start' => '10:00', 'proposed_end' => '11:00'])->assertSessionHasErrors('reason_detail');
         $task = $this->reschedule($ret);
         $user = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $c['tenant']->id, 'user_id' => $user->id, 'role_code' => 'commercial', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $c['tenant']->id, 'user_id' => $user->id, 'role_code' => 'commercial', 'is_active' => true]);
         $this->actingAs($user)->get(route('fleet.requests.show', $ret))->assertOk();
         $this->post(route('fleet.requests.task.resolve', [$ret, $task->id]), ['decision' => 'rejected', 'customer_response' => 'Sin autorización'])->assertForbidden();
         $this->assertDatabaseHas('ret_coordination_tasks', ['id' => $task->id, 'status' => 'pending']);

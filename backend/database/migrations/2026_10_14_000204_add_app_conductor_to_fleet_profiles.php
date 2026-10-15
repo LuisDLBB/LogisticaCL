@@ -20,7 +20,7 @@ return new class extends Migration
         // Assigned profiles must remain available to avoid orphaning user access settings.
         $profiles = DB::table('fleet_profiles')->where('code', 'app_conductor')->get();
         foreach ($profiles as $profile) {
-            if (! DB::table('MBA_tenant_users')->where('tenant_id', $profile->tenant_id)->where('role_code', $profile->code)->exists()) {
+            if (! DB::table('fleet_membership_profiles')->where('fleet_profile_id', $profile->id)->exists()) {
                 DB::table('fleet_profiles')->where('id', $profile->id)->delete();
             }
         }

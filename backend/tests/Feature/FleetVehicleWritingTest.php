@@ -6,7 +6,6 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -93,7 +92,7 @@ class FleetVehicleWritingTest extends TestCase
     {
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $user = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => $role, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => $role, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         $this->actingAs($user)->withSession(['fleet_tenant_id' => $tenant->id]);
 
         return Vehicle::create(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'company_source' => $tenant->code, 'internal_code' => 'WRITE'.$user->id, 'plate' => 'WR'.$user->id, 'vehicle_type' => 'Camioneta', 'ownership_type' => 'Propio', 'operational_status' => 'Activa', 'is_active' => true]);

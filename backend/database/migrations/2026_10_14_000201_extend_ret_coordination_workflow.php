@@ -48,7 +48,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('tenant_id')->constrained('MBA_tenants');
             $table->foreignId('client_id')->constrained('MBA_clients');
-            $table->foreignId('service_type_id')->constrained();
+            $table->foreignId('service_type_id')->constrained('PPR_service_types');
             $table->foreignId('created_by_user_id')->constrained('MBA_users');
             $table->foreignId('service_request_id')->nullable()->unique()->constrained()->restrictOnDelete();
             $table->string('status')->default('operations');

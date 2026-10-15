@@ -30,14 +30,14 @@ class RetRedesignTest extends TestCase
         $this->travelTo(Carbon::parse('2026-10-01 12:30:00', 'America/Santiago'));
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $actor = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $actor->id, 'role_code' => 'administrator', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $actor->id, 'role_code' => 'administrator', 'is_active' => true]);
         $this->actingAs($actor)->withSession(['fleet_tenant_id' => $tenant->id]);
         $client = Client::create(['tenant_id' => $tenant->id, 'commercial_name' => 'Rendic Hermanos', 'legal_name' => 'Rendic SPA', 'tax_id' => '76543210-0', 'tax_id_number' => '76543210', 'tax_id_check_digit' => '0', 'is_active' => true]);
         $point = ClientBranch::create(['client_id' => $client->id, 'code' => 'R01', 'name' => 'Bañados', 'address' => 'Dorsal 3225', 'commune_name' => 'Renca', 'address_status' => 'ready', 'operational_emails' => 'contacto@example.test', 'is_active' => true]);
         $type = ServiceType::create(['service_code' => 990, 'name' => 'Retiro', 'is_active' => true]);
         $client->serviceTypes()->attach($type->id, ['is_active' => true]);
         $driver = User::factory()->create(['profile_name' => 'App Conductor', 'license_type' => 'B']);
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $driver->id, 'role_code' => 'app_conductor', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $driver->id, 'role_code' => 'app_conductor', 'is_active' => true]);
         $vehicle = Vehicle::create(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'company_source' => '4N', 'internal_code' => 'RED001', 'plate' => 'RETT11', 'max_weight_kg' => 3500, 'vehicle_type' => 'Furgón', 'ownership_type' => 'Propio', 'operational_status' => 'Activa', 'is_active' => true]);
 
         return compact('tenant', 'actor', 'client', 'point', 'type', 'driver', 'vehicle');
@@ -129,9 +129,9 @@ class RetRedesignTest extends TestCase
         $this->post(route('fleet.requests.store'), $this->payload($c))->assertSessionHasNoErrors();
         $this->put(route('fleet.merchants.update', $c['client']), ['commercial_name' => 'Rendic Hermanos', 'legal_name' => 'Rendic SPA', 'is_active' => 0])->assertSessionHasNoErrors();
         $this->assertFalse($c['client']->fresh()->is_active);
-        $this->assertDatabaseCount('clients', $total);
+        $this->assertDatabaseCount('MBA_clients', $total);
         $other = Tenant::where('code', 'PMCB')->firstOrFail();
-        DB::table('tenant_users')->insert(['tenant_id' => $other->id, 'user_id' => $c['actor']->id, 'role_code' => 'administrator', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $other->id, 'user_id' => $c['actor']->id, 'role_code' => 'administrator', 'is_active' => true]);
         $this->withSession(['fleet_tenant_id' => $other->id])->get(route('fleet.merchants.show', $c['client']))->assertNotFound();
     }
 
@@ -150,7 +150,7 @@ class RetRedesignTest extends TestCase
     {
         $c = $this->context();
         $c['actor']->forceFill(['area' => 'Comercial'])->save();
-        DB::table('client_service_type')->where('client_id', $c['client']->id)->delete();
+        DB::table('PPR_client_service_type')->where('client_id', $c['client']->id)->delete();
         $payload = $this->payload($c);
         unset($payload['service_type_id']);
         $payload['requesting_area'] = 'Operaciones';
@@ -233,7 +233,7 @@ class RetRedesignTest extends TestCase
         $ops = User::factory()->create();
         $manager = User::factory()->create(['email' => 'hansdelabarra@4nlogistica.cl']);
         foreach ([$ops, $manager] as $user) {
-            DB::table('tenant_users')->insert(['tenant_id' => $c['tenant']->id, 'user_id' => $user->id, 'role_code' => $user === $ops ? 'operations' : 'administrator', 'is_active' => true]);
+            FleetTestMembership::insert(['tenant_id' => $c['tenant']->id, 'user_id' => $user->id, 'role_code' => $user === $ops ? 'operations' : 'administrator', 'is_active' => true]);
         }
 
         foreach (['operations' => $ops, 'commercial' => $manager] as $area => $user) {
@@ -312,7 +312,7 @@ class RetRedesignTest extends TestCase
             $this->post(route('fleet.requests.late.decide', $ret), ['area' => $area, 'decision' => 'approved', 'notes' => 'No autorizado'])->assertForbidden();
         }
         $other = Tenant::where('code', 'PMCB')->firstOrFail();
-        DB::table('tenant_users')->insert(['tenant_id' => $other->id, 'user_id' => $ops->id, 'role_code' => 'operations', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $other->id, 'user_id' => $ops->id, 'role_code' => 'operations', 'is_active' => true]);
         $this->actingAs($ops)->withSession(['fleet_tenant_id' => $other->id])->post(route('fleet.requests.late.decide', $ret), ['area' => 'operations', 'decision' => 'approved', 'notes' => 'Otra empresa'])->assertNotFound();
         $this->get(route('fleet.requests.late.index'))->assertOk()->assertDontSee($ret->ret_code);
     }
@@ -379,7 +379,7 @@ class RetRedesignTest extends TestCase
         $c = $this->context();
         [$ops, $manager] = $this->lateApprovers($c);
         $extra = User::factory()->create(['email' => 'suplente@example.test']);
-        DB::table('tenant_users')->insert(['tenant_id' => $c['tenant']->id, 'user_id' => $extra->id, 'role_code' => 'management', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $c['tenant']->id, 'user_id' => $extra->id, 'role_code' => 'management', 'is_active' => true]);
         $this->post(route('fleet.scheduling.approvers.add'), ['email' => 'SUPLENTE@example.test', 'area' => 'commercial'])->assertSessionHasNoErrors();
         $approver = DB::table('fleet_pickup_approvers')->where('user_id', $extra->id)->first();
         $this->assertSame('commercial', $approver->area);
@@ -407,7 +407,7 @@ class RetRedesignTest extends TestCase
         $this->post(route('fleet.scheduling.approvers.add'), ['email' => 'unknown@example.test', 'area' => 'commercial'])->assertSessionHasErrors('email');
         $other = Tenant::where('code', 'PMCB')->firstOrFail();
         $outsider = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $other->id, 'user_id' => $outsider->id, 'role_code' => 'operations', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $other->id, 'user_id' => $outsider->id, 'role_code' => 'operations', 'is_active' => true]);
         $this->post(route('fleet.scheduling.approvers.add'), ['email' => $outsider->email, 'area' => 'operations'])->assertSessionHasErrors('email');
         $foreign = DB::table('fleet_pickup_approvers')->insertGetId(['tenant_id' => $other->id, 'user_id' => $outsider->id, 'area' => 'operations', 'is_active' => true]);
         $this->patch(route('fleet.scheduling.approvers.toggle', $foreign), ['is_active' => false])->assertNotFound();
@@ -443,7 +443,7 @@ class RetRedesignTest extends TestCase
         foreach (['operations' => $ops, 'commercial' => $manager] as $area => $actor) {
             $this->actingAs($actor)->post(route('fleet.requests.late.decide', $ret), ['area' => $area, 'decision' => 'approved', 'notes' => 'Autorizado'])->assertSessionHasNoErrors();
         }
-        DB::table('tenant_users')->where('user_id', $manager->id)->update(['is_active' => false]);
+        DB::table('MBA_tenant_users')->where('user_id', $manager->id)->update(['is_active' => false]);
         $this->actingAs($ops)->post(route('fleet.requests.decision', $ret), $this->lateAgenda($c))->assertSessionHasErrors('late_pickup');
         $this->assertSame('requested', $ret->fresh()->status);
     }
@@ -549,7 +549,7 @@ class RetRedesignTest extends TestCase
     {
         $c = $this->context();
         $ret = $this->createRet($c);
-        $membership = DB::table('tenant_users')->where('user_id', $c['actor']->id)->where('tenant_id', $c['tenant']->id)->value('id');
+        $membership = DB::table('MBA_tenant_users')->where('user_id', $c['actor']->id)->where('tenant_id', $c['tenant']->id)->value('id');
         DB::table('fleet_user_permission_overrides')->insert(['tenant_user_id' => $membership, 'permission_code' => 'operations.scheduling', 'access_level' => 0]);
         $this->get(route('fleet.requests.show', $ret))->assertOk()->assertSee('Editar solicitud')->assertDontSee('Agenda de Operaciones')->assertDontSee('Guardar decisión');
     }

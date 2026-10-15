@@ -21,7 +21,7 @@ class FleetMaintenancePlanningFormTest extends TestCase
         $this->travelTo(Carbon::parse('2026-10-10 10:00:00', 'America/Santiago'));
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $user = User::factory()->create(['name' => 'Operador de prueba']);
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => $role, 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => $role, 'is_active' => true]);
         $this->actingAs($user)->withSession(['fleet_tenant_id' => $tenant->id]);
         $vehicle = Vehicle::create(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'plate' => 'FORM31', 'internal_code' => 'FORM31', 'vehicle_type' => 'Camioneta', 'ownership_type' => 'Propio', 'operational_status' => 'Activa', 'is_active' => true, 'odometer_km' => 50000]);
 
@@ -68,7 +68,7 @@ class FleetMaintenancePlanningFormTest extends TestCase
         $this->post(route('fleet.maintenance.store'), [...$this->payload($vehicle), 'responsible_user_id' => $other->id])->assertSessionHasNoErrors();
         $job = VehicleMaintenance::where('vehicle_id', $vehicle->id)->firstOrFail();
         $this->assertSame($user->id, $job->responsible_user_id);
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $other->id, 'role_code' => 'administrator', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $other->id, 'role_code' => 'administrator', 'is_active' => true]);
         $this->actingAs($other)->put(route('fleet.maintenance.update', $job), [...$this->payload($vehicle), 'maintenance_type' => 'Cambio de aceite', 'responsible_user_id' => $other->id])->assertSessionHasNoErrors();
         $this->assertSame($user->id, $job->fresh()->responsible_user_id);
         $this->assertSame($user->id, $job->fresh()->created_by_user_id);
@@ -82,7 +82,10 @@ class FleetMaintenancePlanningFormTest extends TestCase
         $this->post(route('fleet.maintenance.store'), [...$payload, 'scheduled_at' => null])->assertSessionHasErrors('scheduled_at');
         $this->assertDatabaseCount('VEH_maintenance_types', 0);
         $this->assertDatabaseCount('vehicle_maintenances', 0);
-        DB::table('tenant_users')->where('user_id', $user->id)->update(['role_code' => 'read_only']);
+        $membershipId = DB::table('MBA_tenant_users')->where('user_id', $user->id)->value('id');
+        DB::table('fleet_membership_profiles')->where('tenant_user_id', $membershipId)->update([
+            'fleet_profile_id' => DB::table('fleet_profiles')->where('tenant_id', $tenant->id)->where('code', 'read_only')->value('id'),
+        ]);
         $this->post(route('fleet.maintenance.store'), $payload)->assertForbidden();
         $this->assertDatabaseCount('VEH_maintenance_types', 0);
     }

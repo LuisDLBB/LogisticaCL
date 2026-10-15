@@ -60,9 +60,9 @@ class FleetBoardAlertsTest extends TestCase
         $this->travelTo(Carbon::parse('2026-10-10 12:00:00', 'America/Santiago'));
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $user = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => $role, 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => $role, 'is_active' => true]);
         $this->actingAs($user)->withSession(['fleet_tenant_id' => $tenant->id]);
-        $id = DB::table('vehicles')->insertGetId(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'company_source' => $tenant->code, 'plate' => 'TEST31', 'internal_code' => 'TEST31', 'vehicle_type' => 'Camioneta', 'ownership_type' => 'Propio', 'operational_status' => 'Activa', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $id = DB::table('MBA_vehicles')->insertGetId(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'company_source' => $tenant->code, 'plate' => 'TEST31', 'internal_code' => 'TEST31', 'vehicle_type' => 'Camioneta', 'ownership_type' => 'Propio', 'operational_status' => 'Activa', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
 
         return [$tenant, $user, Vehicle::findOrFail($id)];
     }

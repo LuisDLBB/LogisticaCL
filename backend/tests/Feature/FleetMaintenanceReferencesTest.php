@@ -113,7 +113,7 @@ class FleetMaintenanceReferencesTest extends TestCase
         $this->travelTo(Carbon::parse('2026-10-09 10:00:00', 'America/Santiago'));
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $user = User::factory()->create(['name' => $role === 'administrator' ? 'Hans de la Barra' : 'Usuario de prueba']);
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => $role, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => $role, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         $this->actingAs($user)->withSession(['fleet_tenant_id' => $tenant->id]);
 
         return [$tenant, $user];
@@ -121,7 +121,7 @@ class FleetMaintenanceReferencesTest extends TestCase
 
     private function vehicle(Tenant $tenant, string $plate): Vehicle
     {
-        $id = DB::table('vehicles')->insertGetId(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'company_source' => $tenant->code, 'internal_code' => $plate, 'plate' => $plate, 'vehicle_type' => 'Camioneta', 'ownership_type' => 'Propio', 'operational_status' => 'Activa', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $id = DB::table('MBA_vehicles')->insertGetId(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'company_source' => $tenant->code, 'internal_code' => $plate, 'plate' => $plate, 'vehicle_type' => 'Camioneta', 'ownership_type' => 'Propio', 'operational_status' => 'Activa', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
 
         return Vehicle::findOrFail($id);
     }

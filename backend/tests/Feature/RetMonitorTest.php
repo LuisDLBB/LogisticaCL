@@ -28,7 +28,7 @@ class RetMonitorTest extends TestCase
         Http::preventStrayRequests();
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $actor = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $actor->id, 'role_code' => 'administrator', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $actor->id, 'role_code' => 'administrator', 'is_active' => true]);
         $this->actingAs($actor)->withSession(['fleet_tenant_id' => $tenant->id]);
         $client = Client::create(['tenant_id' => $tenant->id, 'commercial_name' => 'Cliente monitor', 'legal_name' => 'Cliente SPA', 'tax_id' => '76543210-0', 'tax_id_number' => '76543210', 'tax_id_check_digit' => '0', 'is_active' => true]);
         $point = ClientBranch::create(['client_id' => $client->id, 'code' => 'M01', 'name' => 'Bodega', 'address' => 'Dorsal 3225', 'commune_name' => 'Renca', 'address_status' => 'ready', 'operational_emails' => 'cliente@example.test', 'is_active' => true]);
@@ -47,7 +47,7 @@ class RetMonitorTest extends TestCase
 
     public function test_guest_and_unassociated_users_cannot_read_monitor(): void
     {
-        $this->get('/control-flota/coordinacion/monitor')->assertRedirect('/control-flota/ingresar');
+        $this->get('/control-flota/coordinacion/monitor')->assertRedirect('/');
         $this->actingAs(User::factory()->create())->get('/control-flota/coordinacion/monitor')->assertForbidden();
     }
 
@@ -102,7 +102,7 @@ class RetMonitorTest extends TestCase
         $c = $this->context();
         $ids = [];
         foreach (['Activa', 'Activa', 'Activa', 'En mantención', 'Fuera de servicio', 'Vendido', 'Robado'] as $index => $state) {
-            $ids[] = DB::table('vehicles')->insertGetId(['tenant_id' => $c['tenant']->id, 'rut_empresa' => $c['tenant']->tax_id, 'company_source' => $c['tenant']->code, 'plate' => 'TV'.$index, 'internal_code' => 'TV'.$index, 'vehicle_type' => 'Camioneta', 'ownership_type' => 'Propio', 'operational_status' => $state, 'is_active' => true, 'next_maintenance_at' => $index === 2 ? '2026-10-10' : null, 'created_at' => now(), 'updated_at' => now()]);
+            $ids[] = DB::table('MBA_vehicles')->insertGetId(['tenant_id' => $c['tenant']->id, 'rut_empresa' => $c['tenant']->tax_id, 'company_source' => $c['tenant']->code, 'plate' => 'TV'.$index, 'internal_code' => 'TV'.$index, 'vehicle_type' => 'Camioneta', 'ownership_type' => 'Propio', 'operational_status' => $state, 'is_active' => true, 'next_maintenance_at' => $index === 2 ? '2026-10-10' : null, 'created_at' => now(), 'updated_at' => now()]);
         }
         $ret = $this->ret($c, 'scheduled');
         $ret->update(['vehicle_id' => $ids[1]]);

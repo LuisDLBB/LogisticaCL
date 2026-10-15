@@ -20,7 +20,7 @@ class FleetMaintenanceHistoryImportTest extends TestCase
         $records = json_decode(file_get_contents(database_path('data/fleet_maintenance_history_2026.json')), true, 512, JSON_THROW_ON_ERROR);
         foreach (collect($records)->unique('plate') as $record) {
             $owner = Tenant::where('code', $record['company'])->firstOrFail();
-            DB::table('vehicles')->insert(['tenant_id' => $owner->id, 'rut_empresa' => $owner->tax_id, 'company_source' => $owner->code, 'plate' => $record['plate'], 'internal_code' => $record['plate'], 'vehicle_type' => 'Camión', 'ownership_type' => 'Propio', 'operational_status' => 'Vendido', 'odometer_km' => 999999, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('MBA_vehicles')->insert(['tenant_id' => $owner->id, 'rut_empresa' => $owner->tax_id, 'company_source' => $owner->code, 'plate' => $record['plate'], 'internal_code' => $record['plate'], 'vehicle_type' => 'Camión', 'ownership_type' => 'Propio', 'operational_status' => 'Vendido', 'odometer_km' => 999999, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         }
         $this->seed(FleetMaintenanceHistory2026Seeder::class);
         $this->seed(FleetMaintenanceHistory2026Seeder::class);

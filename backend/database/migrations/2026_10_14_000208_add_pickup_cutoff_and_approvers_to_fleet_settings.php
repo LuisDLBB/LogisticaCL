@@ -25,8 +25,11 @@ return new class extends Migration
         foreach (DB::table('MBA_tenants')->get() as $tenant) {
             DB::table('fleet_scheduling_settings')->insertOrIgnore(['tenant_id' => $tenant->id, 'max_concurrent_pickups' => 3, 'created_at' => now(), 'updated_at' => now()]);
             $members = DB::table('MBA_tenant_users')->join('MBA_users', 'MBA_users.id', '=', 'MBA_tenant_users.user_id')
+                ->join('fleet_membership_profiles', 'fleet_membership_profiles.tenant_user_id', '=', 'MBA_tenant_users.id')
+                ->join('fleet_profiles', 'fleet_profiles.id', '=', 'fleet_membership_profiles.fleet_profile_id')
                 ->where('MBA_tenant_users.tenant_id', $tenant->id)->where('MBA_tenant_users.is_active', true)
-                ->get(['MBA_users.id', 'MBA_users.email', 'MBA_tenant_users.role_code']);
+                ->where('fleet_membership_profiles.is_active', true)->where('fleet_profiles.is_active', true)
+                ->get(['MBA_users.id', 'MBA_users.email', 'fleet_profiles.code as role_code']);
             foreach ($members as $member) {
                 $areas = [];
                 if (in_array($member->role_code, ['operations', 'operaciones'], true)) {

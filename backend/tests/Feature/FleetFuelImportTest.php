@@ -18,7 +18,7 @@ class FleetFuelImportTest extends TestCase
     {
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $user = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => 'administrator', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => 'administrator', 'is_active' => true]);
         $this->actingAs($user)->withSession(['fleet_tenant_id' => $tenant->id]);
 
         return [$tenant, $user];
@@ -95,7 +95,7 @@ class FleetFuelImportTest extends TestCase
     public function test_maintenance_creations_and_changes_are_marked_as_trials(): void
     {
         [$tenant, $user] = $this->context();
-        $id = DB::table('vehicles')->insertGetId(['tenant_id' => $tenant->id, 'plate' => 'TEST31', 'internal_code' => 'TEST31', 'vehicle_type' => 'Camión', 'operational_status' => 'Activa', 'ownership_type' => 'Propio', 'is_active' => true]);
+        $id = DB::table('MBA_vehicles')->insertGetId(['tenant_id' => $tenant->id, 'plate' => 'TEST31', 'internal_code' => 'TEST31', 'vehicle_type' => 'Camión', 'operational_status' => 'Activa', 'ownership_type' => 'Propio', 'is_active' => true]);
         config()->set('fleet.auto_test_mode', true);
         $job = VehicleMaintenance::create(['vehicle_id' => $id, 'tenant_id' => $tenant->id, 'maintenance_type' => 'Preventiva', 'execution_type' => 'internal', 'status' => 'scheduled', 'created_by_user_id' => $user->id]);
         $this->assertTrue($job->is_test);

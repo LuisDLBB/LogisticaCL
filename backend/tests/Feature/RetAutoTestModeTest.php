@@ -12,7 +12,6 @@ use App\Models\Tenant;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -28,7 +27,7 @@ class RetAutoTestModeTest extends TestCase
         Http::preventStrayRequests();
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $actor = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $actor->id, 'role_code' => 'administrator', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $actor->id, 'role_code' => 'administrator', 'is_active' => true]);
         $this->actingAs($actor)->withSession(['fleet_tenant_id' => $tenant->id]);
         $client = Client::create(['tenant_id' => $tenant->id, 'commercial_name' => 'Cliente monitor', 'legal_name' => 'Cliente SPA', 'tax_id' => '76543210-0', 'tax_id_number' => '76543210', 'tax_id_check_digit' => '0', 'is_active' => true]);
         $point = ClientBranch::create(['client_id' => $client->id, 'code' => 'M01', 'name' => 'Bodega', 'address' => 'Dorsal 3225', 'commune_name' => 'Renca', 'address_status' => 'ready', 'operational_emails' => 'cliente@example.test', 'is_active' => true]);

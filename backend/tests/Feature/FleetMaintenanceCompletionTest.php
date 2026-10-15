@@ -8,7 +8,6 @@ use App\Models\Vehicle;
 use App\Models\VehicleMaintenance;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class FleetMaintenanceCompletionTest extends TestCase
@@ -20,7 +19,7 @@ class FleetMaintenanceCompletionTest extends TestCase
         $this->travelTo(Carbon::parse('2026-10-10 10:00:00', 'America/Santiago'));
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $user = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => 'administrator', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => 'administrator', 'is_active' => true]);
         $this->actingAs($user)->withSession(['fleet_tenant_id' => $tenant->id]);
         $vehicle = Vehicle::create(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'plate' => 'CLOSE1', 'internal_code' => 'CLOSE1', 'vehicle_type' => 'Camioneta', 'ownership_type' => 'Propio', 'operational_status' => 'En mantención', 'is_active' => true, 'odometer_km' => 50000]);
 

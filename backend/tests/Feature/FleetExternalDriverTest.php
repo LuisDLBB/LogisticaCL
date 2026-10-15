@@ -24,7 +24,7 @@ class FleetExternalDriverTest extends TestCase
 
     private function membership(User $user, Tenant $tenant, string $role = 'app_conductor'): int
     {
-        return DB::table('tenant_users')->insertGetId([
+        return FleetTestMembership::insertGetId([
             'tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => $role,
             'is_active' => true, 'created_at' => now(), 'updated_at' => now(),
         ]);
@@ -40,7 +40,7 @@ class FleetExternalDriverTest extends TestCase
             'role_code' => 'app_conductor', 'is_active' => 1, 'driver_type' => 'external',
         ])->assertRedirect()->assertSessionHasNoErrors();
 
-        $this->assertDatabaseHas('tenant_users', [
+        $this->assertDatabaseHas('MBA_tenant_users', [
             'id' => $id, 'driver_type' => 'external', 'external_vehicle_plate' => null,
             'external_vehicle_type' => null, 'external_payload_capacity_kg' => null, 'external_capacity_m3' => null,
         ]);
@@ -58,7 +58,7 @@ class FleetExternalDriverTest extends TestCase
             'external_payload_capacity_kg' => 950.5, 'external_capacity_m3' => 8.25,
         ])->assertRedirect()->assertSessionHasNoErrors();
 
-        $this->assertDatabaseHas('tenant_users', [
+        $this->assertDatabaseHas('MBA_tenant_users', [
             'id' => $id, 'driver_type' => 'external', 'external_vehicle_plate' => 'ABCD12',
             'external_vehicle_type' => 'Furgón', 'external_payload_capacity_kg' => 950.5, 'external_capacity_m3' => 8.25,
         ]);
@@ -75,7 +75,7 @@ class FleetExternalDriverTest extends TestCase
             'driver_type' => 'external', 'external_vehicle_plate' => 'wxyz99',
         ])->assertRedirect()->assertSessionHasNoErrors();
 
-        $this->assertDatabaseHas('tenant_users', [
+        $this->assertDatabaseHas('MBA_tenant_users', [
             'tenant_id' => $tenant->id, 'user_id' => $driver->id,
             'driver_type' => 'external', 'external_vehicle_plate' => 'WXYZ99',
         ]);
@@ -92,7 +92,7 @@ class FleetExternalDriverTest extends TestCase
         ])->assertRedirect()->assertSessionHasNoErrors();
 
         $driver = User::where('email', 'externo@example.test')->firstOrFail();
-        $this->assertDatabaseHas('tenant_users', [
+        $this->assertDatabaseHas('MBA_tenant_users', [
             'tenant_id' => $tenant->id, 'user_id' => $driver->id, 'driver_type' => 'external',
             'external_vehicle_type' => 'Camioneta', 'external_payload_capacity_kg' => null,
         ]);
@@ -108,7 +108,7 @@ class FleetExternalDriverTest extends TestCase
             'external_payload_capacity_kg' => -1, 'external_capacity_m3' => 'abc',
         ])->assertSessionHasErrors(['external_payload_capacity_kg', 'external_capacity_m3']);
 
-        $this->assertDatabaseHas('tenant_users', ['id' => $id, 'driver_type' => null]);
+        $this->assertDatabaseHas('MBA_tenant_users', ['id' => $id, 'driver_type' => null]);
     }
 
     public function test_foreign_company_external_vehicle_cannot_be_edited(): void
@@ -122,7 +122,7 @@ class FleetExternalDriverTest extends TestCase
             'external_vehicle_plate' => 'ABCD12',
         ])->assertNotFound();
 
-        $this->assertDatabaseHas('tenant_users', ['id' => $id, 'external_vehicle_plate' => null]);
+        $this->assertDatabaseHas('MBA_tenant_users', ['id' => $id, 'external_vehicle_plate' => null]);
     }
 
     public function test_editing_imported_driver_preserves_current_profile(): void
@@ -135,7 +135,7 @@ class FleetExternalDriverTest extends TestCase
             'external_vehicle_plate' => 'ABCD12',
         ])->assertRedirect()->assertSessionHasNoErrors();
 
-        $this->assertDatabaseHas('tenant_users', [
+        $this->assertDatabaseHas('MBA_tenant_users', [
             'id' => $id, 'role_code' => 'app_conductor', 'external_vehicle_plate' => 'ABCD12',
         ]);
     }
@@ -150,7 +150,7 @@ class FleetExternalDriverTest extends TestCase
             'external_vehicle_plate' => 'ABCD12', 'external_capacity_m3' => -5,
         ])->assertRedirect()->assertSessionHasNoErrors();
 
-        $this->assertDatabaseHas('tenant_users', ['id' => $id, 'driver_type' => null, 'external_vehicle_plate' => null]);
+        $this->assertDatabaseHas('MBA_tenant_users', ['id' => $id, 'driver_type' => null, 'external_vehicle_plate' => null]);
     }
 
     public function test_driver_must_choose_internal_or_external(): void
@@ -162,7 +162,7 @@ class FleetExternalDriverTest extends TestCase
             'role_code' => 'app_conductor', 'is_active' => 1,
         ])->assertSessionHasErrors('driver_type');
 
-        $this->assertDatabaseHas('tenant_users', ['id' => $id, 'driver_type' => null]);
+        $this->assertDatabaseHas('MBA_tenant_users', ['id' => $id, 'driver_type' => null]);
     }
 
     public function test_internal_driver_needs_no_vehicle_details(): void
@@ -174,7 +174,7 @@ class FleetExternalDriverTest extends TestCase
             'role_code' => 'app_conductor', 'is_active' => 1, 'driver_type' => 'own',
         ])->assertRedirect()->assertSessionHasNoErrors();
 
-        $this->assertDatabaseHas('tenant_users', ['id' => $id, 'driver_type' => 'own', 'external_vehicle_plate' => null]);
+        $this->assertDatabaseHas('MBA_tenant_users', ['id' => $id, 'driver_type' => 'own', 'external_vehicle_plate' => null]);
     }
 
     public function test_all_users_share_the_profile_catalog_and_can_become_drivers(): void
@@ -194,6 +194,9 @@ class FleetExternalDriverTest extends TestCase
         $this->patch(route('fleet.users.update', $id), [
             'role_code' => 'app_conductor', 'is_active' => 1, 'driver_type' => 'own',
         ])->assertRedirect()->assertSessionHasNoErrors();
-        $this->assertDatabaseHas('tenant_users', ['id' => $id, 'role_code' => 'app_conductor', 'driver_type' => 'own']);
+        $this->assertDatabaseHas('MBA_tenant_users', ['id' => $id, 'role_code' => 'postventa', 'driver_type' => 'own']);
+        $this->assertSame('app_conductor', DB::table('fleet_membership_profiles as memberships')
+            ->join('fleet_profiles as profiles', 'profiles.id', '=', 'memberships.fleet_profile_id')
+            ->where('memberships.tenant_user_id', $id)->value('profiles.code'));
     }
 }

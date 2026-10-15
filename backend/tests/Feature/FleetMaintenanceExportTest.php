@@ -19,7 +19,7 @@ class FleetMaintenanceExportTest extends TestCase
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $other = Tenant::where('code', 'PMCB')->firstOrFail();
         $user = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => 'administrator', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => 'administrator', 'is_active' => true]);
         $job = $this->job($tenant, 'EXPORT11', 'closed');
         $this->job($tenant, 'EXPORT22', 'pending');
         $this->job($other, 'SECRET99', 'closed');
@@ -62,13 +62,13 @@ class FleetMaintenanceExportTest extends TestCase
     {
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $user = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => 'driver', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => 'driver', 'is_active' => true]);
         $this->actingAs($user)->withSession(['fleet_tenant_id' => $tenant->id])->get(route('fleet.maintenance.export'))->assertForbidden();
     }
 
     private function job(Tenant $tenant, string $plate, string $status): VehicleMaintenance
     {
-        $vehicle = DB::table('vehicles')->insertGetId(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'company_source' => $tenant->code, 'internal_code' => $plate, 'plate' => $plate, 'vehicle_type' => 'Camión', 'ownership_type' => 'Propio', 'operational_status' => 'Activa', 'is_active' => true]);
+        $vehicle = DB::table('MBA_vehicles')->insertGetId(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'company_source' => $tenant->code, 'internal_code' => $plate, 'plate' => $plate, 'vehicle_type' => 'Camión', 'ownership_type' => 'Propio', 'operational_status' => 'Activa', 'is_active' => true]);
 
         return VehicleMaintenance::create(['vehicle_id' => $vehicle, 'tenant_id' => $tenant->id, 'maintenance_type' => 'Reparación', 'execution_type' => 'internal', 'status' => $status, 'quotation_number' => 'COT-001', 'document_number' => 'FAC-002', 'actual_cost' => 45000.25, 'notes' => '=1+1']);
     }

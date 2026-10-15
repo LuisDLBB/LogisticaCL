@@ -32,17 +32,17 @@ class RetCoordinationWorkflowTest extends TestCase
         $this->travelTo(Carbon::parse('2026-09-30 12:00:00'));
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $actor = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $actor->id, 'role_code' => 'administrator', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $actor->id, 'role_code' => 'administrator', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         $this->actingAs($actor)->withSession(['fleet_tenant_id' => $tenant->id]);
         $client = Client::create(['tenant_id' => $tenant->id, 'tax_id' => '76543210-0', 'tax_id_number' => '76543210', 'tax_id_check_digit' => '0', 'commercial_name' => 'Cliente RET', 'legal_name' => 'Cliente RET SPA', 'is_active' => true]);
         $point = ClientBranch::create(['client_id' => $client->id, 'code' => 'RET1', 'name' => 'Punto central', 'address' => 'Calle 123', 'commune_name' => 'Santiago', 'address_status' => 'ready', 'operational_emails' => 'cliente@example.test', 'is_active' => true]);
         $type = ServiceType::create(['service_code' => 991, 'name' => 'Retiro', 'is_active' => true]);
-        DB::table('client_service_type')->insert(['client_id' => $client->id, 'service_type_id' => $type->id, 'is_active' => true]);
+        DB::table('PPR_client_service_type')->insert(['client_id' => $client->id, 'service_type_id' => $type->id, 'is_active' => true]);
         $driver = User::factory()->create();
         $driver->profile_name = 'App Conductor';
         $driver->license_type = 'B';
         $driver->save();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $driver->id, 'role_code' => 'app_conductor', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $driver->id, 'role_code' => 'app_conductor', 'is_active' => true]);
         $vehicle = Vehicle::create(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'company_source' => $tenant->code, 'internal_code' => 'RET001', 'plate' => 'RETT01', 'max_weight_kg' => 3500, 'vehicle_type' => 'Furgón', 'ownership_type' => 'Propio', 'operational_status' => 'Activa', 'is_active' => true]);
 
         return compact('tenant', 'actor', 'client', 'point', 'type', 'driver', 'vehicle');
@@ -226,10 +226,13 @@ class RetCoordinationWorkflowTest extends TestCase
         $this->post(route('fleet.feasibility.store'), $this->payload($c) + ['requires_finance' => 0])->assertSessionHasNoErrors();
         $f = RetFeasibility::firstOrFail();
         $other = Tenant::where('code', 'PMCB')->firstOrFail();
-        DB::table('tenant_users')->insert(['tenant_id' => $other->id, 'user_id' => $c['actor']->id, 'role_code' => 'administrator', 'is_active' => true]);
+        FleetTestMembership::insert(['tenant_id' => $other->id, 'user_id' => $c['actor']->id, 'role_code' => 'administrator', 'is_active' => true]);
         $this->withSession(['fleet_tenant_id' => $other->id])->get(route('fleet.feasibility.show', $f))->assertNotFound();
         $this->withSession(['fleet_tenant_id' => $c['tenant']->id]);
-        DB::table('tenant_users')->where('user_id', $c['actor']->id)->where('tenant_id', $c['tenant']->id)->update(['role_code' => 'read_only']);
+        $membershipId = DB::table('MBA_tenant_users')->where('user_id', $c['actor']->id)->where('tenant_id', $c['tenant']->id)->value('id');
+        DB::table('fleet_membership_profiles')->where('tenant_user_id', $membershipId)->update([
+            'fleet_profile_id' => DB::table('fleet_profiles')->where('tenant_id', $c['tenant']->id)->where('code', 'read_only')->value('id'),
+        ]);
         $this->get(route('fleet.ret.cleanup'))->assertForbidden();
         $this->post(route('fleet.feasibility.act', $f), ['action' => 'operations', 'result' => 'Factible', 'allowances' => 0])->assertForbidden();
         $this->post(route('fleet.feasibility.store'), $this->payload($c) + ['requires_finance' => 0])->assertForbidden();

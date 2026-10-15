@@ -58,7 +58,7 @@ class FleetCoordinationTest extends TestCase
             'commercial_name' => 'Cliente prueba', 'legal_name' => 'Cliente prueba SPA', 'is_active' => true,
         ]);
         $retireType = ServiceType::create(['service_code' => 1, 'name' => 'Retiro', 'is_active' => true]);
-        DB::table('client_service_type')->insert(['client_id' => $this->client->id, 'service_type_id' => $retireType->id, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('PPR_client_service_type')->insert(['client_id' => $this->client->id, 'service_type_id' => $retireType->id, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         $this->point = ClientBranch::create([
             'client_id' => $this->client->id, 'code' => 'P1', 'name' => 'Punto prueba',
             'address' => 'Calle 123', 'commune_name' => 'Santiago',
@@ -238,7 +238,7 @@ class FleetCoordinationTest extends TestCase
         $driver->profile_name = 'App Conductor';
         $driver->license_type = 'B';
         $driver->save();
-        DB::table('tenant_users')->insert([
+        FleetTestMembership::insert([
             'tenant_id' => $this->fourN->id, 'user_id' => $driver->id,
             'role_code' => 'app_conductor', 'is_active' => true,
             'created_at' => now(), 'updated_at' => now(),

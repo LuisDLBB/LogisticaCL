@@ -371,7 +371,7 @@ BULK03	20000'])->assertSessionHasNoErrors()->assertRedirect($captureUrl);
         $this->travelTo(Carbon::parse('2026-10-09 10:00:00', 'America/Santiago'));
         $tenant = Tenant::where('code', '4N')->firstOrFail();
         $user = User::factory()->create();
-        DB::table('tenant_users')->insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => $role, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        FleetTestMembership::insert(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role_code' => $role, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         $this->actingAs($user)->withSession(['fleet_tenant_id' => $tenant->id]);
 
         return [$tenant, $user];
@@ -379,7 +379,7 @@ BULK03	20000'])->assertSessionHasNoErrors()->assertRedirect($captureUrl);
 
     private function vehicle(Tenant $tenant, string $plate): Vehicle
     {
-        $id = DB::table('vehicles')->insertGetId(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'company_source' => $tenant->code, 'internal_code' => $plate, 'plate' => $plate, 'vehicle_type' => 'Camioneta', 'ownership_type' => 'Propio', 'operational_status' => 'Activa', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $id = DB::table('MBA_vehicles')->insertGetId(['tenant_id' => $tenant->id, 'rut_empresa' => $tenant->tax_id, 'company_source' => $tenant->code, 'internal_code' => $plate, 'plate' => $plate, 'vehicle_type' => 'Camioneta', 'ownership_type' => 'Propio', 'operational_status' => 'Activa', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
 
         DB::table('VEH_maintenance_parameters')->insert(['vehicle_id' => $id, 'tenant_id' => $tenant->id, 'effective_from' => '2026-09-01', 'interval_km' => 10000, 'reason' => 'Referencia de prueba', 'created_at' => now(), 'updated_at' => now()]);
         DB::table('VEH_maintenance_baselines')->insert(['vehicle_id' => $id, 'tenant_id' => $tenant->id, 'observed_week' => '2026-09-01', 'last_maintenance_km' => 10000, 'source_key' => 'test-'.$id, 'source' => 'Antecedente de prueba', 'created_at' => now(), 'updated_at' => now()]);

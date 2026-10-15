@@ -212,7 +212,10 @@ class FleetSchedulingTest extends TestCase
     {
         $driver = $this->driver('Conductor');
         $ambiguous = $this->driver('Operaciones');
-        $ambiguous->tenants()->updateExistingPivot($this->fourN->id, ['role_code' => 'operations']);
+        $membershipId = DB::table('MBA_tenant_users')->where('tenant_id', $this->fourN->id)->where('user_id', $ambiguous->id)->value('id');
+        DB::table('fleet_membership_profiles')->where('tenant_user_id', $membershipId)->update([
+            'fleet_profile_id' => DB::table('fleet_profiles')->where('tenant_id', $this->fourN->id)->where('code', 'operations')->value('id'),
+        ]);
         $this->assertTrue(app(SchedulingService::class)->isDriver($driver));
         $this->assertFalse(app(SchedulingService::class)->isDriver($ambiguous));
         $this->actingAs($driver)->withSession(['fleet_tenant_id' => $this->fourN->id]);
@@ -308,7 +311,7 @@ class FleetSchedulingTest extends TestCase
 
     private function membership(User $user, Tenant $tenant, string $role): void
     {
-        DB::table('tenant_users')->insert([
+        FleetTestMembership::insert([
             'tenant_id' => $tenant->id, 'user_id' => $user->id,
             'role_code' => $role, 'is_active' => true,
             'created_at' => now(), 'updated_at' => now(),
